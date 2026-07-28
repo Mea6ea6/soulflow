@@ -1,22 +1,11 @@
 import { Home, Calendar, Users, FolderOpen, User, Settings, Sparkles } from 'lucide-react';
 import type { TabId, NavItem } from '../types/index.tsx';
+import { useTranslation } from 'react-i18next';
 
 interface SidebarProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
 }
-
-const navItems: NavItem[] = [
-  { id: 'home', label: 'Главная' },
-  { id: 'calendar', label: 'Календарь' },
-  { id: 'clients', label: 'Клиенты' },
-  { id: 'documents', label: 'Документы' },
-];
-
-const bottomNavItems: NavItem[] = [
-  { id: 'profile', label: 'Профиль' },
-  { id: 'settings', label: 'Настройки' },
-];
 
 const icons: Record<TabId, React.ElementType> = {
   home: Home,
@@ -44,6 +33,20 @@ function NavButton({ item, active, onClick }: { item: NavItem; active: boolean; 
 }
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+  const { t } = useTranslation();
+
+  const navItems: NavItem[] = [
+    { id: 'home', label: t('nav.home') },
+    { id: 'calendar', label: t('nav.calendar') },
+    { id: 'clients', label: t('nav.clients') },
+    { id: 'documents', label: t('nav.documents') },
+  ];
+
+  const bottomNavItems: NavItem[] = [
+    { id: 'profile', label: t('nav.profile') },
+    { id: 'settings', label: t('nav.settings') },
+  ];
+
   return (
     <aside className="w-64 h-screen flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 px-3 py-4">
       <div className="flex items-center gap-2 px-3 mb-8">

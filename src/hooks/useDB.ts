@@ -2,6 +2,22 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import type { Client, Document, CalendarEvent } from '../types';
 import { encryptObject, decryptObject } from '../utils/encryption';
+import type { AppSettings } from '../types';
+
+// ===== Настройки приложения =====
+
+export function useAppSettings() {
+  return useLiveQuery(() => db.appSettings.toCollection().first(), []);
+}
+
+export async function updateAppSettings(updates: Partial<Pick<AppSettings, 'theme' | 'language'>>) {
+  const existing = await db.appSettings.toCollection().first();
+  if (!existing) return;
+  await db.appSettings.update(existing.id, {
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  });
+}
 
 // ===== Клиенты =====
 

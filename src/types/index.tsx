@@ -25,14 +25,15 @@ export interface Client {
 export type DocumentType = 'txt' | 'pdf' | 'docx';
 
 export interface Document {
-  id: string;                  // UUID
-  title: string;               // Название документа
-  type: DocumentType;          // 'txt' | 'pdf' | 'docx'
-  content: string;             // Для txt — текст, для pdf/docx — base64 или ссылка на blob
-  clientId: string | null;     // null — если личный документ
-  isPersonal: boolean;         // true — личный документ (сертификаты, дипломы)
-  createdAt: string;           // ISO-строка
-  updatedAt: string;           // ISO-строка
+  id: string;
+  title: string;
+  type: DocumentType;              // 'txt' | 'pdf' | 'docx'
+  content: string;                 // txt/редактор — JSON от TipTap; pdf/docx — извлечённый текст (для предпросмотра)
+  originalFileBase64?: string;     // только для импортированных pdf/docx — оригинальный файл в base64 (для скачивания)
+  clientId: string | null;
+  isPersonal: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CalendarEvent {

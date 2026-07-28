@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "home": "Home",
+    "calendar": "Calendar",
+    "clients": "Clients",
+    "documents": "Documents",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "download": "Download",
+    "open": "Open",
+    "loading": "Loading...",
+    "search": "Search..."
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Register",
+    "logout": "Log out",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "masterPassword": "Master password",
+    "confirmPassword": "Confirm password",
+    "loading": "Please wait...",
+    "loginTitle": "Log in",
+    "registerTitle": "Register",
+    "loginSubtitle": "Enter your master password to access your data",
+    "registerSubtitle": "Create an account and a master password",
+    "loggedInAs": "Logged in as",
+    "wrongPassword": "Wrong password",
+    "noAccountFound": "No account found on this device. Please register.",
+    "loginFailed": "Could not log in. Please try again.",
+    "registerFailed": "Could not register. Please try again.",
+    "enterEmail": "Enter your email",
+    "enterPassword": "Enter your password",
+    "passwordTooShort": "Password must be at least 8 characters long",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "forgetAccountConfirm": "Log out of this account and clear the saved sign-in data on this device? Access to your encrypted data without the password will be lost.",
+    "notMe": "Not you? Use a different account",
+    "noAccountYet": "No account? Register",
+    "haveAccount": "Already have an account? Log in"
+  },
+  "settings": {
+    "title": "Settings",
+    "profileSection": "Profile",
+    "fullName": "Full name",
+    "changeEmail": "Change email",
+    "securitySection": "Security",
+    "changePassword": "Change master password",
+    "appearanceSection": "Appearance",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "languageSection": "Language",
+    "aboutSection": "About",
+    "description": "Description",
+    "version": "Version",
+    "dataSection": "Data",
+    "exportData": "Export all data",
+    "importData": "Import all data",
+    "clearData": "Clear all data"
+  },
+  "errors": {
+    "invalidPassword": "Wrong password"
+  }
+}

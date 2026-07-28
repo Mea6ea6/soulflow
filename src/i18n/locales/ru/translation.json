@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "home": "Главная",
+    "calendar": "Календарь",
+    "clients": "Клиенты",
+    "documents": "Документы",
+    "profile": "Профиль",
+    "settings": "Настройки"
+  },
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "add": "Добавить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "close": "Закрыть",
+    "download": "Скачать",
+    "open": "Открыть",
+    "loading": "Загрузка...",
+    "search": "Поиск..."
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Зарегистрироваться",
+    "logout": "Выйти",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "masterPassword": "Мастер-пароль",
+    "confirmPassword": "Повторите пароль",
+    "loading": "Подождите...",
+    "loginTitle": "Вход",
+    "registerTitle": "Регистрация",
+    "loginSubtitle": "Введите мастер-пароль для доступа к данным",
+    "registerSubtitle": "Создайте аккаунт и мастер-пароль",
+    "loggedInAs": "Вход как",
+    "wrongPassword": "Неверный пароль",
+    "noAccountFound": "Аккаунт с таким email не найден на этом устройстве. Зарегистрируйтесь.",
+    "loginFailed": "Не удалось войти. Попробуйте снова.",
+    "registerFailed": "Не удалось зарегистрироваться. Попробуйте снова.",
+    "enterEmail": "Введите email",
+    "enterPassword": "Введите пароль",
+    "passwordTooShort": "Пароль должен быть не менее 8 символов",
+    "passwordsDoNotMatch": "Пароли не совпадают",
+    "forgetAccountConfirm": "Выйти из этого аккаунта и очистить сохранённые данные входа на этом устройстве? Доступ к вашим зашифрованным данным без пароля будет утерян.",
+    "notMe": "Это не я — использовать другой аккаунт",
+    "noAccountYet": "Нет аккаунта? Зарегистрироваться",
+    "haveAccount": "Уже есть аккаунт? Войти"
+  },
+  "settings": {
+    "title": "Настройки",
+    "profileSection": "Профиль",
+    "fullName": "ФИО",
+    "changeEmail": "Сменить email",
+    "securitySection": "Безопасность",
+    "changePassword": "Сменить мастер-пароль",
+    "appearanceSection": "Внешний вид",
+    "theme": "Тема",
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "languageSection": "Язык",
+    "aboutSection": "О приложении",
+    "description": "Описание",
+    "version": "Версия",
+    "dataSection": "Данные",
+    "exportData": "Экспорт всех данных",
+    "importData": "Импорт всех данных",
+    "clearData": "Очистить все данные"
+  },
+  "errors": {
+    "invalidPassword": "Неверный пароль"
+  }
+}

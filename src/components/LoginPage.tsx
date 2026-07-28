@@ -1,18 +1,24 @@
 import { useState } from 'react';
 import { Sparkles, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../hooks/useAuthHook';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const { register, login, getStoredEmail } = useAuth();
 
   const storedEmail = getStoredEmail();
   const [mode, setMode] = useState<'login' | 'register'>(storedEmail ? 'login' : 'register');
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(storedEmail ?? '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Показываем поле email, если это регистрация ИЛИ если сохранённого
+  // email вообще нет (например, после "Это не я" в режиме "Войти")
+  const showEmailField = mode === 'register' || !storedEmail;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +26,7 @@ export default function LoginPage() {
 
     if (mode === 'register') {
       if (!email.trim()) {
-        setError('Введите email');
+        setError(t('auth.enterEmail'));
         return;
       }
       if (password.length < 8) {
@@ -41,22 +47,40 @@ export default function LoginPage() {
         setIsSubmitting(false);
       }
     } else {
+      if (!storedEmail && !email.trim()) {
+        setError(t('auth.enterEmail'));
+        return;
+      }
       if (!password) {
-        setError('Введите пароль');
+        setError(t('auth.enterPassword'));
         return;
       }
 
       setIsSubmitting(true);
       try {
+        // login() всегда сверяется с email/солью, сохранёнными в localStorage —
+        // если сохранённого аккаунта нет вообще, вход не пройдёт ни при каком
+        // введённом email, это ожидаемо: значит нужно сначала зарегистрироваться.
         const success = await login(password);
         if (!success) {
-          setError('Неверный пароль');
+          setError(storedEmail ? t('auth.wrongPassword') : t('auth.noAccountFound'));
         }
       } catch {
-        setError('Не удалось войти. Попробуйте снова.');
+        setError(t('auth.loginFailed'));
       } finally {
         setIsSubmitting(false);
       }
+    }
+  };
+
+  const handleForgetAccount = () => {
+    if (
+      confirm(
+        t('auth.forgetAccountConfirm')
+      )
+    ) {
+      localStorage.removeItem('soulflow_auth');
+      window.location.reload();
     }
   };
 
@@ -70,19 +94,17 @@ export default function LoginPage() {
 
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">
-            {mode === 'login' ? 'Вход' : 'Регистрация'}
+            {mode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-            {mode === 'login'
-              ? 'Введите мастер-пароль для доступа к данным'
-              : 'Создайте аккаунт и мастер-пароль'}
+            {mode === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {mode === 'register' && (
+            {showEmailField && (
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Email
+                  {t('auth.email')}
                 </label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -91,7 +113,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                   />
                 </div>
               </div>
@@ -99,13 +121,13 @@ export default function LoginPage() {
 
             {mode === 'login' && storedEmail && (
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                Вход как <span className="font-medium text-gray-700 dark:text-gray-200">{storedEmail}</span>
+                {t('auth.loggedInAs')} <span className="font-medium text-gray-700 dark:text-gray-200">{storedEmail}</span>
               </div>
             )}
 
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                Мастер-пароль
+                {t('auth.masterPassword')}
               </label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -122,7 +144,7 @@ export default function LoginPage() {
             {mode === 'register' && (
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Повторите пароль
+                  {t('auth.confirmPassword')}
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -148,7 +170,7 @@ export default function LoginPage() {
               disabled={isSubmitting}
               className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
-              {isSubmitting ? 'Подождите...' : mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+              {isSubmitting ? t('auth.loading') : mode === 'login' ? t('auth.login') : t('auth.register')}
             </button>
           </form>
 
@@ -161,7 +183,17 @@ export default function LoginPage() {
               }}
               className="mt-4 text-sm text-indigo-600 dark:text-indigo-400 hover:underline w-full text-center"
             >
-              {mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
+              {mode === 'login' ? t('auth.noAccountYet') : t('auth.haveAccount')}
+            </button>
+          )}
+
+          {storedEmail && (
+            <button
+              type="button"
+              onClick={handleForgetAccount}
+              className="mt-3 text-sm text-gray-500 dark:text-gray-400 hover:underline w-full text-center"
+            >
+              {t('auth.notMe')}
             </button>
           )}
         </div>

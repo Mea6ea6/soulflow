@@ -1,17 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Download, Upload, Trash2 } from 'lucide-react';
+import { SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon } from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuthHook';
+import { useTheme } from '../context/useThemeHook';
+import { useToast } from '../hooks/useToastHook';
 import { useAppSettings, updateAppSettings } from '../hooks/useDB';
 import { exportAllData, downloadExport, importAllData, clearAllData } from '../utils/exportImport';
+import type { ThemeId } from '../types';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import ChangeEmailModal from '../components/ChangeEmailModal';
 
 const APP_VERSION = '0.1.0';
 
+const THEMES: { id: ThemeId; labelKey: string }[] = [
+  { id: 'aurora', labelKey: 'settings.themeAurora' },
+  { id: 'dawn', labelKey: 'settings.themeDawn' },
+  { id: 'dusk', labelKey: 'settings.themeDusk' },
+  { id: 'ink', labelKey: 'settings.themeInk' },
+  { id: 'hearth', labelKey: 'settings.themeHearth' },
+];
+
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { logout, userProfile, updateProfile } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const { showToast } = useToast();
   const appSettings = useAppSettings();
 
   const [name, setName] = useState(userProfile?.name ?? '');
@@ -19,7 +32,6 @@ export default function SettingsPage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [importMessage, setImportMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (appSettings) {
@@ -29,10 +41,11 @@ export default function SettingsPage() {
 
   const handleSaveProfile = async () => {
     await updateProfile({ name, description });
+    showToast('success', t('common.save'));
   };
 
-  const handleThemeChange = async (theme: 'light' | 'dark') => {
-    await updateAppSettings({ theme });
+  const handleThemeChange = (newTheme: ThemeId) => {
+    setTheme(newTheme);
   };
 
   const handleLanguageChange = async (language: 'ru' | 'en') => {
@@ -44,6 +57,7 @@ export default function SettingsPage() {
     try {
       const blob = await exportAllData();
       downloadExport(blob);
+      showToast('success', t('settings.exportData'));
     } finally {
       setIsExporting(false);
     }
@@ -60,9 +74,9 @@ export default function SettingsPage() {
 
     try {
       await importAllData(file);
-      setImportMessage(t('settings.importSuccess'));
+      showToast('success', t('settings.importSuccess'));
     } catch (err) {
-      setImportMessage(err instanceof Error ? err.message : t('settings.importError'));
+      showToast('error', err instanceof Error ? err.message : t('settings.importError'));
     } finally {
       e.target.value = '';
     }
@@ -77,19 +91,19 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
+      <h1 className="text-2xl font-display font-semibold text-text-primary mb-6">
         {t('settings.title')}
       </h1>
 
       <div className="flex flex-col gap-8">
         {/* Профиль */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
             {t('settings.profileSection')}
           </h2>
           <div className="flex flex-col gap-3">
             <div>
-              <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+              <label className="text-sm text-text-secondary mb-1 block">
                 {t('settings.fullName')}
               </label>
               <div className="flex gap-2">
@@ -97,12 +111,12 @@ export default function SettingsPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                   onClick={handleSaveProfile}
                   disabled={name === userProfile?.name}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium"
+                  className="px-4 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
                 >
                   {t('common.save')}
                 </button>
@@ -110,14 +124,14 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+              <label className="text-sm text-text-secondary mb-1 block">
                 {t('auth.email')}
               </label>
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <span className="text-sm text-gray-700 dark:text-gray-300">{userProfile?.email}</span>
+              <div className="flex items-center justify-between px-3 py-2 rounded-md border border-border bg-surface-hover">
+                <span className="text-sm text-text-secondary">{userProfile?.email}</span>
                 <button
                   onClick={() => setIsEmailModalOpen(true)}
-                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                  className="text-sm text-primary hover:underline"
                 >
                   {t('settings.changeEmail')}
                 </button>
@@ -128,12 +142,12 @@ export default function SettingsPage() {
 
         {/* Безопасность */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
             {t('settings.securitySection')}
           </h2>
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="px-4 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
           >
             {t('settings.changePassword')}
           </button>
@@ -141,55 +155,48 @@ export default function SettingsPage() {
 
         {/* Внешний вид */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
             {t('settings.appearanceSection')}
           </h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleThemeChange('light')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                appSettings?.theme === 'light'
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              {t('settings.light')}
-            </button>
-            <button
-              onClick={() => handleThemeChange('dark')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                appSettings?.theme === 'dark'
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              {t('settings.dark')}
-            </button>
+          <div className="flex flex-wrap gap-2">
+            {THEMES.map((th) => (
+              <button
+                key={th.id}
+                onClick={() => handleThemeChange(th.id)}
+                className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
+                  theme === th.id
+                    ? 'border-primary bg-primary-tint text-primary'
+                    : 'border-border text-text-secondary hover:bg-surface-hover'
+                }`}
+              >
+                {t(th.labelKey)}
+              </button>
+            ))}
           </div>
         </section>
 
         {/* Язык */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
             {t('settings.languageSection')}
           </h2>
           <div className="flex gap-2">
             <button
               onClick={() => handleLanguageChange('ru')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
                 appSettings?.language === 'ru'
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                  ? 'border-primary bg-primary-tint text-primary'
+                  : 'border-border text-text-secondary hover:bg-surface-hover'
               }`}
             >
               Русский
             </button>
             <button
               onClick={() => handleLanguageChange('en')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
                 appSettings?.language === 'en'
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                  ? 'border-primary bg-primary-tint text-primary'
+                  : 'border-border text-text-secondary hover:bg-surface-hover'
               }`}
             >
               English
@@ -199,60 +206,56 @@ export default function SettingsPage() {
 
         {/* О приложении */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
             {t('settings.aboutSection')}
           </h2>
-          <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">
+          <label className="text-sm text-text-secondary mb-1 block">
             {t('settings.description')}
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-2"
+            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none mb-2"
           />
           <button
             onClick={handleSaveProfile}
             disabled={description === userProfile?.description}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium"
+            className="px-4 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
           >
             {t('common.save')}
           </button>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
+          <p className="text-xs text-text-tertiary mt-3">
             {t('settings.version')}: {APP_VERSION}
           </p>
         </section>
 
         {/* Данные */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
             {t('settings.dataSection')}
           </h2>
           <div className="flex flex-col gap-2">
             <button
               onClick={handleExport}
               disabled={isExporting}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 w-fit"
+              className="flex items-center gap-2 px-4 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
             >
-              <Download size={16} />
+              <DownloadSimpleIcon size={16} />
               {t('settings.exportData')}
             </button>
 
-            <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 w-fit cursor-pointer">
-              <Upload size={16} />
+            <label className="flex items-center gap-2 px-4 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit cursor-pointer">
+              <UploadSimpleIcon size={16} />
               {t('settings.importData')}
               <input type="file" accept=".json" onChange={handleImport} className="hidden" />
             </label>
 
-            {importMessage && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">{importMessage}</p>
-            )}
-
             <button
               onClick={handleClearData}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 dark:border-red-900 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 w-fit"
+              className="flex items-center gap-2 px-4 py-2 rounded-md border border-error/30 text-sm font-medium text-error hover:bg-error/10 transition-colors w-fit"
             >
-              <Trash2 size={16} />
+              <TrashIcon size={16} />
               {t('settings.clearData')}
             </button>
           </div>
@@ -262,9 +265,9 @@ export default function SettingsPage() {
         <section>
           <button
             onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-500/20"
+            className="flex items-center gap-2 px-4 py-2 rounded-md bg-error/10 text-error text-sm font-medium hover:bg-error/20 transition-colors"
           >
-            <LogOut size={16} />
+            <SignOutIcon size={16} />
             {t('auth.logout')}
           </button>
         </section>

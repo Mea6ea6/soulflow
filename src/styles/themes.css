@@ -1,0 +1,89 @@
+:root {
+  /* Бренд-токены — общие для всех тем */
+  --color-primary: #4A6D8C;
+  --color-primary-hover: #3D5A75;
+  --color-primary-tint: #E8EEF3;
+  --color-secondary: #C0925F;
+  --color-secondary-tint: #F6EEE2;
+
+  --color-success: #4C9A6A;
+  --color-error: #C1503F;
+  --color-warning: #D4A03F;
+  --color-info: #5A87A6;
+
+  --color-shadow: rgba(20, 24, 28, 0.06);
+  --color-shadow-hover: rgba(20, 24, 28, 0.12);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Apple-подобные easing-кривые — используются в motion вместо react-apple-easing */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Aurora — фирменная айдентика (лого, hero, онбординг) */
+[data-theme='aurora'] {
+  --color-bg: #FAF8F4;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F3F1EB;
+  --color-border: #E9E5DC;
+  --color-text-primary: #1E2A33;
+  --color-text-secondary: #5C6B72;
+  --color-text-tertiary: #93A1A8;
+  --color-accent-gradient: linear-gradient(135deg, #4A6D8C 0%, #C0925F 100%);
+}
+
+/* Dawn — светлая (по умолчанию) */
+[data-theme='dawn'] {
+  --color-bg: #F7F6F3;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F1F0EC;
+  --color-border: #E4E1DA;
+  --color-text-primary: #1E2A33;
+  --color-text-secondary: #5C6B72;
+  --color-text-tertiary: #93A1A8;
+}
+
+/* Dusk — тёмная */
+[data-theme='dusk'] {
+  --color-bg: #14181C;
+  --color-surface: #1B2126;
+  --color-surface-hover: #232A2F;
+  --color-border: #2C343A;
+  --color-text-primary: #EDEFEE;
+  --color-text-secondary: #A6ADB0;
+  --color-text-tertiary: #6D7477;
+  --color-shadow: rgba(0, 0, 0, 0.24);
+  --color-shadow-hover: rgba(0, 0, 0, 0.36);
+}
+
+/* Ink — чёрно-белая */
+[data-theme='ink'] {
+  --color-bg: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F2F2F2;
+  --color-border: #D6D6D6;
+  --color-text-primary: #000000;
+  --color-text-secondary: #4D4D4D;
+  --color-text-tertiary: #8A8A8A;
+  --color-primary: #000000;
+  --color-primary-hover: #1A1A1A;
+  --color-primary-tint: #EDEDED;
+}
+
+/* Hearth — тёплая */
+[data-theme='hearth'] {
+  --color-bg: #FBF3E8;
+  --color-surface: #FFFDF9;
+  --color-surface-hover: #F4E9D8;
+  --color-border: #E9DCC8;
+  --color-text-primary: #3B2E22;
+  --color-text-secondary: #7A6A57;
+  --color-text-tertiary: #A8998A;
+  --color-primary: #8A6B4F;
+  --color-primary-hover: #755A41;
+  --color-primary-tint: #F0E4D4;
+}

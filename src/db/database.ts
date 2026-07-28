@@ -50,7 +50,7 @@ export async function initDefaultSettings() {
   if (count === 0) {
     await db.appSettings.add({
       id: crypto.randomUUID(),
-      theme: 'light',
+      theme: 'dawn',
       language: 'en',
       updatedAt: new Date().toISOString(),
     });

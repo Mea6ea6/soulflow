@@ -46,13 +46,10 @@ export class SoulFlowDB extends Dexie {
 export const db = new SoulFlowDB();
 
 export async function initDefaultSettings() {
-  const count = await db.appSettings.count();
-  if (count === 0) {
-    await db.appSettings.add({
-      id: crypto.randomUUID(),
-      theme: 'dawn',
-      language: 'en',
-      updatedAt: new Date().toISOString(),
-    });
-  }
+  await db.appSettings.add({
+    id: crypto.randomUUID(),
+    theme: 'dawn',
+    language: 'en',
+    updatedAt: new Date().toISOString(),
+  });
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { XIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useClients } from '../hooks/useDB';
 
@@ -34,31 +34,23 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-      <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-            <X size={18} />
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+      <div className="w-full max-w-sm bg-surface rounded-lg border border-border shadow-card-hover">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+          <button onClick={onClose} className="text-text-tertiary hover:text-text-secondary">
+            <XIcon size={18} />
           </button>
         </div>
 
         <div className="p-5 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input
-                type="radio"
-                checked={mode === 'personal'}
-                onChange={() => setMode('personal')}
-              />
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
+              <input type="radio" checked={mode === 'personal'} onChange={() => setMode('personal')} />
               {t('documentTarget.personal')}
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input
-                type="radio"
-                checked={mode === 'client'}
-                onChange={() => setMode('client')}
-              />
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
+              <input type="radio" checked={mode === 'client'} onChange={() => setMode('client')} />
               {t('documentTarget.client')}
             </label>
           </div>
@@ -67,7 +59,7 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
             <select
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">{t('documentTarget.selectClient')}</option>
               {activeClients.map((c) => (
@@ -79,7 +71,7 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
           <button
             onClick={handleConfirm}
             disabled={mode === 'client' && !clientId}
-            className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+            className="w-full py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
           >
             {t('common.continue')}
           </button>

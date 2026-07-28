@@ -1,16 +1,15 @@
 import { useState } from 'react';
+import { XIcon, PencilSimpleIcon, PlusIcon, FileTextIcon, FilePlusIcon, UploadSimpleIcon, DownloadSimpleIcon, TrashIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { X, Pencil, Plus } from 'lucide-react';
-import type { Client } from '../types';
+import type { Client, Document } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
-import { formatDateRu } from '../utils/date';
-
+import { useToast } from '../hooks/useToastHook';
 import { updateClient, useClientEvents, addCalendarEvent, useClientDocuments, deleteDocument } from '../hooks/useDB';
-import type { Document } from '../types';
+import { formatDateRu } from '../utils/date';
 import { downloadOriginalFile, downloadAsTxt, MIME_TYPES } from '../utils/fileExport';
+import Avatar from './Avatar';
 import TextEditor from './TextEditor';
 import ImportDocumentModal from './ImportDocumentModal';
-import { FilePlus, Upload, Download, Trash2 } from 'lucide-react';
 
 interface ClientCardProps {
   client: Client;
@@ -21,23 +20,41 @@ interface ClientCardProps {
 export default function ClientCard({ client, onClose, onEdit }: ClientCardProps) {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
+  const { showToast } = useToast();
   const clientEvents = useClientEvents(client.id, masterKey);
+  const clientDocuments = useClientDocuments(client.id, masterKey);
 
   const [notes, setNotes] = useState(client.notes);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [newSessionDate, setNewSessionDate] = useState('');
-
-  const clientDocuments = useClientDocuments(client.id, masterKey);
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
+  const handleSaveNotes = async () => {
+    if (!masterKey) return;
+    setIsSavingNotes(true);
+    try {
+      await updateClient(client.id, { notes }, masterKey);
+      showToast('success', t('client.saveNotes'));
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
+  const handleAddSession = async () => {
+    if (!masterKey || !newSessionDate) return;
+    await addCalendarEvent(
+      { date: newSessionDate, time: '00:00', clientId: client.id, title: '', note: '', isPersonal: false },
+      masterKey
+    );
+    setNewSessionDate('');
+  };
+
   const handleDownloadDoc = (doc: Document) => {
     if (doc.type === 'txt') {
       try {
-        const json = JSON.parse(doc.content);
-        const text = extractPlainTextFromTipTap(json);
-        downloadAsTxt(text, doc.title);
+        downloadAsTxt(extractPlainText(JSON.parse(doc.content)), doc.title);
       } catch {
         downloadAsTxt(doc.content, doc.title);
       }
@@ -49,32 +66,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   const handleDeleteDoc = async (doc: Document) => {
     if (!confirm(t('client.confirmDeleteDocument', { title: doc.title }))) return;
     await deleteDocument(doc.id);
-  };
-
-  const handleSaveNotes = async () => {
-    if (!masterKey) return;
-    setIsSavingNotes(true);
-    try {
-      await updateClient(client.id, { notes }, masterKey);
-    } finally {
-      setIsSavingNotes(false);
-    }
-  };
-
-  const handleAddSession = async () => {
-    if (!masterKey || !newSessionDate) return;
-    await addCalendarEvent(
-      {
-        date: newSessionDate,
-        time: '00:00',
-        clientId: client.id,
-        title: '',
-        note: '',
-        isPersonal: false,
-      },
-      masterKey
-    );
-    setNewSessionDate('');
+    showToast('success', t('common.delete'));
   };
 
   const sortedEvents = [...(clientEvents ?? [])].sort((a, b) =>
@@ -82,64 +74,49 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   );
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-      <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {client.name}
-            </h2>
-            <span
-              className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                client.status === 'active'
-                  ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300'
-                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-              }`}
-            >
-              {client.status === 'active' ? t('clients.status.active') : t('clients.status.archived')}
-            </span>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+      <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-surface rounded-lg border border-border shadow-card-hover">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-border sticky top-0 bg-surface">
+          <div className="flex items-center gap-3">
+            <Avatar name={client.name} size={44} />
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary">{client.name}</h2>
+              <span
+                className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                  client.status === 'active' ? 'bg-success/15 text-success' : 'bg-surface-hover text-text-tertiary'
+                }`}
+              >
+                {client.status === 'active' ? t('clients.status.active') : t('clients.status.archived')}
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={onEdit}
-              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              title={t('common.edit')}
-            >
-              <Pencil size={16} />
+            <button onClick={onEdit} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.edit')}>
+              <PencilSimpleIcon size={16} />
             </button>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              title={t('common.close')}
-            >
-              <X size={16} />
+            <button onClick={onClose} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.close')}>
+              <XIcon size={16} />
             </button>
           </div>
         </div>
 
         <div className="p-5 flex flex-col gap-6">
-          <div className="text-sm text-gray-600 dark:text-gray-300 flex flex-col gap-1">
+          <div className="text-sm text-text-secondary flex flex-col gap-1">
             {client.phone && <p>{t('client.phone')}: {client.phone}</p>}
             {client.email && <p>{t('client.email')}: {client.email}</p>}
             {client.workPlace && <p>{t('client.workPlace')}: {client.workPlace}</p>}
           </div>
 
-          {/* Сеансы — реальные события из календаря */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              {t('client.sessions')}
-            </h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.sessions')}</h3>
             {sortedEvents.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('client.noSessions')}</p>
+              <p className="text-sm text-text-secondary mb-3">{t('client.noSessions')}</p>
             ) : (
               <ul className="flex flex-col gap-1 mb-3">
                 {sortedEvents.map((ev) => (
-                  <li
-                    key={ev.id}
-                    className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5 flex justify-between"
-                  >
+                  <li key={ev.id} className="text-sm text-text-secondary bg-surface-hover rounded-md px-3 py-1.5 flex justify-between">
                     <span>{formatDateRu(ev.date)}</span>
-                    <span className="text-gray-400 dark:text-gray-500">{ev.time}</span>
+                    <span className="text-text-tertiary">{ev.time}</span>
                   </li>
                 ))}
               </ul>
@@ -149,70 +126,62 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                 type="date"
                 value={newSessionDate}
                 onChange={(e) => setNewSessionDate(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3 py-1.5 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
                 onClick={handleAddSession}
                 disabled={!newSessionDate}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
               >
-                <Plus size={14} />
+                <PlusIcon size={14} />
                 {t('common.add')}
               </button>
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              {t('client.sessionTimeHint')}
-            </p>
+            <p className="text-xs text-text-tertiary mt-1">{t('client.sessionTimeHint')}</p>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              {t('client.notes')}
-            </h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.notes')}</h3>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               placeholder={t('client.notesPlaceholder')}
             />
             <button
               onClick={handleSaveNotes}
               disabled={isSavingNotes || notes === client.notes}
-              className="mt-2 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+              className="mt-2 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
             >
               {isSavingNotes ? t('common.saving') : t('client.saveNotes')}
             </button>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              {t('client.documents')}
-            </h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.documents')}</h3>
 
             {(!clientDocuments || clientDocuments.length === 0) ? (
-              <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center mb-3">
-                {t('client.noDocuments')}
+              <div className="text-sm text-text-secondary bg-surface-hover rounded-md p-4 flex flex-col items-center gap-2 mb-3">
+                <FileTextIcon size={20} className="text-text-tertiary" />
+                <span>{t('client.noDocuments')}</span>
               </div>
             ) : (
               <ul className="flex flex-col gap-1.5 mb-3">
                 {clientDocuments.map((doc) => (
-                  <li
-                    key={doc.id}
-                    className="flex items-center justify-between text-sm bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2"
-                  >
-                    <span className="truncate text-gray-700 dark:text-gray-200">{doc.title}</span>
+                  <li key={doc.id} className="flex items-center justify-between text-sm bg-surface-hover rounded-md px-3 py-2">
+                    <span className="truncate text-text-primary">{doc.title}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       {doc.type === 'txt' && (
-                        <button onClick={() => setEditingDoc(doc)} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700" title={t('common.open')}>
-                          <FilePlus size={14} />
+                        <button onClick={() => setEditingDoc(doc)} className="p-1.5 rounded text-text-secondary hover:bg-surface" title={t('common.open')}>
+                          <FilePlusIcon size={14} />
                         </button>
                       )}
-                      <button onClick={() => handleDownloadDoc(doc)} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700" title={t('common.download')}>
-                        <Download size={14} />
+                      <button onClick={() => handleDownloadDoc(doc)} className="p-1.5 rounded text-text-secondary hover:bg-surface" title={t('common.download')}>
+                        <DownloadSimpleIcon size={14} />
                       </button>
-                      <button onClick={() => handleDeleteDoc(doc)} className="p-1.5 rounded text-red-500 hover:bg-red-100 dark:hover:bg-red-500/10" title={t('common.delete')}>
-                        <Trash2 size={14} />
+                      <button onClick={() => handleDeleteDoc(doc)} className="p-1.5 rounded text-error hover:bg-error/10" title={t('common.delete')}>
+                        <TrashIcon size={14} />
                       </button>
                     </div>
                   </li>
@@ -223,42 +192,34 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
             <div className="flex gap-2">
               <button
                 onClick={() => setIsCreatingDoc(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
               >
-                <FilePlus size={14} />
+                <FilePlusIcon size={14} />
                 {t('client.createDocument')}
               </button>
               <button
                 onClick={() => setIsImporting(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
               >
-                <Upload size={14} />
+                <UploadSimpleIcon size={14} />
                 {t('client.importDocument')}
               </button>
             </div>
           </div>
-
-          {editingDoc && (
-            <TextEditor document={editingDoc} clientId={client.id} onClose={() => setEditingDoc(null)} />
-          )}
-          {isCreatingDoc && (
-            <TextEditor document={null} clientId={client.id} onClose={() => setIsCreatingDoc(false)} />
-          )}
-          {isImporting && (
-            <ImportDocumentModal clientId={client.id} onClose={() => setIsImporting(false)} />
-          )}
         </div>
       </div>
+
+      {editingDoc && <TextEditor document={editingDoc} clientId={client.id} onClose={() => setEditingDoc(null)} />}
+      {isCreatingDoc && <TextEditor document={null} clientId={client.id} onClose={() => setIsCreatingDoc(false)} />}
+      {isImporting && <ImportDocumentModal clientId={client.id} onClose={() => setIsImporting(false)} />}
     </div>
   );
 }
 
-function extractPlainTextFromTipTap(node: { text?: string; content?: unknown[] }): string {
+function extractPlainText(node: { text?: string; content?: unknown[] }): string {
   if (node.text) return node.text;
   if (node.content) {
-    return (node.content as { text?: string; content?: unknown[] }[])
-      .map((child) => extractPlainTextFromTipTap(child))
-      .join('\n');
+    return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
   }
   return '';
 }

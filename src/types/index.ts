@@ -1,5 +1,4 @@
 export type TabId = 'home' | 'calendar' | 'clients' | 'documents' | 'profile' | 'settings';
-export type ThemeId = 'aurora' | 'dawn' | 'dusk' | 'ink' | 'hearth';
 
 export interface NavItem {
   id: TabId;
@@ -57,6 +56,8 @@ export interface UserProfile {
   createdAt: string;           // ISO-строка
   updatedAt: string;           // ISO-строка
 }
+
+export type ThemeId = 'dawn' | 'dusk';
 
 export interface AppSettings {
   id: string;                  // UUID

@@ -9,15 +9,13 @@ import { exportAllData, downloadExport, importAllData, clearAllData } from '../u
 import type { ThemeId } from '../types';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import ChangeEmailModal from '../components/ChangeEmailModal';
+import ThemeSwatch from '../components/ThemeSwatch';
 
 const APP_VERSION = '0.1.0';
 
 const THEMES: { id: ThemeId; labelKey: string }[] = [
-  { id: 'aurora', labelKey: 'settings.themeAurora' },
   { id: 'dawn', labelKey: 'settings.themeDawn' },
   { id: 'dusk', labelKey: 'settings.themeDusk' },
-  { id: 'ink', labelKey: 'settings.themeInk' },
-  { id: 'hearth', labelKey: 'settings.themeHearth' },
 ];
 
 export default function SettingsPage() {
@@ -155,22 +153,19 @@ export default function SettingsPage() {
 
         {/* Внешний вид */}
         <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-1">
             {t('settings.appearanceSection')}
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-xs text-text-tertiary mb-4">{t('settings.defaultThemes')}</p>
+          <div className="flex flex-wrap gap-4">
             {THEMES.map((th) => (
-              <button
+              <ThemeSwatch
                 key={th.id}
+                themeId={th.id}
+                label={t(th.labelKey)}
+                isSelected={theme === th.id}
                 onClick={() => handleThemeChange(th.id)}
-                className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
-                  theme === th.id
-                    ? 'border-primary bg-primary-tint text-primary'
-                    : 'border-border text-text-secondary hover:bg-surface-hover'
-                }`}
-              >
-                {t(th.labelKey)}
-              </button>
+              />
             ))}
           </div>
         </section>

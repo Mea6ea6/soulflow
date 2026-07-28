@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Sparkles, Lock, Mail } from 'lucide-react';
-import { useAuth } from '../hooks/useAuthHook';
+import { SparkleIcon, LockIcon, EnvelopeSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../hooks/useAuthHook';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -16,8 +16,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Показываем поле email, если это регистрация ИЛИ если сохранённого
-  // email вообще нет (например, после "Это не я" в режиме "Войти")
   const showEmailField = mode === 'register' || !storedEmail;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,9 +56,6 @@ export default function LoginPage() {
 
       setIsSubmitting(true);
       try {
-        // login() всегда сверяется с email/солью, сохранёнными в localStorage —
-        // если сохранённого аккаунта нет вообще, вход не пройдёт ни при каком
-        // введённом email, это ожидаемо: значит нужно сначала зарегистрироваться.
         const success = await login(password);
         if (!success) {
           setError(storedEmail ? t('auth.wrongPassword') : t('auth.noAccountFound'));
@@ -81,34 +76,36 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4" data-theme="dawn">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <Sparkles className="text-indigo-600 dark:text-indigo-400" size={28} />
-          <span className="text-2xl font-bold text-gray-800 dark:text-gray-100">SoulFlow</span>
+          <SparkleIcon size={28} weight="fill" className="text-primary" />
+          <span className="text-2xl font-display font-semibold text-text-primary">
+            {t('brand.soulFlow')}
+          </span>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">
+        <div className="bg-surface rounded-lg border border-border p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-text-primary mb-1">
             {mode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+          <p className="text-sm text-text-secondary mb-5">
             {mode === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {showEmailField && (
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                <label className="text-sm font-medium text-text-secondary mb-1 block">
                   {t('auth.email')}
                 </label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <EnvelopeSimpleIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder={t('auth.emailPlaceholder')}
                   />
                 </div>
@@ -116,22 +113,22 @@ export default function LoginPage() {
             )}
 
             {mode === 'login' && storedEmail && (
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {t('auth.loggedInAs')} <span className="font-medium text-gray-700 dark:text-gray-200">{storedEmail}</span>
+              <div className="text-sm text-text-secondary">
+                {t('auth.loggedInAs')} <span className="font-medium text-text-primary">{storedEmail}</span>
               </div>
             )}
 
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+              <label className="text-sm font-medium text-text-secondary mb-1 block">
                 {t('auth.masterPassword')}
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <LockIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="••••••••"
                 />
               </div>
@@ -139,16 +136,16 @@ export default function LoginPage() {
 
             {mode === 'register' && (
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                <label className="text-sm font-medium text-text-secondary mb-1 block">
                   {t('auth.confirmPassword')}
                 </label>
                 <div className="relative">
-                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <LockIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="••••••••"
                   />
                 </div>
@@ -156,7 +153,7 @@ export default function LoginPage() {
             )}
 
             {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 rounded-lg px-3 py-2">
+              <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">
                 {error}
               </div>
             )}
@@ -164,7 +161,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="w-full py-2.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               {isSubmitting ? t('auth.loading') : mode === 'login' ? t('auth.login') : t('auth.register')}
             </button>
@@ -177,7 +174,7 @@ export default function LoginPage() {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setError(null);
               }}
-              className="mt-4 text-sm text-indigo-600 dark:text-indigo-400 hover:underline w-full text-center"
+              className="mt-4 text-sm text-primary hover:underline w-full text-center"
             >
               {mode === 'login' ? t('auth.noAccountYet') : t('auth.haveAccount')}
             </button>
@@ -187,7 +184,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleForgetAccount}
-              className="mt-3 text-sm text-gray-500 dark:text-gray-400 hover:underline w-full text-center"
+              className="mt-3 text-sm text-text-tertiary hover:underline w-full text-center"
             >
               {t('auth.notMe')}
             </button>

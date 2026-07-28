@@ -53,24 +53,24 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!confirm('Импорт заменит ВСЕ текущие данные данными из файла. Продолжить?')) {
+    if (!confirm(t('settings.importConfirm'))) {
       e.target.value = '';
       return;
     }
 
     try {
       await importAllData(file);
-      setImportMessage('Данные успешно импортированы. Перезагрузите страницу.');
+      setImportMessage(t('settings.importSuccess'));
     } catch (err) {
-      setImportMessage(err instanceof Error ? err.message : 'Ошибка импорта');
+      setImportMessage(err instanceof Error ? err.message : t('settings.importError'));
     } finally {
       e.target.value = '';
     }
   };
 
   const handleClearData = async () => {
-    if (!confirm('Это удалит ВСЕ данные без возможности восстановления. Вы уверены?')) return;
-    if (!confirm('Точно уверены? Это действие необратимо.')) return;
+    if (!confirm(t('settings.clearConfirm'))) return;
+    if (!confirm(t('settings.clearConfirmAgain'))) return;
     await clearAllData();
     window.location.reload();
   };

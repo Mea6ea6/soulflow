@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useClients } from '../hooks/useDB';
@@ -15,6 +16,7 @@ interface DocumentTargetModalProps {
 }
 
 export default function DocumentTargetModal({ title, onConfirm, onClose }: DocumentTargetModalProps) {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
   const clients = useClients(masterKey);
   const activeClients = (clients ?? []).filter((c) => c.status === 'active');
@@ -49,7 +51,7 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
                 checked={mode === 'personal'}
                 onChange={() => setMode('personal')}
               />
-              Личный документ
+              {t('documentTarget.personal')}
             </label>
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
@@ -57,7 +59,7 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
                 checked={mode === 'client'}
                 onChange={() => setMode('client')}
               />
-              Документ клиента
+              {t('documentTarget.client')}
             </label>
           </div>
 
@@ -67,7 +69,7 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
               onChange={(e) => setClientId(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="">Выберите клиента</option>
+              <option value="">{t('documentTarget.selectClient')}</option>
               {activeClients.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -79,7 +81,7 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
             disabled={mode === 'client' && !clientId}
             className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
           >
-            Продолжить
+            {t('common.continue')}
           </button>
         </div>
       </div>

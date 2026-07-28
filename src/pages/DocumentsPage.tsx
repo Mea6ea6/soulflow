@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, FileText, Download, Trash2, Pencil, ArrowUpDown, Plus, Upload } from 'lucide-react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useDocuments, useClients, deleteDocument } from '../hooks/useDB';
@@ -12,6 +13,7 @@ type SortOrder = 'newest' | 'oldest';
 type ScopeFilter = 'all' | 'client' | 'personal';
 
 export default function DocumentsPage() {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
   const allDocuments = useDocuments(masterKey);
   const clients = useClients(masterKey);
@@ -72,7 +74,7 @@ export default function DocumentsPage() {
   };
 
   const handleDelete = async (doc: Document) => {
-    if (!confirm(`Удалить документ "${doc.title}"?`)) return;
+    if (!confirm(t('documents.confirmDelete', { title: doc.title }))) return;
     await deleteDocument(doc.id);
   };
 
@@ -82,21 +84,21 @@ export default function DocumentsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Документы</h1>
+        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{t('documents.title')}</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCreatingStep('choose')}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
           >
             <Plus size={16} />
-            Создать документ
+            {t('documents.create')}
           </button>
           <button
             onClick={() => setImportingStep('choose')}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <Upload size={16} />
-            Импортировать
+            {t('documents.import')}
           </button>
         </div>
       </div>
@@ -108,7 +110,7 @@ export default function DocumentsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Поиск по названию..."
+            placeholder={t('documents.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
@@ -118,9 +120,9 @@ export default function DocumentsPage() {
           onChange={(e) => setScopeFilter(e.target.value as ScopeFilter)}
           className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          <option value="all">Все документы</option>
-          <option value="client">Клиентские</option>
-          <option value="personal">Личные</option>
+          <option value="all">{t('documents.scope.all')}</option>
+          <option value="client">{t('documents.scope.client')}</option>
+          <option value="personal">{t('documents.scope.personal')}</option>
         </select>
 
         <select
@@ -128,10 +130,10 @@ export default function DocumentsPage() {
           onChange={(e) => setTypeFilter(e.target.value as DocumentType | 'all')}
           className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          <option value="all">Все типы</option>
-          <option value="txt">TXT</option>
-          <option value="pdf">PDF</option>
-          <option value="docx">DOCX</option>
+          <option value="all">{t('documents.type.all')}</option>
+          <option value="txt">{t('documents.type.txt')}</option>
+          <option value="pdf">{t('documents.type.pdf')}</option>
+          <option value="docx">{t('documents.type.docx')}</option>
         </select>
 
         {scopeFilter !== 'personal' && (
@@ -140,7 +142,7 @@ export default function DocumentsPage() {
             onChange={(e) => setClientFilter(e.target.value)}
             className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="all">Все клиенты</option>
+            <option value="all">{t('documents.clientFilter.all')}</option>
             {(clients ?? []).map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -152,18 +154,18 @@ export default function DocumentsPage() {
           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <ArrowUpDown size={14} />
-          {sortOrder === 'newest' ? 'Сначала новые' : 'Сначала старые'}
+          {sortOrder === 'newest' ? t('documents.sort.newest') : t('documents.sort.oldest')}
         </button>
       </div>
 
       {allDocuments === undefined && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Загрузка...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
       )}
 
       {allDocuments && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
           <FileText size={32} className="mb-2" />
-          <p className="text-sm">Документов не найдено</p>
+          <p className="text-sm">{t('documents.empty')}</p>
         </div>
       )}
 
@@ -181,7 +183,7 @@ export default function DocumentsPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{doc.title}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {doc.isPersonal ? 'Личный' : (doc.clientId && clientNameById.get(doc.clientId)) || '—'}
+                    {doc.isPersonal ? t('documents.personalLabel') : (doc.clientId && clientNameById.get(doc.clientId)) || t('common.dash')}
                     {' · '}
                     {new Date(doc.updatedAt).toLocaleDateString('ru-RU')}
                   </p>
@@ -191,7 +193,7 @@ export default function DocumentsPage() {
                 {doc.type === 'txt' && (
                   <button
                     onClick={() => setEditingDoc(doc)}
-                    title="Открыть"
+                    title={t('common.open')}
                     className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <Pencil size={16} />
@@ -199,14 +201,14 @@ export default function DocumentsPage() {
                 )}
                 <button
                   onClick={() => handleDownload(doc)}
-                  title="Скачать"
+                  title={t('common.download')}
                   className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <Download size={16} />
                 </button>
                 <button
                   onClick={() => handleDelete(doc)}
-                  title="Удалить"
+                  title={t('common.delete')}
                   className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
                 >
                   <Trash2 size={16} />
@@ -229,7 +231,7 @@ export default function DocumentsPage() {
       {/* Флоу создания */}
       {creatingStep === 'choose' && (
         <DocumentTargetModal
-          title="Новый документ"
+          title={t('documents.newTitle')}
           onClose={() => setCreatingStep(null)}
           onConfirm={(target) => {
             setPendingTarget(target);
@@ -252,7 +254,7 @@ export default function DocumentsPage() {
       {/* Флоу импорта */}
       {importingStep === 'choose' && (
         <DocumentTargetModal
-          title="Импортировать документ"
+          title={t('documents.importTitle')}
           onClose={() => setImportingStep(null)}
           onConfirm={(target) => {
             setPendingTarget(target);

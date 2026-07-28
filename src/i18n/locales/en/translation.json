@@ -7,8 +7,12 @@
     "profile": "Profile",
     "settings": "Settings"
   },
+  "brand": {
+    "soulFlow": "SoulFlow"
+  },
   "common": {
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "add": "Add",
     "delete": "Delete",
@@ -16,8 +20,159 @@
     "close": "Close",
     "download": "Download",
     "open": "Open",
+    "import": "Import",
+    "importing": "Importing...",
+    "continue": "Continue",
     "loading": "Loading...",
-    "search": "Search..."
+    "search": "Search...",
+    "dash": "—",
+    "sessionExpired": "No access. Please sign in again.",
+    "confirmDeleteEvent": "Delete this event?"
+  },
+  "home": {
+    "welcome": "Welcome to SoulFlow!",
+    "welcomeWithName": "Welcome to SoulFlow, {{name}}!",
+    "today": "Today",
+    "noEventsToday": "No meetings scheduled for today",
+    "recentDocuments": "Recent documents",
+    "noRecentDocuments": "No recent documents",
+    "clientFallback": "Client",
+    "downloadTxt": "Open / download",
+    "downloadOriginal": "Download"
+  },
+  "clients": {
+    "title": "Clients",
+    "addClient": "Add client",
+    "searchPlaceholder": "Search by name or phone...",
+    "emptySearch": "Nothing found",
+    "emptyState": "No clients yet",
+    "status": {
+      "active": "Active",
+      "archived": "Archived"
+    }
+  },
+  "client": {
+    "confirmDeleteDocument": "Delete document \"{{title}}\"?",
+    "phone": "Phone",
+    "email": "Email",
+    "workPlace": "Work or study place",
+    "sessions": "Sessions",
+    "noSessions": "No sessions yet",
+    "sessionTimeHint": "You can set the time later in Calendar.",
+    "notes": "Notes",
+    "notesPlaceholder": "Short client description...",
+    "saveNotes": "Save notes",
+    "documents": "Documents",
+    "noDocuments": "No documents yet",
+    "createDocument": "Create document",
+    "importDocument": "Import document",
+    "validation": {
+      "nameRequired": "Enter full name"
+    },
+    "editTitle": "Edit client",
+    "addTitle": "Add client",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Ivanov Ivan Ivanovich",
+    "phonePlaceholder": "+7 900 000-00-00",
+    "emailPlaceholder": "client@example.com",
+    "status": {
+      "label": "Status"
+    },
+    "saveFailed": "Could not save client"
+  },
+  "calendar": {
+    "today": "Today",
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "moreEvents": "+{{count}} more",
+    "validation": {
+      "timeRequired": "Enter the time",
+      "titleRequired": "Enter the event title",
+      "clientRequired": "Select a client"
+    },
+    "saveFailed": "Could not save event",
+    "editTitle": "Edit event",
+    "newTitle": "New event",
+    "time": "Time",
+    "personalEvent": "Personal event",
+    "title": "Title",
+    "titlePlaceholder": "Meeting with a colleague",
+    "client": "Client",
+    "clientPlaceholder": "Select a client",
+    "note": "Note"
+  },
+  "documents": {
+    "title": "Documents",
+    "create": "Create document",
+    "import": "Import",
+    "searchPlaceholder": "Search by title...",
+    "scope": {
+      "all": "All documents",
+      "client": "Client",
+      "personal": "Personal"
+    },
+    "type": {
+      "all": "All types",
+      "txt": "TXT",
+      "pdf": "PDF",
+      "docx": "DOCX"
+    },
+    "clientFilter": {
+      "all": "All clients"
+    },
+    "sort": {
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "empty": "No documents found",
+    "personalLabel": "Personal",
+    "confirmDelete": "Delete document \"{{title}}\"?",
+    "newTitle": "New document",
+    "importTitle": "Import document"
+  },
+  "profile": {
+    "title": "Profile",
+    "documentsTitle": "My documents",
+    "noDocuments": "No personal documents yet",
+    "upload": "Upload (certificate, diploma...)"
+  },
+  "textEditor": {
+    "saveFailed": "Could not save the document",
+    "titlePlaceholder": "Document title",
+    "readOnlyNotice": "Imported {{type}} file is read-only. Only TXT documents created in the editor can be edited.",
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "bulletList": "Bullet list",
+      "orderedList": "Numbered list"
+    },
+    "export": "Export",
+    "exportTxt": "Download as TXT",
+    "exportPdf": "Download as PDF",
+    "exportDocx": "Download as DOCX"
+  },
+  "import": {
+    "title": "Import document",
+    "file": "File",
+    "chooseFile": "Choose file (TXT, PDF, DOCX)",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Document title",
+    "validation": {
+      "fileRequired": "Choose a file",
+      "unsupportedType": "Only TXT, PDF and DOCX files are supported"
+    },
+    "failed": "Could not import the file"
   },
   "auth": {
     "login": "Log in",
@@ -64,7 +219,22 @@
     "dataSection": "Data",
     "exportData": "Export all data",
     "importData": "Import all data",
-    "clearData": "Clear all data"
+    "clearData": "Clear all data",
+    "importConfirm": "Import will replace ALL current data with data from the file. Continue?",
+    "importSuccess": "Data imported successfully. Please reload the page.",
+    "importError": "Import error",
+    "clearConfirm": "This will delete ALL data permanently. Are you sure?",
+    "clearConfirmAgain": "Are you absolutely sure? This action cannot be undone.",
+    "changeEmailNewEmailPlaceholder": "New email",
+    "changeEmailPasswordPlaceholder": "Current master password",
+    "changePasswordCurrentPlaceholder": "Current password",
+    "changePasswordNewPlaceholder": "New password",
+    "changePasswordConfirmPlaceholder": "Repeat new password"
+  },
+  "documentTarget": {
+    "personal": "Personal document",
+    "client": "Client document",
+    "selectClient": "Select a client"
   },
   "errors": {
     "invalidPassword": "Wrong password"

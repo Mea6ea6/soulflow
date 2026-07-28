@@ -30,11 +30,11 @@ export default function LoginPage() {
         return;
       }
       if (password.length < 8) {
-        setError('Пароль должен быть не менее 8 символов');
+        setError(t('auth.passwordTooShort'));
         return;
       }
       if (password !== confirmPassword) {
-        setError('Пароли не совпадают');
+        setError(t('auth.passwordsDoNotMatch'));
         return;
       }
 
@@ -42,7 +42,7 @@ export default function LoginPage() {
       try {
         await register(email.trim(), password);
       } catch {
-        setError('Не удалось зарегистрироваться. Попробуйте снова.');
+        setError(t('auth.registerFailed'));
       } finally {
         setIsSubmitting(false);
       }
@@ -74,11 +74,7 @@ export default function LoginPage() {
   };
 
   const handleForgetAccount = () => {
-    if (
-      confirm(
-        t('auth.forgetAccountConfirm')
-      )
-    ) {
+    if (confirm(t('auth.forgetAccountConfirm'))) {
       localStorage.removeItem('soulflow_auth');
       window.location.reload();
     }

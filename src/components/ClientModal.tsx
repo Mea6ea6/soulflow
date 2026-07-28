@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import type { Client, ClientStatus } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
@@ -10,6 +11,7 @@ interface ClientModalProps {
 }
 
 export default function ClientModal({ client, onClose }: ClientModalProps) {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
 
   const [name, setName] = useState('');
@@ -25,11 +27,11 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
     setError(null);
 
     if (!name.trim()) {
-      setError('Введите ФИО');
+      setError(t('client.validation.nameRequired'));
       return;
     }
     if (!masterKey) {
-      setError('Нет доступа — войдите заново');
+      setError(t('common.sessionExpired'));
       return;
     }
 
@@ -57,7 +59,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
       }
       onClose();
     } catch {
-      setError('Не удалось сохранить клиента');
+      setError(t('client.saveFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +70,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
       <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-            {client ? 'Редактировать клиента' : 'Добавить клиента'}
+            {client ? t('client.editTitle') : t('client.addTitle')}
           </h2>
           <button
             onClick={onClose}
@@ -81,46 +83,46 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              ФИО *
+              {t('client.fullName')} *
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Иванов Иван Иванович"
+              placeholder={t('client.fullNamePlaceholder')}
             />
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Телефон
+              {t('client.phone')}
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="+7 900 000-00-00"
+              placeholder={t('client.phonePlaceholder')}
             />
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Email
+              {t('client.email')}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="client@example.com"
+              placeholder={t('client.emailPlaceholder')}
             />
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Место работы/учёбы
+              {t('client.workPlace')}
             </label>
             <input
               type="text"
@@ -132,15 +134,15 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
 
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Статус
+              {t('client.status.label')}
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ClientStatus)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="active">Активный</option>
-              <option value="archived">Архивный</option>
+              <option value="active">{t('clients.status.active')}</option>
+              <option value="archived">{t('clients.status.archived')}</option>
             </select>
           </div>
 
@@ -156,14 +158,14 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
               onClick={onClose}
               className="flex-1 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              Отмена
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
-              {isSubmitting ? 'Сохранение...' : 'Сохранить'}
+              {isSubmitting ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </form>

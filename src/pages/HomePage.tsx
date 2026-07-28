@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileText, Pencil, Download, CalendarClock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useDocuments, useCalendarEvents, useClients } from '../hooks/useDB';
@@ -9,6 +10,7 @@ import { toYMD } from '../utils/date';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const { userProfile, masterKey } = useAuth();
   const documents = useDocuments(masterKey);
   const events = useCalendarEvents(masterKey);
@@ -52,7 +54,9 @@ export default function HomePage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
-        Добро пожаловать в SoulFlow{userProfile ? `, ${userProfile.name}` : ''}!
+        {userProfile
+          ? t('home.welcomeWithName', { name: userProfile.name })
+          : t('home.welcome')}
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -60,18 +64,18 @@ export default function HomePage() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
           <div className="flex items-center gap-2 mb-4">
             <CalendarClock size={18} className="text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Сегодня</h2>
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t('home.today')}</h2>
           </div>
 
           {todayEvents.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">На сегодня встреч не запланировано</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('home.noEventsToday')}</p>
           ) : (
             <ul className="flex flex-col gap-2">
               {todayEvents.map((ev) => (
                 <li key={ev.id} className="flex items-center gap-3 text-sm">
                   <span className="font-medium text-gray-700 dark:text-gray-200 w-12 shrink-0">{ev.time}</span>
                   <span className="text-gray-600 dark:text-gray-300 truncate">
-                    {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? 'Клиент'}
+                    {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
                   </span>
                 </li>
               ))}
@@ -83,11 +87,11 @@ export default function HomePage() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
           <div className="flex items-center gap-2 mb-4">
             <FileText size={18} className="text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Последние документы</h2>
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t('home.recentDocuments')}</h2>
           </div>
 
           {recentDocuments.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Нет недавних документов</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('home.noRecentDocuments')}</p>
           ) : (
             <ul className="flex flex-col gap-2">
               {recentDocuments.map((doc) => (
@@ -101,7 +105,7 @@ export default function HomePage() {
                   <button
                     onClick={() => handleDownload(doc)}
                     className="p-1.5 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
-                    title={doc.type === 'txt' ? 'Открыть/скачать' : 'Скачать'}
+                    title={doc.type === 'txt' ? t('home.downloadTxt') : t('home.downloadOriginal')}
                   >
                     {doc.type === 'txt' ? <Pencil size={14} /> : <Download size={14} />}
                   </button>

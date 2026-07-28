@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useCalendarEvents, useClients } from '../hooks/useDB';
 import type { CalendarEvent } from '../types';
 import { toYMD } from '../utils/date';
 import CalendarEventModal from '../components/CalendarEventModal';
-
-const WEEKDAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 function buildMonthGrid(year: number, month: number): Date[] {
   const firstOfMonth = new Date(year, month, 1);
@@ -23,6 +22,7 @@ function buildMonthGrid(year: number, month: number): Date[] {
 }
 
 export default function CalendarPage() {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
   const events = useCalendarEvents(masterKey);
   const clients = useClients(masterKey);
@@ -84,7 +84,7 @@ export default function CalendarPage() {
             onClick={goToToday}
             className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            Сегодня
+            {t('calendar.today')}
           </button>
           <button
             onClick={goToPrevMonth}
@@ -102,12 +102,12 @@ export default function CalendarPage() {
       </div>
 
       <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800">
-        {WEEKDAYS_RU.map((day) => (
+        {(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((day) => (
           <div
             key={day}
             className="bg-gray-50 dark:bg-gray-900 text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2"
           >
-            {day}
+            {t(`calendar.weekdays.${day}`)}
           </div>
         ))}
 
@@ -151,12 +151,12 @@ export default function CalendarPage() {
                     }`}
                     title={ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? ''}
                   >
-                    {ev.time} {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? '—'}
+                    {ev.time} {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('common.dash')}
                   </div>
                 ))}
                 {dayEvents.length > 3 && (
                   <span className="text-[11px] text-gray-400 dark:text-gray-500 px-1.5">
-                    ещё {dayEvents.length - 3}
+                    {t('calendar.moreEvents', { count: dayEvents.length - 3 })}
                   </span>
                 )}
               </div>

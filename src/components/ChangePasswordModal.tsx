@@ -18,11 +18,11 @@ export default function ChangePasswordModal({ onClose }: { onClose: () => void }
     setError(null);
 
     if (newPassword.length < 8) {
-      setError('Новый пароль должен быть не менее 8 символов');
+      setError(t('auth.passwordTooShort'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('Пароли не совпадают');
+      setError(t('auth.passwordsDoNotMatch'));
       return;
     }
 
@@ -56,21 +56,21 @@ export default function ChangePasswordModal({ onClose }: { onClose: () => void }
             type="password"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
-            placeholder="Текущий пароль"
+            placeholder={t('settings.changePasswordCurrentPlaceholder')}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Новый пароль"
+            placeholder={t('settings.changePasswordNewPlaceholder')}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Повторите новый пароль"
+            placeholder={t('settings.changePasswordConfirmPlaceholder')}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
@@ -93,7 +93,7 @@ export default function ChangePasswordModal({ onClose }: { onClose: () => void }
               disabled={isSubmitting}
               className="flex-1 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium"
             >
-              {isSubmitting ? '...' : t('common.save')}
+              {isSubmitting ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </form>

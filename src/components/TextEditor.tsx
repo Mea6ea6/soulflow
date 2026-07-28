@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -46,6 +47,7 @@ function ToolbarButton({
 }
 
 export default function TextEditor({ document, clientId, isPersonal = false, onClose }: TextEditorProps) {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
 
   const isReadonly = !!document && document.type !== 'txt';
@@ -105,11 +107,11 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
       }
       onClose();
     } catch {
-      setError('Не удалось сохранить документ');
+      setError(t('textEditor.saveFailed'));
     } finally {
       setIsSaving(false);
     }
-  }, [editor, masterKey, isReadonly, title, document, clientId, isPersonal, onClose]);
+  }, [editor, masterKey, isReadonly, title, document, clientId, isPersonal, onClose, t]);
 
   const handleExport = (format: 'txt' | 'pdf' | 'docx') => {
     if (!editor) return;
@@ -135,7 +137,7 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isReadonly}
-            placeholder="Название документа"
+            placeholder={t('textEditor.titlePlaceholder')}
             className="flex-1 text-base font-semibold text-gray-800 dark:text-gray-100 bg-transparent focus:outline-none disabled:opacity-70"
           />
           <button
@@ -148,37 +150,37 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
 
         {isReadonly && (
           <div className="px-5 py-2 text-xs text-amber-700 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400">
-            Импортированный {document?.type.toUpperCase()}-файл открыт только для чтения. Редактировать можно только TXT-документы, созданные в редакторе.
+            {t('textEditor.readOnlyNotice', { type: document?.type.toUpperCase() ?? '' })}
           </div>
         )}
 
         {/* Панель инструментов */}
         {!isReadonly && (
           <div className="flex items-center gap-1 px-5 py-2 border-b border-gray-200 dark:border-gray-800">
-            <ToolbarButton title="Жирный" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+            <ToolbarButton title={t('textEditor.toolbar.bold')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
               <Bold size={16} />
             </ToolbarButton>
-            <ToolbarButton title="Курсив" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+            <ToolbarButton title={t('textEditor.toolbar.italic')} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
               <Italic size={16} />
             </ToolbarButton>
-            <ToolbarButton title="Подчёркнутый" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+            <ToolbarButton title={t('textEditor.toolbar.underline')} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
               <UnderlineIcon size={16} />
             </ToolbarButton>
             <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
-            <ToolbarButton title="Заголовок 1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+            <ToolbarButton title={t('textEditor.toolbar.heading1')} active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
               <Heading1 size={16} />
             </ToolbarButton>
-            <ToolbarButton title="Заголовок 2" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+            <ToolbarButton title={t('textEditor.toolbar.heading2')} active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
               <Heading2 size={16} />
             </ToolbarButton>
-            <ToolbarButton title="Заголовок 3" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+            <ToolbarButton title={t('textEditor.toolbar.heading3')} active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
               <Heading3 size={16} />
             </ToolbarButton>
             <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
-            <ToolbarButton title="Маркированный список" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+            <ToolbarButton title={t('textEditor.toolbar.bulletList')} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
               <List size={16} />
             </ToolbarButton>
-            <ToolbarButton title="Нумерованный список" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+            <ToolbarButton title={t('textEditor.toolbar.orderedList')} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
               <ListOrdered size={16} />
             </ToolbarButton>
           </div>
@@ -207,18 +209,18 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
               className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <Download size={16} />
-              Экспорт
+              {t('textEditor.export')}
             </button>
             {isExportMenuOpen && (
               <div className="absolute bottom-full mb-2 left-0 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
                 <button onClick={() => handleExport('txt')} className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  Скачать как TXT
+                  {t('textEditor.exportTxt')}
                 </button>
                 <button onClick={() => handleExport('pdf')} className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  Скачать как PDF
+                  {t('textEditor.exportPdf')}
                 </button>
                 <button onClick={() => handleExport('docx')} className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  Скачать как DOCX
+                  {t('textEditor.exportDocx')}
                 </button>
               </div>
             )}
@@ -231,7 +233,7 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               <Save size={16} />
-              {isSaving ? 'Сохранение...' : 'Сохранить'}
+              {isSaving ? t('common.saving') : t('common.save')}
             </button>
           )}
         </div>

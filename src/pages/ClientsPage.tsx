@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Plus, Users } from 'lucide-react';
 import type { Client } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
@@ -7,6 +8,7 @@ import ClientModal from '../components/ClientModal';
 import ClientCard from '../components/ClientCard';
 
 export default function ClientsPage() {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
   const clients = useClients(masterKey);
 
@@ -47,13 +49,13 @@ export default function ClientsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Клиенты</h1>
+        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{t('clients.title')}</h1>
         <button
           onClick={handleAddClick}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
         >
           <Plus size={16} />
-          Добавить клиента
+          {t('clients.addClient')}
         </button>
       </div>
 
@@ -63,20 +65,20 @@ export default function ClientsPage() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Поиск по ФИО или телефону..."
+          placeholder={t('clients.searchPlaceholder')}
           className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 
       {clients === undefined && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Загрузка...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
       )}
 
       {clients && filteredClients.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
           <Users size={32} className="mb-2" />
           <p className="text-sm">
-            {search ? 'Ничего не найдено' : 'Клиентов пока нет'}
+            {search ? t('clients.emptySearch') : t('clients.emptyState')}
           </p>
         </div>
       )}
@@ -98,7 +100,7 @@ export default function ClientsPage() {
                       : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  {client.status === 'active' ? 'Активный' : 'Архивный'}
+                  {client.status === 'active' ? t('clients.status.active') : t('clients.status.archived')}
                 </span>
               </div>
               {client.phone && (

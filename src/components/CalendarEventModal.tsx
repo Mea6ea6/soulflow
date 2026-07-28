@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Trash2 } from 'lucide-react';
 import type { CalendarEvent } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
@@ -12,6 +13,7 @@ interface CalendarEventModalProps {
 }
 
 export default function CalendarEventModal({ date, event, onClose }: CalendarEventModalProps) {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
   const clients = useClients(masterKey);
   const activeClients = (clients ?? []).filter((c) => c.status === 'active');
@@ -29,19 +31,19 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
     setError(null);
 
     if (!time) {
-      setError('Укажите время');
+      setError(t('calendar.validation.timeRequired'));
       return;
     }
     if (isPersonal && !title.trim()) {
-      setError('Укажите название события');
+      setError(t('calendar.validation.titleRequired'));
       return;
     }
     if (!isPersonal && !clientId) {
-      setError('Выберите клиента');
+      setError(t('calendar.validation.clientRequired'));
       return;
     }
     if (!masterKey) {
-      setError('Нет доступа — войдите заново');
+      setError(t('common.sessionExpired'));
       return;
     }
 
@@ -63,7 +65,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
       }
       onClose();
     } catch {
-      setError('Не удалось сохранить событие');
+      setError(t('calendar.saveFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +73,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
 
   const handleDelete = async () => {
     if (!event) return;
-    if (!confirm('Удалить это событие?')) return;
+    if (!confirm(t('common.confirmDeleteEvent'))) return;
     await deleteCalendarEvent(event.id);
     onClose();
   };
@@ -82,7 +84,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
           <div>
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-              {event ? 'Редактировать событие' : 'Новое событие'}
+              {event ? t('calendar.editTitle') : t('calendar.newTitle')}
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateRu(date)}</p>
           </div>
@@ -97,7 +99,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Время *
+              {t('calendar.time')} *
             </label>
             <input
               type="time"
@@ -114,33 +116,33 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
               onChange={(e) => setIsPersonal(e.target.checked)}
               className="rounded border-gray-300 dark:border-gray-700"
             />
-            Личное событие
+            {t('calendar.personalEvent')}
           </label>
 
           {isPersonal ? (
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                Название *
+                {t('calendar.title')} *
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Встреча с коллегой"
+                placeholder={t('calendar.titlePlaceholder')}
               />
             </div>
           ) : (
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                Клиент *
+                {t('calendar.client')} *
               </label>
               <select
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Выберите клиента</option>
+                <option value="">{t('calendar.clientPlaceholder')}</option>
                 {activeClients.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -152,7 +154,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
 
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Заметка
+              {t('calendar.note')}
             </label>
             <textarea
               value={note}
@@ -174,7 +176,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
                 type="button"
                 onClick={handleDelete}
                 className="px-3 py-2 rounded-lg border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                title="Удалить событие"
+                title={t('common.delete')}
               >
                 <Trash2 size={16} />
               </button>
@@ -184,14 +186,14 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
               onClick={onClose}
               className="flex-1 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              Отмена
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
-              {isSubmitting ? 'Сохранение...' : 'Сохранить'}
+              {isSubmitting ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </form>

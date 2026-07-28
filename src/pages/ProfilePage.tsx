@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileText, Upload, Download, Trash2, FilePlus, User } from 'lucide-react';
 import { useAuth } from '../hooks/useAuthHook';
 import { usePersonalDocuments, deleteDocument } from '../hooks/useDB';
@@ -8,6 +9,7 @@ import TextEditor from '../components/TextEditor';
 import ImportDocumentModal from '../components/ImportDocumentModal';
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const { userProfile, masterKey } = useAuth();
   const personalDocuments = usePersonalDocuments(masterKey);
 
@@ -28,13 +30,13 @@ export default function ProfilePage() {
   };
 
   const handleDelete = async (doc: Document) => {
-    if (!confirm(`Удалить документ "${doc.title}"?`)) return;
+    if (!confirm(t('documents.confirmDelete', { title: doc.title }))) return;
     await deleteDocument(doc.id);
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">Профиль</h1>
+      <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">{t('profile.title')}</h1>
 
       <div className="flex items-center gap-4 mb-8">
         <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400">
@@ -47,12 +49,12 @@ export default function ProfilePage() {
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Мои документы</h2>
+        <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">{t('profile.documentsTitle')}</h2>
 
         {(!personalDocuments || personalDocuments.length === 0) ? (
           <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 rounded-xl mb-3">
             <FileText size={28} className="mb-2" />
-            <p className="text-sm">Личных документов пока нет</p>
+            <p className="text-sm">{t('profile.noDocuments')}</p>
           </div>
         ) : (
           <ul className="flex flex-col gap-2 mb-3">
@@ -64,14 +66,14 @@ export default function ProfilePage() {
                 <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{doc.title}</span>
                 <div className="flex items-center gap-1 shrink-0">
                   {doc.type === 'txt' && (
-                    <button onClick={() => setEditingDoc(doc)} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" title="Открыть">
+                    <button onClick={() => setEditingDoc(doc)} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" title={t('common.open')}>
                       <FilePlus size={16} />
                     </button>
                   )}
-                  <button onClick={() => handleDownload(doc)} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" title="Скачать">
+                  <button onClick={() => handleDownload(doc)} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" title={t('common.download')}>
                     <Download size={16} />
                   </button>
-                  <button onClick={() => handleDelete(doc)} className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10" title="Удалить">
+                  <button onClick={() => handleDelete(doc)} className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10" title={t('common.delete')}>
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -86,7 +88,7 @@ export default function ProfilePage() {
             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <Upload size={14} />
-            Загрузить (сертификат, диплом...)
+            {t('profile.upload')}
           </button>
         </div>
       </div>

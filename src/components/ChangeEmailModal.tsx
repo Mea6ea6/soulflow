@@ -17,7 +17,7 @@ export default function ChangeEmailModal({ onClose }: { onClose: () => void }) {
     setError(null);
 
     if (!newEmail.trim()) {
-      setError('Введите email');
+      setError(t('auth.enterEmail'));
       return;
     }
 
@@ -51,14 +51,14 @@ export default function ChangeEmailModal({ onClose }: { onClose: () => void }) {
             type="email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
-            placeholder="Новый email"
+            placeholder={t('settings.changeEmailNewEmailPlaceholder')}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Текущий мастер-пароль"
+            placeholder={t('settings.changeEmailPasswordPlaceholder')}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
@@ -81,7 +81,7 @@ export default function ChangeEmailModal({ onClose }: { onClose: () => void }) {
               disabled={isSubmitting}
               className="flex-1 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium"
             >
-              {isSubmitting ? '...' : t('common.save')}
+              {isSubmitting ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </form>

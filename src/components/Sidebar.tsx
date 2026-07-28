@@ -51,7 +51,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     <aside className="w-64 h-screen flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 px-3 py-4">
       <div className="flex items-center gap-2 px-3 mb-8">
         <Sparkles className="text-indigo-600 dark:text-indigo-400" size={22} />
-        <span className="text-lg font-bold text-gray-800 dark:text-gray-100">SoulFlow</span>
+        <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{t('brand.soulFlow')}</span>
       </div>
 
       <nav className="flex-1 flex flex-col gap-1">

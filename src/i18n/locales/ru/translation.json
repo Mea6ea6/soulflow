@@ -7,8 +7,12 @@
     "profile": "Профиль",
     "settings": "Настройки"
   },
+  "brand": {
+    "soulFlow": "SoulFlow"
+  },
   "common": {
     "save": "Сохранить",
+    "saving": "Сохранение...",
     "cancel": "Отмена",
     "add": "Добавить",
     "delete": "Удалить",
@@ -16,8 +20,159 @@
     "close": "Закрыть",
     "download": "Скачать",
     "open": "Открыть",
+    "import": "Импортировать",
+    "importing": "Импорт...",
+    "continue": "Продолжить",
     "loading": "Загрузка...",
-    "search": "Поиск..."
+    "search": "Поиск...",
+    "dash": "—",
+    "sessionExpired": "Нет доступа — войдите заново.",
+    "confirmDeleteEvent": "Удалить это событие?"
+  },
+  "home": {
+    "welcome": "Добро пожаловать в SoulFlow!",
+    "welcomeWithName": "Добро пожаловать в SoulFlow, {{name}}!",
+    "today": "Сегодня",
+    "noEventsToday": "На сегодня встреч не запланировано",
+    "recentDocuments": "Последние документы",
+    "noRecentDocuments": "Нет недавних документов",
+    "clientFallback": "Клиент",
+    "downloadTxt": "Открыть / скачать",
+    "downloadOriginal": "Скачать"
+  },
+  "clients": {
+    "title": "Клиенты",
+    "addClient": "Добавить клиента",
+    "searchPlaceholder": "Поиск по ФИО или телефону...",
+    "emptySearch": "Ничего не найдено",
+    "emptyState": "Клиентов пока нет",
+    "status": {
+      "active": "Активный",
+      "archived": "Архивный"
+    }
+  },
+  "client": {
+    "confirmDeleteDocument": "Удалить документ \"{{title}}\"?",
+    "phone": "Телефон",
+    "email": "Email",
+    "workPlace": "Место работы/учёбы",
+    "sessions": "Сеансы",
+    "noSessions": "Сеансов пока нет",
+    "sessionTimeHint": "Время можно уточнить позже в разделе «Календарь».",
+    "notes": "Заметки",
+    "notesPlaceholder": "Краткое описание клиента...",
+    "saveNotes": "Сохранить заметку",
+    "documents": "Документы",
+    "noDocuments": "Документов пока нет",
+    "createDocument": "Создать документ",
+    "importDocument": "Импортировать документ",
+    "validation": {
+      "nameRequired": "Введите ФИО"
+    },
+    "editTitle": "Редактировать клиента",
+    "addTitle": "Добавить клиента",
+    "fullName": "ФИО",
+    "fullNamePlaceholder": "Иванов Иван Иванович",
+    "phonePlaceholder": "+7 900 000-00-00",
+    "emailPlaceholder": "client@example.com",
+    "status": {
+      "label": "Статус"
+    },
+    "saveFailed": "Не удалось сохранить клиента"
+  },
+  "calendar": {
+    "today": "Сегодня",
+    "weekdays": {
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thu": "Чт",
+      "fri": "Пт",
+      "sat": "Сб",
+      "sun": "Вс"
+    },
+    "moreEvents": "+{{count}} ещё",
+    "validation": {
+      "timeRequired": "Укажите время",
+      "titleRequired": "Укажите название события",
+      "clientRequired": "Выберите клиента"
+    },
+    "saveFailed": "Не удалось сохранить событие",
+    "editTitle": "Редактировать событие",
+    "newTitle": "Новое событие",
+    "time": "Время",
+    "personalEvent": "Личное событие",
+    "title": "Название",
+    "titlePlaceholder": "Встреча с коллегой",
+    "client": "Клиент",
+    "clientPlaceholder": "Выберите клиента",
+    "note": "Заметка"
+  },
+  "documents": {
+    "title": "Документы",
+    "create": "Создать документ",
+    "import": "Импортировать",
+    "searchPlaceholder": "Поиск по названию...",
+    "scope": {
+      "all": "Все документы",
+      "client": "Клиентские",
+      "personal": "Личные"
+    },
+    "type": {
+      "all": "Все типы",
+      "txt": "TXT",
+      "pdf": "PDF",
+      "docx": "DOCX"
+    },
+    "clientFilter": {
+      "all": "Все клиенты"
+    },
+    "sort": {
+      "newest": "Сначала новые",
+      "oldest": "Сначала старые"
+    },
+    "empty": "Документов не найдено",
+    "personalLabel": "Личный",
+    "confirmDelete": "Удалить документ \"{{title}}\"?",
+    "newTitle": "Новый документ",
+    "importTitle": "Импортировать документ"
+  },
+  "profile": {
+    "title": "Профиль",
+    "documentsTitle": "Мои документы",
+    "noDocuments": "Личных документов пока нет",
+    "upload": "Загрузить (сертификат, диплом...)"
+  },
+  "textEditor": {
+    "saveFailed": "Не удалось сохранить документ",
+    "titlePlaceholder": "Название документа",
+    "readOnlyNotice": "Импортированный {{type}}-файл открыт только для чтения. Редактировать можно только TXT-документы, созданные в редакторе.",
+    "toolbar": {
+      "bold": "Жирный",
+      "italic": "Курсив",
+      "underline": "Подчёркнутый",
+      "heading1": "Заголовок 1",
+      "heading2": "Заголовок 2",
+      "heading3": "Заголовок 3",
+      "bulletList": "Маркированный список",
+      "orderedList": "Нумерованный список"
+    },
+    "export": "Экспорт",
+    "exportTxt": "Скачать как TXT",
+    "exportPdf": "Скачать как PDF",
+    "exportDocx": "Скачать как DOCX"
+  },
+  "import": {
+    "title": "Импортировать документ",
+    "file": "Файл",
+    "chooseFile": "Выбрать файл (TXT, PDF, DOCX)",
+    "titleLabel": "Название",
+    "titlePlaceholder": "Название документа",
+    "validation": {
+      "fileRequired": "Выберите файл",
+      "unsupportedType": "Поддерживаются только файлы TXT, PDF и DOCX"
+    },
+    "failed": "Не удалось импортировать файл"
   },
   "auth": {
     "login": "Войти",
@@ -64,7 +219,22 @@
     "dataSection": "Данные",
     "exportData": "Экспорт всех данных",
     "importData": "Импорт всех данных",
-    "clearData": "Очистить все данные"
+    "clearData": "Очистить все данные",
+    "importConfirm": "Импорт заменит ВСЕ текущие данные данными из файла. Продолжить?",
+    "importSuccess": "Данные успешно импортированы. Перезагрузите страницу.",
+    "importError": "Ошибка импорта",
+    "clearConfirm": "Это удалит ВСЕ данные без возможности восстановления. Вы уверены?",
+    "clearConfirmAgain": "Точно уверены? Это действие необратимо.",
+    "changeEmailNewEmailPlaceholder": "Новый email",
+    "changeEmailPasswordPlaceholder": "Текущий мастер-пароль",
+    "changePasswordCurrentPlaceholder": "Текущий пароль",
+    "changePasswordNewPlaceholder": "Новый пароль",
+    "changePasswordConfirmPlaceholder": "Повторите новый пароль"
+  },
+  "documentTarget": {
+    "personal": "Личный документ",
+    "client": "Документ клиента",
+    "selectClient": "Выберите клиента"
   },
   "errors": {
     "invalidPassword": "Неверный пароль"

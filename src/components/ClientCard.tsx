@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Pencil, Plus } from 'lucide-react';
 import type { Client } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
@@ -18,6 +19,7 @@ interface ClientCardProps {
 }
 
 export default function ClientCard({ client, onClose, onEdit }: ClientCardProps) {
+  const { t } = useTranslation();
   const { masterKey } = useAuth();
   const clientEvents = useClientEvents(client.id, masterKey);
 
@@ -45,7 +47,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   };
 
   const handleDeleteDoc = async (doc: Document) => {
-    if (!confirm(`Удалить документ "${doc.title}"?`)) return;
+    if (!confirm(t('client.confirmDeleteDocument', { title: doc.title }))) return;
     await deleteDocument(doc.id);
   };
 
@@ -94,21 +96,21 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
               }`}
             >
-              {client.status === 'active' ? 'Активный' : 'Архивный'}
+              {client.status === 'active' ? t('clients.status.active') : t('clients.status.archived')}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={onEdit}
               className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Редактировать"
+              title={t('common.edit')}
             >
               <Pencil size={16} />
             </button>
             <button
               onClick={onClose}
               className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Закрыть"
+              title={t('common.close')}
             >
               <X size={16} />
             </button>
@@ -117,18 +119,18 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
 
         <div className="p-5 flex flex-col gap-6">
           <div className="text-sm text-gray-600 dark:text-gray-300 flex flex-col gap-1">
-            {client.phone && <p>Телефон: {client.phone}</p>}
-            {client.email && <p>Email: {client.email}</p>}
-            {client.workPlace && <p>Место работы/учёбы: {client.workPlace}</p>}
+            {client.phone && <p>{t('client.phone')}: {client.phone}</p>}
+            {client.email && <p>{t('client.email')}: {client.email}</p>}
+            {client.workPlace && <p>{t('client.workPlace')}: {client.workPlace}</p>}
           </div>
 
           {/* Сеансы — реальные события из календаря */}
           <div>
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              Сеансы
+              {t('client.sessions')}
             </h3>
             {sortedEvents.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Сеансов пока нет</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('client.noSessions')}</p>
             ) : (
               <ul className="flex flex-col gap-1 mb-3">
                 {sortedEvents.map((ev) => (
@@ -155,42 +157,42 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
               >
                 <Plus size={14} />
-                Добавить
+                {t('common.add')}
               </button>
             </div>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Время можно уточнить позже в разделе "Календарь"
+              {t('client.sessionTimeHint')}
             </p>
           </div>
 
           <div>
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              Заметки
+              {t('client.notes')}
             </h3>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              placeholder="Краткое описание клиента..."
+              placeholder={t('client.notesPlaceholder')}
             />
             <button
               onClick={handleSaveNotes}
               disabled={isSavingNotes || notes === client.notes}
               className="mt-2 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
             >
-              {isSavingNotes ? 'Сохранение...' : 'Сохранить заметку'}
+              {isSavingNotes ? t('common.saving') : t('client.saveNotes')}
             </button>
           </div>
 
           <div>
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              Документы
+              {t('client.documents')}
             </h3>
 
             {(!clientDocuments || clientDocuments.length === 0) ? (
               <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center mb-3">
-                Документов пока нет
+                {t('client.noDocuments')}
               </div>
             ) : (
               <ul className="flex flex-col gap-1.5 mb-3">
@@ -202,14 +204,14 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                     <span className="truncate text-gray-700 dark:text-gray-200">{doc.title}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       {doc.type === 'txt' && (
-                        <button onClick={() => setEditingDoc(doc)} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700" title="Открыть">
+                        <button onClick={() => setEditingDoc(doc)} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700" title={t('common.open')}>
                           <FilePlus size={14} />
                         </button>
                       )}
-                      <button onClick={() => handleDownloadDoc(doc)} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700" title="Скачать">
+                      <button onClick={() => handleDownloadDoc(doc)} className="p-1.5 rounded text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700" title={t('common.download')}>
                         <Download size={14} />
                       </button>
-                      <button onClick={() => handleDeleteDoc(doc)} className="p-1.5 rounded text-red-500 hover:bg-red-100 dark:hover:bg-red-500/10" title="Удалить">
+                      <button onClick={() => handleDeleteDoc(doc)} className="p-1.5 rounded text-red-500 hover:bg-red-100 dark:hover:bg-red-500/10" title={t('common.delete')}>
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -224,14 +226,14 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                 className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <FilePlus size={14} />
-                Создать документ
+                {t('client.createDocument')}
               </button>
               <button
                 onClick={() => setIsImporting(true)}
                 className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Upload size={14} />
-                Импортировать документ
+                {t('client.importDocument')}
               </button>
             </div>
           </div>

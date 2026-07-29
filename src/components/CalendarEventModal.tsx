@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { XIcon, TrashIcon } from '@phosphor-icons/react';
+import { TrashIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { CalendarEvent } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { useClients, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '../hooks/useDB';
 import { formatDateRu } from '../utils/date';
+import ModalShell from './ModalShell';
 
 interface CalendarEventModalProps {
   date: string;
@@ -69,103 +70,98 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="w-full max-w-md bg-surface rounded-lg border border-border shadow-card-hover">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <div>
-            <h2 className="text-base font-semibold text-text-primary">
-              {event ? t('calendar.editTitle') : t('calendar.newTitle')}
-            </h2>
-            <p className="text-xs text-text-tertiary mt-0.5">{formatDateRu(date)}</p>
-          </div>
-          <button onClick={onClose} className="text-text-tertiary hover:text-text-secondary">
-            <XIcon size={18} />
-          </button>
+    <ModalShell onClose={onClose} maxWidth="max-w-md">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div>
+          <h2 className="text-base font-semibold text-text-primary">
+            {event ? t('calendar.editTitle') : t('calendar.newTitle')}
+          </h2>
+          <p className="text-xs text-text-tertiary mt-0.5">{formatDateRu(date)}</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+        <div>
+          <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.time')} *</label>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+        <label className="flex items-center gap-2 text-sm text-text-secondary">
+          <input type="checkbox" checked={isPersonal} onChange={(e) => setIsPersonal(e.target.checked)} className="rounded border-border" />
+          {t('calendar.personalEvent')}
+        </label>
+
+        {isPersonal ? (
           <div>
-            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.time')} *</label>
+            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.title')} *</label>
             <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder={t('calendar.titlePlaceholder')}
             />
           </div>
-
-          <label className="flex items-center gap-2 text-sm text-text-secondary">
-            <input type="checkbox" checked={isPersonal} onChange={(e) => setIsPersonal(e.target.checked)} className="rounded border-border" />
-            {t('calendar.personalEvent')}
-          </label>
-
-          {isPersonal ? (
-            <div>
-              <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.title')} *</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder={t('calendar.titlePlaceholder')}
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.client')} *</label>
-              <select
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">{t('calendar.clientPlaceholder')}</option>
-                {activeClients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
+        ) : (
           <div>
-            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.note')}</label>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-            />
+            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.client')} *</label>
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">{t('calendar.clientPlaceholder')}</option>
+              {activeClients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
+        )}
 
-          {error && <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>}
+        <div>
+          <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.note')}</label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+          />
+        </div>
 
-          <div className="flex gap-3 pt-2">
-            {event && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="px-3 py-2 rounded-md border border-error/30 text-error hover:bg-error/10 transition-colors"
-                title={t('common.delete')}
-              >
-                <TrashIcon size={16} />
-              </button>
-            )}
+        {error && <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>}
+
+        <div className="flex gap-3 pt-2">
+          {event && (
             <button
               type="button"
-              onClick={onClose}
-              className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
+              onClick={handleDelete}
+              className="px-3 py-2 rounded-md border border-error/30 text-error hover:bg-error/10 transition-colors"
+              title={t('common.delete')}
             >
-              {t('common.cancel')}
+              <TrashIcon size={16} />
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
-            >
-              {isSubmitting ? t('common.saving') : t('common.save')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-lift flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+          >
+            {isSubmitting ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }

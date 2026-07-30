@@ -1,156 +1,226 @@
 import { useState } from 'react';
+import {
+  PencilSimpleIcon, PlusIcon, FileTextIcon, FilePlusIcon,
+  UploadSimpleIcon, DownloadSimpleIcon, TrashIcon,
+} from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import type { Client, ClientStatus } from '../types';
+import type { Client, Document } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
-import { addClient, updateClient } from '../hooks/useDB';
+import { updateClient, useClientEvents, addCalendarEvent, useClientDocuments, deleteDocument } from '../hooks/useDB';
+import { formatDateRu } from '../utils/date';
+import { downloadOriginalFile, downloadAsTxt, MIME_TYPES } from '../utils/fileExport';
+import Avatar from './Avatar';
 import ModalShell from './ModalShell';
+import TextEditor from './TextEditor';
+import ImportDocumentModal from './ImportDocumentModal';
 
-interface ClientModalProps {
-  client: Client | null;
+interface ClientCardProps {
+  client: Client;
   onClose: () => void;
+  onEdit: () => void;
 }
 
-export default function ClientModal({ client, onClose }: ClientModalProps) {
+export default function ClientCard({ client, onClose, onEdit }: ClientCardProps) {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
   const { showToast } = useToast();
+  const clientEvents = useClientEvents(client.id, masterKey);
+  const clientDocuments = useClientDocuments(client.id, masterKey);
 
-  const [name, setName] = useState(client?.name ?? '');
-  const [phone, setPhone] = useState(client?.phone ?? '');
-  const [email, setEmail] = useState(client?.email ?? '');
-  const [workPlace, setWorkPlace] = useState(client?.workPlace ?? '');
-  const [status, setStatus] = useState<ClientStatus>(client?.status ?? 'active');
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notes, setNotes] = useState(client.notes);
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [newSessionDate, setNewSessionDate] = useState('');
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
+  const [isCreatingDoc, setIsCreatingDoc] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!name.trim()) {
-      setError(t('client.validation.nameRequired'));
-      return;
-    }
-    if (!masterKey) {
-      setError(t('common.sessionExpired'));
-      return;
-    }
-
-    setIsSubmitting(true);
+  const handleSaveNotes = async () => {
+    if (!masterKey) return;
+    setIsSavingNotes(true);
     try {
-      if (client) {
-        await updateClient(client.id, { name: name.trim(), phone, email, workPlace, status }, masterKey);
-      } else {
-        await addClient(
-          { name: name.trim(), phone, email, workPlace, status, sessions: [], notes: '' },
-          masterKey
-        );
-      }
-      showToast('success', t('common.save'));
-      onClose();
-    } catch {
-      setError(t('client.saveFailed'));
+      await updateClient(client.id, { notes }, masterKey);
+      showToast('success', t('client.saveNotes'));
     } finally {
-      setIsSubmitting(false);
+      setIsSavingNotes(false);
     }
   };
 
-  return (
-    <ModalShell onClose={onClose} maxWidth="max-w-md">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <h2 className="text-base font-semibold text-text-primary">
-          {client ? t('client.editTitle') : t('client.addTitle')}
-        </h2>
-      </div>
+  const handleAddSession = async () => {
+    if (!masterKey || !newSessionDate) return;
+    await addCalendarEvent(
+      { date: newSessionDate, time: '00:00', clientId: client.id, title: '', note: '', isPersonal: false },
+      masterKey
+    );
+    setNewSessionDate('');
+  };
 
-      <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
-        <div>
-          <label className="text-sm font-medium text-text-secondary mb-1 block">
-            {t('client.fullName')} *
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder={t('client.fullNamePlaceholder')}
-          />
-        </div>
+  const handleDownloadDoc = (doc: Document) => {
+    if (doc.type === 'txt') {
+      try {
+        downloadAsTxt(extractPlainText(JSON.parse(doc.content)), doc.title);
+      } catch {
+        downloadAsTxt(doc.content, doc.title);
+      }
+    } else if (doc.originalFileBase64) {
+      downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
+    }
+  };
 
-        <div>
-          <label className="text-sm font-medium text-text-secondary mb-1 block">
-            {t('client.phone')}
-          </label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder={t('client.phonePlaceholder')}
-          />
-        </div>
+  const handleDeleteDoc = async (doc: Document) => {
+    if (!confirm(t('client.confirmDeleteDocument', { title: doc.title }))) return;
+    await deleteDocument(doc.id);
+    showToast('success', t('common.delete'));
+  };
 
-        <div>
-          <label className="text-sm font-medium text-text-secondary mb-1 block">
-            {t('client.email')}
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder={t('client.emailPlaceholder')}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-text-secondary mb-1 block">
-            {t('client.workPlace')}
-          </label>
-          <input
-            type="text"
-            value={workPlace}
-            onChange={(e) => setWorkPlace(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-text-secondary mb-1 block">
-            {t('client.status.label')}
-          </label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as ClientStatus)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="active">{t('clients.status.active')}</option>
-            <option value="archived">{t('clients.status.archived')}</option>
-          </select>
-        </div>
-
-        {error && (
-          <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>
-        )}
-
-        <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
-          >
-            {t('common.cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn-lift flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
-          >
-            {isSubmitting ? t('common.saving') : t('common.save')}
-          </button>
-        </div>
-      </form>
-    </ModalShell>
+  const sortedEvents = [...(clientEvents ?? [])].sort((a, b) =>
+    a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date)
   );
+
+  return (
+    <>
+      <ModalShell onClose={onClose} maxWidth="max-w-lg">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-border sticky top-0 bg-surface">
+          <div className="flex items-center gap-3">
+            <Avatar name={client.name} size={44} />
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary">{client.name}</h2>
+              <span
+                className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                  client.status === 'active' ? 'bg-success/15 text-success' : 'bg-surface-hover text-text-tertiary'
+                }`}
+              >
+                {client.status === 'active' ? t('clients.status.active') : t('clients.status.archived')}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={onEdit} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.edit')}>
+              <PencilSimpleIcon size={16} />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-5 flex flex-col gap-6">
+          <div className="text-sm text-text-secondary flex flex-col gap-1">
+            {client.phone && <p>{t('client.phone')}: {client.phone}</p>}
+            {client.email && <p>{t('client.email')}: {client.email}</p>}
+            {client.workPlace && <p>{t('client.workPlace')}: {client.workPlace}</p>}
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.sessions')}</h3>
+            {sortedEvents.length === 0 ? (
+              <p className="text-sm text-text-secondary mb-3">{t('client.noSessions')}</p>
+            ) : (
+              <ul className="flex flex-col gap-1 mb-3">
+                {sortedEvents.map((ev) => (
+                  <li key={ev.id} className="text-sm text-text-secondary bg-surface-hover rounded-md px-3 py-1.5 flex justify-between">
+                    <span>{formatDateRu(ev.date)}</span>
+                    <span className="text-text-tertiary">{ev.time}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={newSessionDate}
+                onChange={(e) => setNewSessionDate(e.target.value)}
+                className="flex-1 px-3 py-1.5 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                onClick={handleAddSession}
+                disabled={!newSessionDate}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+              >
+                <PlusIcon size={14} />
+                {t('common.add')}
+              </button>
+            </div>
+            <p className="text-xs text-text-tertiary mt-1">{t('client.sessionTimeHint')}</p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.notes')}</h3>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              placeholder={t('client.notesPlaceholder')}
+            />
+            <button
+              onClick={handleSaveNotes}
+              disabled={isSavingNotes || notes === client.notes}
+              className="mt-2 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+            >
+              {isSavingNotes ? t('common.saving') : t('client.saveNotes')}
+            </button>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.documents')}</h3>
+
+            {(!clientDocuments || clientDocuments.length === 0) ? (
+              <div className="text-sm text-text-secondary bg-surface-hover rounded-md p-4 flex flex-col items-center gap-2 mb-3">
+                <FileTextIcon size={20} className="text-text-tertiary" />
+                <span>{t('client.noDocuments')}</span>
+              </div>
+            ) : (
+              <ul className="flex flex-col gap-1.5 mb-3">
+                {clientDocuments.map((doc) => (
+                  <li key={doc.id} className="flex items-center justify-between text-sm bg-surface-hover rounded-md px-3 py-2">
+                    <span className="truncate text-text-primary">{doc.title}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {doc.type === 'txt' && (
+                        <button onClick={() => setEditingDoc(doc)} className="p-1.5 rounded text-text-secondary hover:bg-surface" title={t('common.open')}>
+                          <FilePlusIcon size={14} />
+                        </button>
+                      )}
+                      <button onClick={() => handleDownloadDoc(doc)} className="p-1.5 rounded text-text-secondary hover:bg-surface" title={t('common.download')}>
+                        <DownloadSimpleIcon size={14} />
+                      </button>
+                      <button onClick={() => handleDeleteDoc(doc)} className="p-1.5 rounded text-error hover:bg-error/10" title={t('common.delete')}>
+                        <TrashIcon size={14} />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsCreatingDoc(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
+              >
+                <FilePlusIcon size={14} />
+                {t('client.createDocument')}
+              </button>
+              <button
+                onClick={() => setIsImporting(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
+              >
+                <UploadSimpleIcon size={14} />
+                {t('client.importDocument')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ModalShell>
+
+      {editingDoc && <TextEditor document={editingDoc} clientId={client.id} onClose={() => setEditingDoc(null)} />}
+      {isCreatingDoc && <TextEditor document={null} clientId={client.id} onClose={() => setIsCreatingDoc(false)} />}
+      {isImporting && <ImportDocumentModal clientId={client.id} onClose={() => setIsImporting(false)} />}
+    </>
+  );
+}
+
+function extractPlainText(node: { text?: string; content?: unknown[] }): string {
+  if (node.text) return node.text;
+  if (node.content) {
+    return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
+  }
+  return '';
 }

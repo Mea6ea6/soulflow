@@ -1,5 +1,4 @@
 import { useState, useCallback, type ReactNode } from 'react';
-import { db } from '../db/database'; // зачем?
 import type { UserProfile } from '../types';
 import { deriveKey, encryptData, decryptData, generateSalt, uint8ArrayToBase64, base64ToUint8Array } from './useEncryption';
 import { AuthContext, type AuthContextValue } from './AuthContext';

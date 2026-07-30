@@ -76,7 +76,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4" data-theme="dawn">
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: 'var(--color-accent-gradient)' }}
+      data-theme="dawn"
+    >
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
           <SparkleIcon size={28} weight="fill" className="text-primary" />
@@ -161,7 +165,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="btn-lift w-full py-2.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               {isSubmitting ? t('auth.loading') : mode === 'login' ? t('auth.login') : t('auth.register')}
             </button>

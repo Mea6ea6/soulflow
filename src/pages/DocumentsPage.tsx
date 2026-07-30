@@ -76,7 +76,7 @@ export default function DocumentsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCreatingStep('choose')}
-            className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
+            className="btn-lift flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
           >
             <PlusIcon size={16} />
             {t('documents.create')}

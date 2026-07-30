@@ -40,13 +40,18 @@ export default function ClientsPage() {
     }
   };
 
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditingClient(null);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-display font-semibold text-text-primary">{t('clients.title')}</h1>
         <button
           onClick={handleAddClick}
-          className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
+          className="btn-lift flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
         >
           <PlusIcon size={16} />
           {t('clients.addClient')}
@@ -79,7 +84,7 @@ export default function ClientsPage() {
             <button
               key={client.id}
               onClick={() => setSelectedClient(client)}
-              className="text-left p-4 rounded-lg border border-border bg-surface hover:shadow-card-hover transition-shadow flex items-center gap-3"
+              className="text-left p-4 rounded-lg border border-border bg-surface shadow-card hover:shadow-card-hover transition-shadow flex items-center gap-3"
             >
               <Avatar name={client.name} size={40} />
               <div className="min-w-0 flex-1">
@@ -103,7 +108,7 @@ export default function ClientsPage() {
       )}
 
       {isModalOpen && (
-        <ClientModal client={editingClient} onClose={() => { setIsModalOpen(false); setEditingClient(null); }} />
+        <ClientModal client={editingClient} onClose={handleModalClose} />
       )}
 
       {selectedClient && (

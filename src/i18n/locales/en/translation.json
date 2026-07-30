@@ -33,9 +33,9 @@
     "welcome": "Welcome to SoulFlow!",
     "welcomeWithName": "Welcome to SoulFlow, {{name}}!",
     "today": "Today",
-    "noEventsToday": "No meetings scheduled for today",
+    "noEventsToday": "A free day — no meetings scheduled.",
+    "noRecentDocuments": "Documents you create or edit this week will show up here.",
     "recentDocuments": "Recent documents",
-    "noRecentDocuments": "No recent documents",
     "clientFallback": "Client",
     "downloadTxt": "Open / download",
     "downloadOriginal": "Download"
@@ -45,7 +45,7 @@
     "addClient": "Add client",
     "searchPlaceholder": "Search by name or phone...",
     "emptySearch": "Nothing found",
-    "emptyState": "No clients yet",
+    "emptyState": "No clients yet. Click \"Add client\" to create your first one.",
     "status": {
       "active": "Active",
       "archived": "Archived"
@@ -57,13 +57,13 @@
     "email": "Email",
     "workPlace": "Work or study place",
     "sessions": "Sessions",
-    "noSessions": "No sessions yet",
+    "noSessions": "No sessions yet — add the date of the first meeting below.",
+    "noDocuments": "This client doesn't have any documents yet.",
     "sessionTimeHint": "You can set the time later in Calendar.",
     "notes": "Notes",
     "notesPlaceholder": "Short client description...",
     "saveNotes": "Save notes",
     "documents": "Documents",
-    "noDocuments": "No documents yet",
     "createDocument": "Create document",
     "importDocument": "Import document",
     "validation": {
@@ -131,7 +131,7 @@
       "newest": "Newest first",
       "oldest": "Oldest first"
     },
-    "empty": "No documents found",
+    "empty": "No documents yet. Create a new one or import an existing file.",
     "personalLabel": "Personal",
     "confirmDelete": "Delete document \"{{title}}\"?",
     "newTitle": "New document",
@@ -140,7 +140,7 @@
   "profile": {
     "title": "Profile",
     "documentsTitle": "My documents",
-    "noDocuments": "No personal documents yet",
+    "noDocuments": "Documents you create or edit this week will show up here.",
     "upload": "Upload (certificate, diploma...)"
   },
   "textEditor": {

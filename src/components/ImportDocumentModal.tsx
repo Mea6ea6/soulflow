@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
-import { XIcon, UploadSimpleIcon } from '@phosphor-icons/react';
+import { UploadSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { addDocument } from '../hooks/useDB';
 import { fileToBase64, readTextFile, readPdfText, readDocxText, guessDocumentType } from '../utils/fileImport';
+import ModalShell from './ModalShell';
 
 interface ImportDocumentModalProps {
   clientId: string | null;
@@ -76,52 +77,47 @@ export default function ImportDocumentModal({ clientId, isPersonal = false, onCl
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="w-full max-w-md bg-surface rounded-lg border border-border shadow-card-hover">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="text-base font-semibold text-text-primary">{t('import.title')}</h2>
-          <button onClick={onClose} className="text-text-tertiary hover:text-text-secondary">
-            <XIcon size={18} />
+    <ModalShell onClose={onClose} maxWidth="max-w-md">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <h2 className="text-base font-semibold text-text-primary">{t('import.title')}</h2>
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+        <div>
+          <label className="text-sm font-medium text-text-secondary mb-1 block">{t('import.file')} *</label>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
+          >
+            <UploadSimpleIcon size={16} />
+            {file ? file.name : t('import.chooseFile')}
           </button>
+          <input ref={fileInputRef} type="file" accept=".txt,.pdf,.docx" onChange={handleFileChange} className="hidden" />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
-          <div>
-            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('import.file')} *</label>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
-            >
-              <UploadSimpleIcon size={16} />
-              {file ? file.name : t('import.chooseFile')}
-            </button>
-            <input ref={fileInputRef} type="file" accept=".txt,.pdf,.docx" onChange={handleFileChange} className="hidden" />
-          </div>
+        <div>
+          <label className="text-sm font-medium text-text-secondary mb-1 block">{t('import.titleLabel')}</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t('import.titlePlaceholder')}
+            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
 
-          <div>
-            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('import.titleLabel')}</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t('import.titlePlaceholder')}
-              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+        {error && <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>}
 
-          {error && <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>}
-
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors">
-              {t('common.cancel')}
-            </button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors">
-              {isSubmitting ? t('common.importing') : t('common.import')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex gap-3 pt-2">
+          <button type="button" onClick={onClose} className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors">
+            {t('common.cancel')}
+          </button>
+          <button type="submit" disabled={isSubmitting} className="btn-lift flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors">
+            {isSubmitting ? t('common.importing') : t('common.import')}
+          </button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }

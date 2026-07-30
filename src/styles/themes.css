@@ -30,6 +30,7 @@
   --color-primary-tint: #E8EEF3;
   --color-secondary: #7E97A8;
   --color-secondary-tint: #EEF2F5;
+  --color-accent-gradient: linear-gradient(135deg, #4A6D8C 0%, #7E97A8 100%);
 }
 
 /* Dusk — тёмная, та же синяя гамма */
@@ -48,4 +49,5 @@
   --color-secondary-tint: #1F282E;
   --color-shadow: rgba(0, 0, 0, 0.24);
   --color-shadow-hover: rgba(0, 0, 0, 0.36);
+  --color-accent-gradient: linear-gradient(135deg, #6E93AC 0%, #46606F 100%);
 }

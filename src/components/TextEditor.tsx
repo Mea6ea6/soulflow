@@ -3,7 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import {
-  XIcon, TextBolderIcon, TextItalicIcon, TextUnderlineIcon, ListBulletsIcon, ListNumbersIcon,
+  TextBolderIcon, TextItalicIcon, TextUnderlineIcon, ListBulletsIcon, ListNumbersIcon,
   TextHOneIcon, TextHTwoIcon, TextHThreeIcon, DownloadSimpleIcon, FloppyDiskIcon,
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { addDocument, updateDocument } from '../hooks/useDB';
 import { downloadAsTxt, downloadAsPdf, downloadAsDocx } from '../utils/fileExport';
+import ModalShell from './ModalShell';
 
 interface TextEditorProps {
   document: Document | null;
@@ -109,9 +110,9 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
   if (!editor) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col bg-surface rounded-lg border border-border shadow-card-hover">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border gap-3">
+    <ModalShell onClose={onClose} maxWidth="max-w-2xl">
+      <div className="flex flex-col max-h-[85vh]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border gap-3 shrink-0">
           <input
             type="text"
             value={title}
@@ -120,19 +121,16 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
             placeholder={t('textEditor.titlePlaceholder')}
             className="flex-1 text-base font-semibold text-text-primary bg-transparent focus:outline-none disabled:opacity-70"
           />
-          <button onClick={onClose} className="text-text-tertiary hover:text-text-secondary shrink-0">
-            <XIcon size={18} />
-          </button>
         </div>
 
         {isReadonly && (
-          <div className="px-5 py-2 text-xs text-warning bg-warning/10">
+          <div className="px-5 py-2 text-xs text-warning bg-warning/10 shrink-0">
             {t('textEditor.readOnlyNotice', { type: document?.type.toUpperCase() })}
           </div>
         )}
 
         {!isReadonly && (
-          <div className="flex items-center gap-1 px-5 py-2 border-b border-border">
+          <div className="flex items-center gap-1 px-5 py-2 border-b border-border shrink-0">
             <ToolbarButton title={t('textEditor.toolbar.bold')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
               <TextBolderIcon size={16} />
             </ToolbarButton>
@@ -167,10 +165,10 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
         </div>
 
         {error && (
-          <div className="mx-5 mb-2 text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>
+          <div className="mx-5 mb-2 text-sm text-error bg-error/10 rounded-md px-3 py-2 shrink-0">{error}</div>
         )}
 
-        <div className="flex items-center justify-between px-5 py-4 border-t border-border">
+        <div className="flex items-center justify-between px-5 py-4 border-t border-border shrink-0">
           <div className="relative">
             <button
               type="button"
@@ -199,7 +197,7 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="btn-lift flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               <FloppyDiskIcon size={16} />
               {isSaving ? t('common.saving') : t('common.save')}
@@ -207,6 +205,6 @@ export default function TextEditor({ document, clientId, isPersonal = false, onC
           )}
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

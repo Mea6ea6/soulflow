@@ -1,11 +1,14 @@
-import { useState, useMemo } from 'react';
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { CaretLeftIcon, CaretRightIcon, XIcon } from '@phosphor-icons/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useCalendarEvents, useClients } from '../hooks/useDB';
 import type { CalendarEvent } from '../types';
 import { toYMD } from '../utils/date';
 import CalendarEventModal from '../components/CalendarEventModal';
+
+const MAX_VISIBLE_EVENTS = 2;
 
 function buildMonthGrid(year: number, month: number): Date[] {
   const firstOfMonth = new Date(year, month, 1);
@@ -28,6 +31,8 @@ export default function CalendarPage() {
   const [modalDate, setModalDate] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [todayYMD] = useState(() => toYMD(new Date()));
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -55,6 +60,13 @@ export default function CalendarPage() {
     return map;
   }, [clients]);
 
+  useEffect(() => {
+    if (!expandedDate) return;
+    const handler = () => setExpandedDate(null);
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
+  }, [expandedDate]);
+
   const goToPrevMonth = () => setViewDate(new Date(year, month - 1, 1));
   const goToNextMonth = () => setViewDate(new Date(year, month + 1, 1));
   const goToToday = () => setViewDate(new Date());
@@ -66,79 +78,128 @@ export default function CalendarPage() {
 
   const handleEventClick = (ev: CalendarEvent, e: React.MouseEvent) => {
     e.stopPropagation();
+    setExpandedDate(null);
     setModalDate(ev.date);
     setEditingEvent(ev);
   };
 
+  const eventLabel = (ev: CalendarEvent) =>
+    ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('common.dash');
+
   const monthLabel = viewDate.toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-display font-semibold text-text-primary capitalize">{monthLabel}</h1>
-        <div className="flex items-center gap-2">
-          <button onClick={goToToday} className="px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors">
-            {t('calendar.today')}
-          </button>
-          <button onClick={goToPrevMonth} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover transition-colors">
-            <CaretLeftIcon size={18} />
-          </button>
-          <button onClick={goToNextMonth} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover transition-colors">
-            <CaretRightIcon size={18} />
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border">
-        {weekdays.map((day) => (
-          <div key={day} className="bg-surface-hover text-center text-xs font-medium text-text-tertiary py-2">
-            {day}
+    <div ref={containerRef} className="flex flex-col justify-center min-h-[calc(100vh-8rem)]">
+      <div className="max-w-6xl w-full mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-display font-semibold text-text-primary capitalize">{monthLabel}</h1>
+          <div className="flex items-center gap-2">
+            <button onClick={goToToday} className="px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors">
+              {t('calendar.today')}
+            </button>
+            <button onClick={goToPrevMonth} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover transition-colors">
+              <CaretLeftIcon size={18} />
+            </button>
+            <button onClick={goToNextMonth} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover transition-colors">
+              <CaretRightIcon size={18} />
+            </button>
           </div>
-        ))}
+        </div>
 
-        {days.map((date) => {
-          const ymd = toYMD(date);
-          const isCurrentMonth = date.getMonth() === month;
-          const isToday = ymd === todayYMD;
-          const dayEvents = eventsByDate.get(ymd) ?? [];
+        <div className="grid grid-cols-7 gap-px bg-border rounded-xl overflow-hidden border border-border shadow-card">
+          {weekdays.map((day) => (
+            <div key={day} className="bg-surface-hover text-center text-xs font-semibold tracking-wide uppercase text-text-tertiary py-3">
+              {day}
+            </div>
+          ))}
 
-          return (
-            <button
-              key={ymd}
-              onClick={() => handleDayClick(date)}
-              className={`min-h-24 p-2 flex flex-col items-start gap-1 text-left transition-colors ${
-                isCurrentMonth ? 'bg-surface hover:bg-surface-hover' : 'bg-bg text-text-tertiary hover:bg-surface-hover'
-              }`}
-            >
-              <span
-                className={`text-sm w-6 h-6 flex items-center justify-center rounded-full ${
-                  isToday ? 'bg-primary text-white font-semibold' : isCurrentMonth ? 'text-text-primary' : ''
+          {days.map((date) => {
+            const ymd = toYMD(date);
+            const isCurrentMonth = date.getMonth() === month;
+            const isToday = ymd === todayYMD;
+            const dayEvents = eventsByDate.get(ymd) ?? [];
+            const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
+            const hiddenCount = dayEvents.length - visibleEvents.length;
+            const isExpanded = expandedDate === ymd;
+
+            return (
+              <button
+                key={ymd}
+                onClick={() => handleDayClick(date)}
+                className={`relative min-h-24 sm:min-h-28 p-2.5 flex flex-col items-start gap-1.5 text-left transition-colors ${
+                  isCurrentMonth ? 'bg-surface hover:bg-surface-hover' : 'bg-bg text-text-tertiary hover:bg-surface-hover'
                 }`}
               >
-                {date.getDate()}
-              </span>
+                <span
+                  className={`text-sm w-7 h-7 flex items-center justify-center rounded-full ${
+                    isToday ? 'bg-primary text-white font-semibold' : isCurrentMonth ? 'text-text-primary' : ''
+                  }`}
+                >
+                  {date.getDate()}
+                </span>
 
-              <div className="flex flex-col gap-0.5 w-full">
-                {dayEvents.slice(0, 3).map((ev) => (
-                  <div
-                    key={ev.id}
-                    onClick={(e) => handleEventClick(ev, e)}
-                    className={`text-[11px] px-1.5 py-0.5 rounded truncate w-full ${
-                      ev.isPersonal ? 'bg-secondary-tint text-secondary' : 'bg-primary-tint text-primary'
-                    }`}
-                  >
-                    {ev.time} {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('common.dash')}
-                  </div>
-                ))}
-                {dayEvents.length > 3 && (
-                  <span className="text-[11px] text-text-tertiary px-1.5">
-                    {t('calendar.moreEvents', { count: dayEvents.length - 3 })}
-                  </span>
-                )}
-              </div>
-            </button>
-          );
-        })}
+                <div className="flex flex-col gap-1 w-full">
+                  {visibleEvents.map((ev) => (
+                    <div
+                      key={ev.id}
+                      onClick={(e) => handleEventClick(ev, e)}
+                      className={`text-xs px-1.5 py-1 rounded-md truncate w-full ${
+                        ev.isPersonal ? 'bg-secondary-tint text-secondary' : 'bg-primary-tint text-primary'
+                      }`}
+                    >
+                      {ev.time} {eventLabel(ev)}
+                    </div>
+                  ))}
+
+                  {hiddenCount > 0 && (
+                    <div
+                      onClick={(e) => { e.stopPropagation(); setExpandedDate(isExpanded ? null : ymd); }}
+                      className="text-xs font-medium text-text-tertiary hover:text-text-secondary px-1.5 cursor-pointer"
+                    >
+                      {t('calendar.moreEvents', { count: hiddenCount })}
+                    </div>
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {isExpanded && hiddenCount > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                      transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute z-30 top-2 left-2 right-2 bg-surface border border-border rounded-lg shadow-card-hover p-1.5 flex flex-col gap-1"
+                    >
+                      <div className="flex items-center justify-between px-1 pb-1">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-text-tertiary">
+                          {date.getDate()} {monthLabel}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setExpandedDate(null); }}
+                          className="p-0.5 rounded text-text-tertiary hover:bg-surface-hover hover:text-text-secondary"
+                        >
+                          <XIcon size={12} />
+                        </button>
+                      </div>
+                      {dayEvents.map((ev) => (
+                        <div
+                          key={ev.id}
+                          onClick={(e) => handleEventClick(ev, e)}
+                          className={`text-xs px-2 py-1.5 rounded-md truncate w-full ${
+                            ev.isPersonal ? 'bg-secondary-tint text-secondary' : 'bg-primary-tint text-primary'
+                          }`}
+                        >
+                          {ev.time} {eventLabel(ev)}
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {modalDate && (

@@ -9,8 +9,25 @@ import { toYMD } from '../utils/date';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
+const GREETING_POOLS = {
+  night: ['home.greetingNight1', 'home.greetingNight2'],
+  morning: ['home.greetingMorning1', 'home.greetingMorning2'],
+  day: ['home.greetingDay1', 'home.greetingDay2'],
+  evening: ['home.greetingEvening1', 'home.greetingEvening2'],
+} as const;
+
+function pickGreetingKey(): string {
+  const hour = new Date().getHours();
+  const pool =
+    hour < 6 ? GREETING_POOLS.night :
+    hour < 12 ? GREETING_POOLS.morning :
+    hour < 18 ? GREETING_POOLS.day :
+    GREETING_POOLS.evening;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 export default function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { userProfile, masterKey } = useAuth();
   const documents = useDocuments(masterKey);
   const events = useCalendarEvents(masterKey);
@@ -18,6 +35,15 @@ export default function HomePage() {
 
   const [cutoff] = useState(() => Date.now() - SEVEN_DAYS_MS);
   const [todayYMD] = useState(() => toYMD(new Date()));
+  const [greetingKey] = useState(() => pickGreetingKey());
+
+  const dateLabel = useMemo(() => {
+    return new Date().toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+  }, [i18n.language]);
 
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -50,63 +76,86 @@ export default function HomePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-display font-semibold text-text-primary mb-6">
-        {userProfile ? t('home.welcomeWithName', { name: userProfile.name }) : t('home.welcome')}
-      </h1>
+      <div className="text-center max-w-xl mx-auto py-10 md:py-14">
+        <p className="text-xs font-semibold tracking-widest uppercase text-text-tertiary mb-3">
+          {dateLabel}
+        </p>
+        <h1 className="font-display text-3xl md:text-4xl font-semibold text-text-primary">
+          {userProfile ? t(greetingKey, { name: userProfile.name }) : t('home.welcome')}
+        </h1>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface rounded-lg border border-border p-5 shadow-card">
-          <div className="flex items-center gap-2 mb-4">
-            <CalendarCheckIcon size={18} className="text-primary" />
-            <h2 className="text-sm font-semibold text-text-primary">{t('home.today')}</h2>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-8">
+        <section>
+          <h2 className="text-xs font-semibold tracking-widest uppercase text-text-tertiary mb-3">
+            {t('home.today')}
+          </h2>
 
           {todayEvents.length === 0 ? (
-            <p className="text-sm text-text-secondary">{t('home.noEventsToday')}</p>
+            <div className="flex flex-col items-center justify-center py-10 text-text-tertiary">
+              <CalendarCheckIcon size={32} className="mb-2 opacity-50" />
+              <p className="text-sm text-center">{t('home.noEventsToday')}</p>
+            </div>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
               {todayEvents.map((ev) => (
-                <li key={ev.id} className="flex items-center gap-3 text-sm">
-                  <span className="font-medium text-text-primary w-12 shrink-0">{ev.time}</span>
-                  <span className="text-text-secondary truncate">
-                    {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
-                  </span>
-                </li>
+                <div
+                  key={ev.id}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-surface shadow-card hover:shadow-card-hover transition-shadow"
+                >
+                  <div className="shrink-0 w-11 h-11 rounded-lg bg-primary-tint text-primary flex items-center justify-center font-display font-semibold text-xs">
+                    {ev.time}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-text-primary truncate">
+                      {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
+                    </p>
+                    {ev.isPersonal && (
+                      <p className="text-xs text-text-tertiary">{t('calendar.personalEvent')}</p>
+                    )}
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
-        </div>
+        </section>
 
-        <div className="bg-surface rounded-lg border border-border p-5 shadow-card">
-          <div className="flex items-center gap-2 mb-4">
-            <FileTextIcon size={18} className="text-primary" />
-            <h2 className="text-sm font-semibold text-text-primary">{t('home.recentDocuments')}</h2>
-          </div>
+        <section>
+          <h2 className="text-xs font-semibold tracking-widest uppercase text-text-tertiary mb-3">
+            {t('home.recentDocuments')}
+          </h2>
 
           {recentDocuments.length === 0 ? (
-            <p className="text-sm text-text-secondary">{t('home.noRecentDocuments')}</p>
+            <div className="flex flex-col items-center justify-center py-10 text-text-tertiary">
+              <FileTextIcon size={32} className="mb-2 opacity-50" />
+              <p className="text-sm text-center">{t('home.noRecentDocuments')}</p>
+            </div>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
               {recentDocuments.map((doc) => (
-                <li key={doc.id} className="flex items-center justify-between text-sm gap-2">
-                  <div className="min-w-0">
-                    <p className="text-text-primary truncate">{doc.title}</p>
+                <button
+                  key={doc.id}
+                  onClick={() => handleDownload(doc)}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-surface shadow-card hover:shadow-card-hover transition-shadow text-left"
+                  title={doc.type === 'txt' ? t('home.downloadTxt') : t('home.downloadOriginal')}
+                >
+                  <div className="shrink-0 w-11 h-11 rounded-lg bg-secondary-tint text-secondary flex items-center justify-center">
+                    <FileTextIcon size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-text-primary truncate">{doc.title}</p>
                     <p className="text-xs text-text-tertiary">
                       {new Date(doc.updatedAt).toLocaleDateString('ru-RU')} · {doc.type.toUpperCase()}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleDownload(doc)}
-                    className="p-1.5 rounded text-text-secondary hover:bg-surface-hover shrink-0"
-                    title={doc.type === 'txt' ? t('home.downloadTxt') : t('home.downloadOriginal')}
-                  >
-                    {doc.type === 'txt' ? <PencilSimpleIcon size={14} /> : <DownloadSimpleIcon size={14} />}
-                  </button>
-                </li>
+                  <span className="shrink-0 text-text-tertiary">
+                    {doc.type === 'txt' ? <PencilSimpleIcon size={16} /> : <DownloadSimpleIcon size={16} />}
+                  </span>
+                </button>
               ))}
-            </ul>
+            </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

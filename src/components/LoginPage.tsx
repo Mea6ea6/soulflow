@@ -78,22 +78,25 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'var(--color-accent-gradient)' }}
+      style={{ backgroundColor: 'var(--color-bg)' }}
       data-theme="dawn"
     >
       <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <SparkleIcon size={28} weight="fill" className="text-primary" />
-          <span className="text-2xl font-display font-semibold text-text-primary">
+        <div className="flex flex-col items-center text-center mb-10">
+          <SparkleIcon size={32} weight="fill" className="text-primary mb-3" />
+          <span className="text-3xl font-display font-semibold text-text-primary">
             {t('brand.soulFlow')}
           </span>
         </div>
 
-        <div className="bg-surface rounded-lg border border-border p-6 shadow-card">
+        <div
+          className="bg-surface rounded-3xl p-7"
+          style={{ boxShadow: '0 1px 2px var(--color-shadow), 0 8px 24px var(--color-shadow-hover)' }}
+        >
           <h2 className="text-lg font-semibold text-text-primary mb-1">
             {mode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
           </h2>
-          <p className="text-sm text-text-secondary mb-5">
+          <p className="text-sm text-text-secondary mb-6">
             {mode === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
           </p>
 
@@ -109,7 +112,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder={t('auth.emailPlaceholder')}
                   />
                 </div>
@@ -132,7 +135,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="••••••••"
                 />
               </div>
@@ -149,7 +152,7 @@ export default function LoginPage() {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="••••••••"
                   />
                 </div>
@@ -157,7 +160,7 @@ export default function LoginPage() {
             )}
 
             {error && (
-              <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">
+              <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">
                 {error}
               </div>
             )}
@@ -165,7 +168,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn-lift w-full py-2.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="btn-lift w-full py-3 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors mt-1"
             >
               {isSubmitting ? t('auth.loading') : mode === 'login' ? t('auth.login') : t('auth.register')}
             </button>
@@ -178,7 +181,7 @@ export default function LoginPage() {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setError(null);
               }}
-              className="mt-4 text-sm text-primary hover:underline w-full text-center"
+              className="mt-5 text-sm text-primary hover:underline w-full text-center"
             >
               {mode === 'login' ? t('auth.noAccountYet') : t('auth.haveAccount')}
             </button>
@@ -188,7 +191,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleForgetAccount}
-              className="mt-3 text-sm text-text-tertiary hover:underline w-full text-center"
+              className="mt-4 text-sm text-text-tertiary hover:underline w-full text-center"
             >
               {t('auth.notMe')}
             </button>

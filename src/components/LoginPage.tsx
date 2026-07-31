@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SparkleIcon, LockIcon, EnvelopeSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
+import FloatingInput from '../components/FloatingInput';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -102,21 +103,13 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {showEmailField && (
-              <div>
-                <label className="text-sm font-medium text-text-secondary mb-1 block">
-                  {t('auth.email')}
-                </label>
-                <div className="relative">
-                  <EnvelopeSimpleIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder={t('auth.emailPlaceholder')}
-                  />
-                </div>
-              </div>
+              <FloatingInput
+                type="email"
+                label={t('auth.email')}
+                icon={<EnvelopeSimpleIcon size={16} />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             )}
 
             {mode === 'login' && storedEmail && (
@@ -125,38 +118,22 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div>
-              <label className="text-sm font-medium text-text-secondary mb-1 block">
-                {t('auth.masterPassword')}
-              </label>
-              <div className="relative">
-                <LockIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
+            <FloatingInput
+              type="password"
+              label={t('auth.masterPassword')}
+              icon={<LockIcon size={16} />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
             {mode === 'register' && (
-              <div>
-                <label className="text-sm font-medium text-text-secondary mb-1 block">
-                  {t('auth.confirmPassword')}
-                </label>
-                <div className="relative">
-                  <LockIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
+              <FloatingInput
+                type="password"
+                label={t('auth.confirmPassword')}
+                icon={<LockIcon size={16} />}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
             )}
 
             {error && (

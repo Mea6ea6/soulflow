@@ -14,6 +14,8 @@ import Avatar from './Avatar';
 import ModalShell from './ModalShell';
 import TextEditor from './TextEditor';
 import ImportDocumentModal from './ImportDocumentModal';
+import DateInput from './DateInput';
+import TimeInput from './TimeInput';
 
 interface ClientCardProps {
   client: Client;
@@ -31,6 +33,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   const [notes, setNotes] = useState(client.notes);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [newSessionDate, setNewSessionDate] = useState('');
+  const [newSessionTime, setNewSessionTime] = useState('');
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -47,12 +50,13 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   };
 
   const handleAddSession = async () => {
-    if (!masterKey || !newSessionDate) return;
+    if (!masterKey || !newSessionDate || !newSessionTime) return;
     await addCalendarEvent(
-      { date: newSessionDate, time: '00:00', clientId: client.id, title: '', note: '', isPersonal: false },
+      { date: newSessionDate, time: newSessionTime, clientId: client.id, title: '', note: '', isPersonal: false },
       masterKey
     );
     setNewSessionDate('');
+    setNewSessionTime('');
   };
 
   const handleDownloadDoc = (doc: Document) => {
@@ -122,23 +126,18 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                 ))}
               </ul>
             )}
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={newSessionDate}
-                onChange={(e) => setNewSessionDate(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+            <div className="flex flex-wrap items-end gap-2">
+              <DateInput value={newSessionDate} onChange={setNewSessionDate} />
+              <TimeInput value={newSessionTime} onChange={setNewSessionTime} />
               <button
                 onClick={handleAddSession}
-                disabled={!newSessionDate}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                disabled={!newSessionDate || !newSessionTime}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
               >
                 <PlusIcon size={14} />
                 {t('common.add')}
               </button>
             </div>
-            <p className="text-xs text-text-tertiary mt-1">{t('client.sessionTimeHint')}</p>
           </div>
 
           <div>

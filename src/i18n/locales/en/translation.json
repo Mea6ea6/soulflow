@@ -72,7 +72,6 @@
     "sessions": "Sessions",
     "noSessions": "No sessions yet — add the date of the first meeting below.",
     "noDocuments": "This client doesn't have any documents yet.",
-    "sessionTimeHint": "You can set the time later in Calendar.",
     "notes": "Notes",
     "notesPlaceholder": "Short client description...",
     "saveNotes": "Save notes",

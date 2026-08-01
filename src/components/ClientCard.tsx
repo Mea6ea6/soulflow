@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import type { Client, Document } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
-import { updateClient, useClientEvents, addCalendarEvent, useClientDocuments, deleteDocument } from '../hooks/useDB';
+import { updateClient, deleteClient, useClientEvents, addCalendarEvent, useClientDocuments, deleteDocument } from '../hooks/useDB';
 import { formatDateRu } from '../utils/date';
 import { downloadOriginalFile, downloadAsTxt, MIME_TYPES } from '../utils/fileExport';
 import Avatar from './Avatar';
@@ -16,6 +16,7 @@ import TextEditor from './TextEditor';
 import ImportDocumentModal from './ImportDocumentModal';
 import DateInput from './DateInput';
 import TimeInput from './TimeInput';
+import ConfirmDialog from './ConfirmDialog';
 
 interface ClientCardProps {
   client: Client;
@@ -37,6 +38,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const handleSaveNotes = async () => {
     if (!masterKey) return;
@@ -77,6 +79,13 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
     showToast('success', t('common.delete'));
   };
 
+  const handleDeleteClient = async () => {
+    await deleteClient(client.id);
+    showToast('success', t('common.delete'));
+    setIsConfirmingDelete(false);
+    onClose();
+  };
+
   const sortedEvents = [...(clientEvents ?? [])].sort((a, b) =>
     a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date)
   );
@@ -98,9 +107,16 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button onClick={onEdit} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.edit')}>
               <PencilSimpleIcon size={16} />
+            </button>
+            <button
+              onClick={() => setIsConfirmingDelete(true)}
+              className="p-2 rounded-md text-error hover:bg-error/10"
+              title={t('common.delete')}
+            >
+              <TrashIcon size={16} />
             </button>
           </div>
         </div>
@@ -146,13 +162,13 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               placeholder={t('client.notesPlaceholder')}
             />
             <button
               onClick={handleSaveNotes}
               disabled={isSavingNotes || notes === client.notes}
-              className="mt-2 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+              className="mt-2 px-3 py-1.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
             >
               {isSavingNotes ? t('common.saving') : t('client.saveNotes')}
             </button>
@@ -162,14 +178,14 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
             <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.documents')}</h3>
 
             {(!clientDocuments || clientDocuments.length === 0) ? (
-              <div className="text-sm text-text-secondary bg-surface-hover rounded-md p-4 flex flex-col items-center gap-2 mb-3">
+              <div className="text-sm text-text-secondary bg-surface-hover rounded-xl p-4 flex flex-col items-center gap-2 mb-3">
                 <FileTextIcon size={20} className="text-text-tertiary" />
                 <span>{t('client.noDocuments')}</span>
               </div>
             ) : (
               <ul className="flex flex-col gap-1.5 mb-3">
                 {clientDocuments.map((doc) => (
-                  <li key={doc.id} className="flex items-center justify-between text-sm bg-surface-hover rounded-md px-3 py-2">
+                  <li key={doc.id} className="flex items-center justify-between text-sm bg-surface-hover rounded-xl px-3 py-2">
                     <span className="truncate text-text-primary">{doc.title}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       {doc.type === 'txt' && (
@@ -192,14 +208,14 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
             <div className="flex gap-2">
               <button
                 onClick={() => setIsCreatingDoc(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
               >
                 <FilePlusIcon size={14} />
                 {t('client.createDocument')}
               </button>
               <button
                 onClick={() => setIsImporting(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
               >
                 <UploadSimpleIcon size={14} />
                 {t('client.importDocument')}
@@ -212,6 +228,14 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
       {editingDoc && <TextEditor document={editingDoc} clientId={client.id} onClose={() => setEditingDoc(null)} />}
       {isCreatingDoc && <TextEditor document={null} clientId={client.id} onClose={() => setIsCreatingDoc(false)} />}
       {isImporting && <ImportDocumentModal clientId={client.id} onClose={() => setIsImporting(false)} />}
+      {isConfirmingDelete && (
+        <ConfirmDialog
+          title={t('client.deleteConfirmTitle')}
+          message={t('client.deleteConfirmMessage', { name: client.name })}
+          onConfirm={handleDeleteClient}
+          onClose={() => setIsConfirmingDelete(false)}
+        />
+      )}
     </>
   );
 }

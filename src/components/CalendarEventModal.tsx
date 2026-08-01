@@ -9,6 +9,7 @@ import { formatDateRu } from '../utils/date';
 import ModalShell from './ModalShell';
 import TimeInput from './TimeInput';
 import Checkbox from './Checkbox';
+import Select from './Select';
 
 interface CalendarEventModalProps {
   date: string;
@@ -83,36 +84,34 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
       </div>
 
       <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
-        <TimeInput label={`${t('calendar.time')} *`} value={time} onChange={setTime} />
-
         <Checkbox checked={isPersonal} onChange={setIsPersonal} label={t('calendar.personalEvent')} />
 
-        {isPersonal ? (
-          <div>
-            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.title')} *</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder={t('calendar.titlePlaceholder')}
-            />
-          </div>
-        ) : (
-          <div>
-            <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.client')} *</label>
-            <select
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{t('calendar.clientPlaceholder')}</option>
-              {activeClients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div className="flex items-end gap-3">
+          <TimeInput label={`${t('calendar.time')} *`} value={time} onChange={setTime} />
+
+          {isPersonal ? (
+            <div className="flex-1">
+              <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.title')} *</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder={t('calendar.titlePlaceholder')}
+              />
+            </div>
+          ) : (
+            <div className="flex-1">
+              <Select
+                label={`${t('calendar.client')} *`}
+                value={clientId}
+                onChange={setClientId}
+                options={activeClients.map((c) => ({ value: c.id, label: c.name }))}
+                placeholder={t('calendar.clientPlaceholder')}
+              />
+            </div>
+          )}
+        </div>
 
         <div>
           <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.note')}</label>

@@ -20,65 +20,66 @@ export default function DateInput({ value, onChange, label }: DateInputProps) {
     onChange(dd.length === 2 && mm.length === 2 && yyyy.length === 4 ? `${yyyy}-${mm}-${dd}` : '');
   };
 
-  const makeDigitHandler = (
-    current: string,
-    setCurrent: (v: string) => void,
-    maxLen: number,
-    maxValue: number | null,
-    onFull: () => void,
-    onBackAtEmpty: () => void,
-    other: { day: string; month: string; year: string },
-  ) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleDayKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Tab') return;
     e.preventDefault();
 
     if (e.key === 'Backspace') {
-      if (current === '') {
-        onBackAtEmpty();
-        return;
-      }
-      const next = current.slice(0, -1);
-      setCurrent(next);
-      commit(
-        setCurrent === setDayStr ? next : other.day,
-        setCurrent === setMonthStr ? next : other.month,
-        setCurrent === setYearStr ? next : other.year
-      );
+      const next = dayStr.slice(0, -1);
+      setDayStr(next);
+      commit(next, monthStr, yearStr);
       return;
     }
     if (!/^[0-9]$/.test(e.key)) return;
 
-    const appended = (current + e.key).slice(-maxLen);
-    const isFull = appended.length === maxLen;
-    const clamped = maxValue && isFull ? String(Math.max(1, Math.min(maxValue, parseInt(appended, 10)))).padStart(maxLen, '0') : appended;
+    const appended = (dayStr + e.key).slice(-2);
+    const isFull = appended.length === 2;
+    const next = isFull ? String(Math.max(1, Math.min(31, parseInt(appended, 10)))).padStart(2, '0') : appended;
 
-    setCurrent(clamped);
-    commit(
-      setCurrent === setDayStr ? clamped : other.day,
-      setCurrent === setMonthStr ? clamped : other.month,
-      setCurrent === setYearStr ? clamped : other.year
-    );
-    if (isFull) onFull();
+    setDayStr(next);
+    commit(next, monthStr, yearStr);
+    if (isFull) monthRef.current?.focus();
   };
 
-  const handleDayKeyDown = makeDigitHandler(
-    dayStr, setDayStr, 2, 31,
-    () => monthRef.current?.focus(),
-    () => {},
-    { day: dayStr, month: monthStr, year: yearStr }
-  );
-  const handleMonthKeyDown = makeDigitHandler(
-    monthStr, setMonthStr, 2, 12,
-    () => yearRef.current?.focus(),
-    () => dayRef.current?.focus(),
-    { day: dayStr, month: monthStr, year: yearStr }
-  );
-  const handleYearKeyDown = makeDigitHandler(
-    yearStr, setYearStr, 4, null,
-    () => {},
-    () => monthRef.current?.focus(),
-    { day: dayStr, month: monthStr, year: yearStr }
-  );
+  const handleMonthKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Tab') return;
+    e.preventDefault();
+
+    if (e.key === 'Backspace') {
+      if (monthStr === '') { dayRef.current?.focus(); return; }
+      const next = monthStr.slice(0, -1);
+      setMonthStr(next);
+      commit(dayStr, next, yearStr);
+      return;
+    }
+    if (!/^[0-9]$/.test(e.key)) return;
+
+    const appended = (monthStr + e.key).slice(-2);
+    const isFull = appended.length === 2;
+    const next = isFull ? String(Math.max(1, Math.min(12, parseInt(appended, 10)))).padStart(2, '0') : appended;
+
+    setMonthStr(next);
+    commit(dayStr, next, yearStr);
+    if (isFull) yearRef.current?.focus();
+  };
+
+  const handleYearKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Tab') return;
+    e.preventDefault();
+
+    if (e.key === 'Backspace') {
+      if (yearStr === '') { monthRef.current?.focus(); return; }
+      const next = yearStr.slice(0, -1);
+      setYearStr(next);
+      commit(dayStr, monthStr, next);
+      return;
+    }
+    if (!/^[0-9]$/.test(e.key)) return;
+
+    const appended = (yearStr + e.key).slice(-4);
+    setYearStr(appended);
+    commit(dayStr, monthStr, appended);
+  };
 
   return (
     <div>

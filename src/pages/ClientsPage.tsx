@@ -51,7 +51,7 @@ export default function ClientsPage() {
         <h1 className="text-2xl font-display font-semibold text-text-primary">{t('clients.title')}</h1>
         <button
           onClick={handleAddClick}
-          className="btn-lift flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
+          className="btn-lift flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
         >
           <PlusIcon size={16} />
           {t('clients.addClient')}
@@ -65,7 +65,7 @@ export default function ClientsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('clients.searchPlaceholder')}
-          className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
@@ -73,8 +73,10 @@ export default function ClientsPage() {
 
       {clients && filteredClients.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
-          <UsersIcon size={48} className="mb-3 opacity-60" />
-          <p className="text-sm">{search ? t('clients.emptySearch') : t('clients.emptyState')}</p>
+          <div className="w-14 h-14 rounded-full bg-primary-tint text-primary flex items-center justify-center mb-3">
+            <UsersIcon size={24} />
+          </div>
+          <p className="text-sm text-center">{search ? t('clients.emptySearch') : t('clients.emptyState')}</p>
         </div>
       )}
 
@@ -84,7 +86,7 @@ export default function ClientsPage() {
             <button
               key={client.id}
               onClick={() => setSelectedClient(client)}
-              className="text-left p-4 rounded-lg border border-border bg-surface shadow-card hover:shadow-card-hover transition-shadow flex items-center gap-3"
+              className="text-left p-4 rounded-2xl bg-surface shadow-card hover:shadow-card-hover transition-shadow flex items-center gap-3"
             >
               <Avatar name={client.name} size={40} />
               <div className="min-w-0 flex-1">

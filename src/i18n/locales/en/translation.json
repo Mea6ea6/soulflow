@@ -90,7 +90,9 @@
     "status": {
       "label": "Status"
     },
-    "saveFailed": "Could not save client"
+    "saveFailed": "Could not save client",
+    "deleteConfirmTitle": "Delete client?",
+    "deleteConfirmMessage": "\"{{name}}\" and all related data (documents, calendar entries) will be permanently deleted."
   },
   "calendar": {
     "today": "Today",

@@ -141,7 +141,7 @@ export default function WeekCalendarView() {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[720px] border border-border rounded-xl overflow-hidden bg-surface shadow-card">
+        <div className="min-w-180 border border-border rounded-xl overflow-hidden bg-surface shadow-card">
           <div className="flex border-b border-border">
             <div className="w-14 shrink-0" />
             {weekDays.map((date, i) => {

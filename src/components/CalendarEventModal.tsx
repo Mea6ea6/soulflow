@@ -7,6 +7,8 @@ import { useToast } from '../hooks/useToastHook';
 import { useClients, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '../hooks/useDB';
 import { formatDateRu } from '../utils/date';
 import ModalShell from './ModalShell';
+import TimeInput from './TimeInput';
+import Checkbox from './Checkbox';
 
 interface CalendarEventModalProps {
   date: string;
@@ -81,20 +83,9 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
       </div>
 
       <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
-        <div>
-          <label className="text-sm font-medium text-text-secondary mb-1 block">{t('calendar.time')} *</label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
+        <TimeInput label={`${t('calendar.time')} *`} value={time} onChange={setTime} />
 
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <input type="checkbox" checked={isPersonal} onChange={(e) => setIsPersonal(e.target.checked)} className="rounded border-border" />
-          {t('calendar.personalEvent')}
-        </label>
+        <Checkbox checked={isPersonal} onChange={setIsPersonal} label={t('calendar.personalEvent')} />
 
         {isPersonal ? (
           <div>
@@ -103,7 +94,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder={t('calendar.titlePlaceholder')}
             />
           </div>
@@ -113,7 +104,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
             <select
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">{t('calendar.clientPlaceholder')}</option>
               {activeClients.map((c) => (
@@ -129,18 +120,18 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
-        {error && <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>}
+        {error && <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">{error}</div>}
 
         <div className="flex gap-3 pt-2">
           {event && (
             <button
               type="button"
               onClick={handleDelete}
-              className="px-3 py-2 rounded-md border border-error/30 text-error hover:bg-error/10 transition-colors"
+              className="px-3 py-2 rounded-full border border-error/30 text-error hover:bg-error/10 transition-colors"
               title={t('common.delete')}
             >
               <TrashIcon size={16} />
@@ -149,14 +140,14 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
+            className="flex-1 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
           >
             {t('common.cancel')}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-lift flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+            className="btn-lift flex-1 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
           >
             {isSubmitting ? t('common.saving') : t('common.save')}
           </button>

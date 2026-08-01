@@ -30,6 +30,11 @@
     "confirmDeleteEvent": "Удалить это событие?"
   },
   "home": {
+    "stats": {
+      "activeClients": "Активных клиентов",
+      "documents": "Документов",
+      "upcomingEvents": "Встреч на неделю"
+    },
     "welcome": "Добро пожаловать в SoulFlow!",
     "welcomeWithName": "Добро пожаловать в SoulFlow, {{name}}!",
     "greetingMorning1": "Доброе утро, {{name}}!",
@@ -114,7 +119,9 @@
     "titlePlaceholder": "Встреча с коллегой",
     "client": "Клиент",
     "clientPlaceholder": "Выберите клиента",
-    "note": "Заметка"
+    "note": "Заметка",
+    "viewMonth": "Месяц",
+    "viewWeek": "Неделя"
   },
   "documents": {
     "title": "Документы",

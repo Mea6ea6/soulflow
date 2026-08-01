@@ -22,6 +22,7 @@
   --color-primary-tint: rgba(226, 99, 47, 0.12);
   --color-secondary: #9C7414;
   --color-secondary-tint: rgba(226, 165, 47, 0.16);
+  --color-accent-gradient: linear-gradient(135deg, #E2632F 0%, #E2A52F 100%);
 
   --color-success: #227A49;
   --color-error: #D0402A;
@@ -46,6 +47,7 @@
   --color-primary-tint: rgba(255, 122, 71, 0.16);
   --color-secondary: #F0B429;
   --color-secondary-tint: rgba(255, 189, 71, 0.20);
+  --color-accent-gradient: linear-gradient(135deg, #FF7A47 0%, #F0B429 100%);
 
   --color-success: #4AC985;
   --color-error: #FF8066;

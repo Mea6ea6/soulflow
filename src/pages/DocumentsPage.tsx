@@ -9,6 +9,7 @@ import { downloadAsTxt, downloadOriginalFile, MIME_TYPES } from '../utils/fileEx
 import TextEditor from '../components/TextEditor';
 import ImportDocumentModal from '../components/ImportDocumentModal';
 import DocumentTargetModal, { type DocumentTarget } from '../components/DocumentTargetModal';
+import Select from '../components/Select';
 
 type SortOrder = 'newest' | 'oldest';
 type ScopeFilter = 'all' | 'client' | 'personal';
@@ -23,7 +24,7 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<DocumentType | 'all'>('all');
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
-  const [clientFilter, setClientFilter] = useState<string | 'all'>('all');
+  const [clientFilter, setClientFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [creatingStep, setCreatingStep] = useState<'choose' | 'editor' | null>(null);
@@ -76,14 +77,14 @@ export default function DocumentsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCreatingStep('choose')}
-            className="btn-lift flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
+            className="btn-lift flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
           >
             <PlusIcon size={16} />
             {t('documents.create')}
           </button>
           <button
             onClick={() => setImportingStep('choose')}
-            className="flex items-center gap-2 px-4 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
           >
             <UploadSimpleIcon size={16} />
             {t('documents.import')}
@@ -92,42 +93,61 @@ export default function DocumentsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-50">
           <MagnifyingGlassIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('documents.searchPlaceholder')}
-            className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
-        <select value={scopeFilter} onChange={(e) => setScopeFilter(e.target.value as ScopeFilter)} className="px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary">
-          <option value="all">{t('documents.scope.all')}</option>
-          <option value="client">{t('documents.scope.client')}</option>
-          <option value="personal">{t('documents.scope.personal')}</option>
-        </select>
+        <div className="w-44">
+          <Select
+            value={scopeFilter}
+            onChange={(v) => setScopeFilter(v as ScopeFilter)}
+            options={[
+              { value: 'all', label: t('documents.scope.all') },
+              { value: 'client', label: t('documents.scope.client') },
+              { value: 'personal', label: t('documents.scope.personal') },
+            ]}
+            placeholder={t('documents.scope.all')}
+          />
+        </div>
 
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as DocumentType | 'all')} className="px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary">
-          <option value="all">{t('documents.type.all')}</option>
-          <option value="txt">{t('documents.type.txt')}</option>
-          <option value="pdf">{t('documents.type.pdf')}</option>
-          <option value="docx">{t('documents.type.docx')}</option>
-        </select>
+        <div className="w-36">
+          <Select
+            value={typeFilter}
+            onChange={(v) => setTypeFilter(v as DocumentType | 'all')}
+            options={[
+              { value: 'all', label: t('documents.type.all') },
+              { value: 'txt', label: t('documents.type.txt') },
+              { value: 'pdf', label: t('documents.type.pdf') },
+              { value: 'docx', label: t('documents.type.docx') },
+            ]}
+            placeholder={t('documents.type.all')}
+          />
+        </div>
 
         {scopeFilter !== 'personal' && (
-          <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary">
-            <option value="all">{t('documents.clientFilter.all')}</option>
-            {(clients ?? []).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <div className="w-48">
+            <Select
+              value={clientFilter}
+              onChange={setClientFilter}
+              options={[
+                { value: 'all', label: t('documents.clientFilter.all') },
+                ...(clients ?? []).map((c) => ({ value: c.id, label: c.name })),
+              ]}
+              placeholder={t('documents.clientFilter.all')}
+            />
+          </div>
         )}
 
         <button
           onClick={() => setSortOrder((o) => (o === 'newest' ? 'oldest' : 'newest'))}
-          className="flex items-center gap-2 px-3 py-2 rounded-md border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
         >
           <ArrowsDownUpIcon size={14} />
           {sortOrder === 'newest' ? t('documents.sort.newest') : t('documents.sort.oldest')}
@@ -138,15 +158,17 @@ export default function DocumentsPage() {
 
       {allDocuments && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
-          <FileTextIcon size={48} className="mb-3 opacity-60" />
-          <p className="text-sm">{t('documents.empty')}</p>
+          <div className="w-14 h-14 rounded-full bg-secondary-tint text-secondary flex items-center justify-center mb-3">
+            <FileTextIcon size={24} />
+          </div>
+          <p className="text-sm text-center">{t('documents.empty')}</p>
         </div>
       )}
 
       {filtered.length > 0 && (
         <div className="flex flex-col gap-2">
           {filtered.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface">
+            <div key={doc.id} className="flex items-center justify-between p-3 rounded-2xl bg-surface shadow-card">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface-hover text-text-tertiary uppercase">
                   {doc.type}
@@ -185,6 +207,7 @@ export default function DocumentsPage() {
       {creatingStep === 'choose' && (
         <DocumentTargetModal
           title={t('documents.newTitle')}
+          icon="create"
           onClose={() => setCreatingStep(null)}
           onConfirm={(target) => { setPendingTarget(target); setCreatingStep('editor'); }}
         />
@@ -201,6 +224,7 @@ export default function DocumentsPage() {
       {importingStep === 'choose' && (
         <DocumentTargetModal
           title={t('documents.importTitle')}
+          icon="import"
           onClose={() => setImportingStep(null)}
           onConfirm={(target) => { setPendingTarget(target); setImportingStep('import'); }}
         />

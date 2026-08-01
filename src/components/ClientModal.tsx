@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { addClient, updateClient } from '../hooks/useDB';
 import ModalShell from './ModalShell';
+import Select from './Select';
 
 interface ClientModalProps {
   client: Client | null;
@@ -73,7 +74,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder={t('client.fullNamePlaceholder')}
           />
         </div>
@@ -86,7 +87,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder={t('client.phonePlaceholder')}
           />
         </div>
@@ -99,7 +100,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder={t('client.emailPlaceholder')}
           />
         </div>
@@ -112,40 +113,37 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
             type="text"
             value={workPlace}
             onChange={(e) => setWorkPlace(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-text-secondary mb-1 block">
-            {t('client.status.label')}
-          </label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as ClientStatus)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="active">{t('clients.status.active')}</option>
-            <option value="archived">{t('clients.status.archived')}</option>
-          </select>
-        </div>
+        <Select
+          label={t('client.status.label')}
+          value={status}
+          onChange={(v) => setStatus(v as ClientStatus)}
+          options={[
+            { value: 'active', label: t('clients.status.active') },
+            { value: 'archived', label: t('clients.status.archived') },
+          ]}
+          placeholder={t('client.status.label')}
+        />
 
         {error && (
-          <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>
+          <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">{error}</div>
         )}
 
         <div className="flex gap-3 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
+            className="flex-1 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
           >
             {t('common.cancel')}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-lift flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+            className="btn-lift flex-1 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
           >
             {isSubmitting ? t('common.saving') : t('common.save')}
           </button>

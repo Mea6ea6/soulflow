@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   PencilSimpleIcon, PlusIcon, FileTextIcon, FilePlusIcon,
   UploadSimpleIcon, DownloadSimpleIcon, TrashIcon,
@@ -8,7 +8,7 @@ import type { Client, Document } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { updateClient, deleteClient, useClientEvents, addCalendarEvent, useClientDocuments, deleteDocument } from '../hooks/useDB';
-import { formatDateRu } from '../utils/date';
+import { formatDateRu, toYMD } from '../utils/date';
 import { downloadOriginalFile, downloadAsTxt, MIME_TYPES } from '../utils/fileExport';
 import Avatar from './Avatar';
 import ModalShell from './ModalShell';
@@ -23,6 +23,8 @@ interface ClientCardProps {
   onClose: () => void;
   onEdit: () => void;
 }
+
+type SessionsView = 'upcoming' | 'completed';
 
 export default function ClientCard({ client, onClose, onEdit }: ClientCardProps) {
   const { t } = useTranslation();
@@ -39,6 +41,8 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [sessionsView, setSessionsView] = useState<SessionsView>('upcoming');
+  const [todayYMD] = useState(() => toYMD(new Date()));
 
   const handleSaveNotes = async () => {
     if (!masterKey) return;
@@ -86,9 +90,17 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
     onClose();
   };
 
-  const sortedEvents = [...(clientEvents ?? [])].sort((a, b) =>
-    a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date)
-  );
+  const { upcomingEvents, completedEvents } = useMemo(() => {
+    const sorted = [...(clientEvents ?? [])].sort((a, b) =>
+      a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date)
+    );
+    return {
+      upcomingEvents: sorted.filter((ev) => ev.date >= todayYMD),
+      completedEvents: sorted.filter((ev) => ev.date < todayYMD).reverse(),
+    };
+  }, [clientEvents, todayYMD]);
+
+  const visibleEvents = sessionsView === 'upcoming' ? upcomingEvents : completedEvents;
 
   return (
     <>
@@ -129,19 +141,33 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-text-primary mb-2">{t('client.sessions')}</h3>
-            {sortedEvents.length === 0 ? (
-              <p className="text-sm text-text-secondary mb-3">{t('client.noSessions')}</p>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-text-primary">{t('client.sessions')}</h3>
+              <button
+                onClick={() => setSessionsView((v) => (v === 'upcoming' ? 'completed' : 'upcoming'))}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                {sessionsView === 'upcoming'
+                  ? t('client.showCompletedSessions', { count: completedEvents.length })
+                  : t('client.showUpcomingSessions', { count: upcomingEvents.length })}
+              </button>
+            </div>
+
+            {visibleEvents.length === 0 ? (
+              <p className="text-sm text-text-secondary mb-3">
+                {sessionsView === 'upcoming' ? t('client.noSessions') : t('client.noCompletedSessions')}
+              </p>
             ) : (
-              <ul className="flex flex-col gap-1 mb-3">
-                {sortedEvents.map((ev) => (
-                  <li key={ev.id} className="text-sm text-text-secondary bg-surface-hover rounded-md px-3 py-1.5 flex justify-between">
+              <ul className="flex flex-col gap-1 mb-3 max-h-48 overflow-y-auto pr-1">
+                {visibleEvents.map((ev) => (
+                  <li key={ev.id} className="text-sm text-text-secondary bg-surface-hover rounded-md px-3 py-1.5 flex justify-between shrink-0">
                     <span>{formatDateRu(ev.date)}</span>
                     <span className="text-text-tertiary">{ev.time}</span>
                   </li>
                 ))}
               </ul>
             )}
+
             <div className="flex flex-wrap items-end gap-2">
               <DateInput value={newSessionDate} onChange={setNewSessionDate} />
               <TimeInput value={newSessionTime} onChange={setNewSessionTime} />

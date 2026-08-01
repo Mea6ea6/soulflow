@@ -92,7 +92,10 @@
     },
     "saveFailed": "Could not save client",
     "deleteConfirmTitle": "Delete client?",
-    "deleteConfirmMessage": "\"{{name}}\" and all related data (documents, calendar entries) will be permanently deleted."
+    "deleteConfirmMessage": "\"{{name}}\" and all related data (documents, calendar entries) will be permanently deleted.",
+    "showCompletedSessions": "Completed ({{count}})",
+    "showUpcomingSessions": "Upcoming ({{count}})",
+    "noCompletedSessions": "No completed sessions yet."
   },
   "calendar": {
     "today": "Today",

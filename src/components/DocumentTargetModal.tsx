@@ -1,8 +1,11 @@
+import { FilePlusIcon, UploadSimpleIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useClients } from '../hooks/useDB';
 import ModalShell from './ModalShell';
+import Radio from './Radio';
+import Select from './Select';
 
 export interface DocumentTarget {
   clientId: string | null;
@@ -11,11 +14,12 @@ export interface DocumentTarget {
 
 interface DocumentTargetModalProps {
   title: string;
+  icon: 'create' | 'import';
   onConfirm: (target: DocumentTarget) => void;
   onClose: () => void;
 }
 
-export default function DocumentTargetModal({ title, onConfirm, onClose }: DocumentTargetModalProps) {
+export default function DocumentTargetModal({ title, icon, onConfirm, onClose }: DocumentTargetModalProps) {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
   const clients = useClients(masterKey);
@@ -33,41 +37,37 @@ export default function DocumentTargetModal({ title, onConfirm, onClose }: Docum
     }
   };
 
+  const Icon = icon === 'create' ? FilePlusIcon : UploadSimpleIcon;
+  const iconColorClass = icon === 'create' ? 'bg-primary-tint text-primary' : 'bg-secondary-tint text-secondary';
+
   return (
     <ModalShell onClose={onClose} maxWidth="max-w-sm">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="flex flex-col items-center text-center px-5 pt-6 pb-4 border-b border-border">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${iconColorClass}`}>
+          <Icon size={22} />
+        </div>
         <h2 className="text-base font-semibold text-text-primary">{title}</h2>
       </div>
 
       <div className="p-5 flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-2 text-sm text-text-secondary">
-            <input type="radio" checked={mode === 'personal'} onChange={() => setMode('personal')} />
-            {t('documentTarget.personal')}
-          </label>
-          <label className="flex items-center gap-2 text-sm text-text-secondary">
-            <input type="radio" checked={mode === 'client'} onChange={() => setMode('client')} />
-            {t('documentTarget.client')}
-          </label>
+          <Radio checked={mode === 'personal'} onChange={() => setMode('personal')} label={t('documentTarget.personal')} />
+          <Radio checked={mode === 'client'} onChange={() => setMode('client')} label={t('documentTarget.client')} />
         </div>
 
         {mode === 'client' && (
-          <select
+          <Select
             value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">{t('documentTarget.selectClient')}</option>
-            {activeClients.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            onChange={setClientId}
+            options={activeClients.map((c) => ({ value: c.id, label: c.name }))}
+            placeholder={t('documentTarget.selectClient')}
+          />
         )}
 
         <button
           onClick={handleConfirm}
           disabled={mode === 'client' && !clientId}
-          className="btn-lift w-full py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+          className="btn-lift w-full py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
         >
           {t('common.continue')}
         </button>

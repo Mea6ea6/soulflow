@@ -78,7 +78,10 @@ export default function ImportDocumentModal({ clientId, isPersonal = false, onCl
 
   return (
     <ModalShell onClose={onClose} maxWidth="max-w-md">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="flex flex-col items-center text-center px-5 pt-6 pb-4 border-b border-border">
+        <div className="w-12 h-12 rounded-full bg-secondary-tint text-secondary flex items-center justify-center mb-3">
+          <UploadSimpleIcon size={22} />
+        </div>
         <h2 className="text-base font-semibold text-text-primary">{t('import.title')}</h2>
       </div>
 
@@ -88,7 +91,7 @@ export default function ImportDocumentModal({ clientId, isPersonal = false, onCl
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
           >
             <UploadSimpleIcon size={16} />
             {file ? file.name : t('import.chooseFile')}
@@ -103,17 +106,17 @@ export default function ImportDocumentModal({ clientId, isPersonal = false, onCl
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('import.titlePlaceholder')}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
-        {error && <div className="text-sm text-error bg-error/10 rounded-md px-3 py-2">{error}</div>}
+        {error && <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">{error}</div>}
 
         <div className="flex gap-3 pt-2">
-          <button type="button" onClick={onClose} className="flex-1 py-2 rounded-md border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors">
+          <button type="button" onClick={onClose} className="flex-1 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors">
             {t('common.cancel')}
           </button>
-          <button type="submit" disabled={isSubmitting} className="btn-lift flex-1 py-2 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors">
+          <button type="submit" disabled={isSubmitting} className="btn-lift flex-1 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors">
             {isSubmitting ? t('common.importing') : t('common.import')}
           </button>
         </div>

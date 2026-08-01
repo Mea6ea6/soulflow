@@ -191,7 +191,10 @@
       "fileRequired": "Choose a file",
       "unsupportedType": "Only TXT, PDF and DOCX files are supported"
     },
-    "failed": "Could not import the file"
+    "failed": "Could not import the file",
+    "discardConfirmTitle": "Discard changes?",
+    "discardConfirmMessage": "Unsaved changes to this document will be lost.",
+    "discardConfirm": "Discard"
   },
   "auth": {
     "login": "Log in",

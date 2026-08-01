@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrashIcon } from '@phosphor-icons/react';
+import { TrashIcon, CalendarBlankIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { CalendarEvent } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
@@ -74,13 +74,14 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
 
   return (
     <ModalShell onClose={onClose} maxWidth="max-w-md">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <div>
-          <h2 className="text-base font-semibold text-text-primary">
-            {event ? t('calendar.editTitle') : t('calendar.newTitle')}
-          </h2>
-          <p className="text-xs text-text-tertiary mt-0.5">{formatDateRu(date)}</p>
+      <div className="flex flex-col items-center text-center px-5 pt-6 pb-4 border-b border-border">
+        <div className="w-12 h-12 rounded-full bg-primary-tint text-primary flex items-center justify-center mb-3">
+          <CalendarBlankIcon size={22} />
         </div>
+        <h2 className="text-base font-semibold text-text-primary">
+          {event ? t('calendar.editTitle') : t('calendar.newTitle')}
+        </h2>
+        <p className="text-xs text-text-tertiary mt-0.5">{formatDateRu(date)}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">

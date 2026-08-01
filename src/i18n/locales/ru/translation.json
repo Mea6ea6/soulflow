@@ -179,7 +179,10 @@
     "export": "Экспорт",
     "exportTxt": "Скачать как TXT",
     "exportPdf": "Скачать как PDF",
-    "exportDocx": "Скачать как DOCX"
+    "exportDocx": "Скачать как DOCX",
+    "discardConfirmTitle": "Закрыть без сохранения?",
+    "discardConfirmMessage": "Несохранённые изменения в документе будут потеряны.",
+    "discardConfirm": "Не сохранять"
   },
   "import": {
     "title": "Импортировать документ",

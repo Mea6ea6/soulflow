@@ -35,7 +35,7 @@ function ToolbarButton({ onClick, active, children, title }: { onClick: () => vo
       onClick={onClick}
       title={title}
       className={`p-1.5 rounded-md transition-colors ${
-        active ? 'bg-[var(--editor-active)] text-[var(--editor-primary)]' : 'text-[var(--editor-text-secondary)] hover:bg-[var(--editor-hover)]'
+        active ? 'bg-(--editor-active) text-(--editor-primary)' : 'text-(--editor-text-secondary) hover:bg-(--editor-hover)'
       }`}
     >
       {children}
@@ -152,24 +152,24 @@ function DocumentEditorPanel({ target, editorTheme, onToggleTheme, onRequestClos
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <div className="flex items-center justify-between px-6 py-3 border-b border-[var(--editor-border)] gap-3 shrink-0">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-(--editor-border) gap-3 shrink-0">
         <input
           type="text"
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
           disabled={isReadonly}
           placeholder={t('textEditor.titlePlaceholder')}
-          className="flex-1 text-lg font-semibold bg-transparent focus:outline-none disabled:opacity-70 placeholder:text-[var(--editor-text-secondary)]"
+          className="flex-1 text-lg font-semibold bg-transparent focus:outline-none disabled:opacity-70 placeholder:text-(--editor-text-secondary)"
         />
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={onToggleTheme}
-            className="p-2 rounded-md hover:bg-[var(--editor-hover)] text-[var(--editor-text-secondary)]"
+            className="p-2 rounded-md hover:bg-(--editor-hover) text-(--editor-text-secondary)"
             title={editorTheme === 'light' ? t('documentEditor.darkTheme') : t('documentEditor.lightTheme')}
           >
             {editorTheme === 'light' ? <MoonIcon size={16} /> : <SunIcon size={16} />}
           </button>
-          <button onClick={onRequestClose} className="p-2 rounded-md hover:bg-[var(--editor-hover)] text-[var(--editor-text-secondary)]" title={t('common.close')}>
+          <button onClick={onRequestClose} className="p-2 rounded-md hover:bg-(--editor-hover) text-(--editor-text-secondary)" title={t('common.close')}>
             <XIcon size={18} />
           </button>
         </div>
@@ -182,7 +182,7 @@ function DocumentEditorPanel({ target, editorTheme, onToggleTheme, onRequestClos
       )}
 
       {!isReadonly && (
-        <div className="flex items-center gap-1 px-6 py-2 border-b border-[var(--editor-border)] shrink-0">
+        <div className="flex items-center gap-1 px-6 py-2 border-b border-(--editor-border) shrink-0">
           <ToolbarButton title={t('textEditor.toolbar.bold')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
             <TextBolderIcon size={16} />
           </ToolbarButton>
@@ -192,7 +192,7 @@ function DocumentEditorPanel({ target, editorTheme, onToggleTheme, onRequestClos
           <ToolbarButton title={t('textEditor.toolbar.underline')} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
             <TextUnderlineIcon size={16} />
           </ToolbarButton>
-          <div className="w-px h-5 bg-[var(--editor-border)] mx-1" />
+          <div className="w-px h-5 bg-(--editor-border) mx-1" />
           <ToolbarButton title={t('textEditor.toolbar.heading1')} active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
             <TextHOneIcon size={16} />
           </ToolbarButton>
@@ -202,7 +202,7 @@ function DocumentEditorPanel({ target, editorTheme, onToggleTheme, onRequestClos
           <ToolbarButton title={t('textEditor.toolbar.heading3')} active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
             <TextHThreeIcon size={16} />
           </ToolbarButton>
-          <div className="w-px h-5 bg-[var(--editor-border)] mx-1" />
+          <div className="w-px h-5 bg-(--editor-border) mx-1" />
           <ToolbarButton title={t('textEditor.toolbar.bulletList')} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
             <ListBulletsIcon size={16} />
           </ToolbarButton>
@@ -223,25 +223,25 @@ function DocumentEditorPanel({ target, editorTheme, onToggleTheme, onRequestClos
         <div className="mx-6 mb-2 text-sm text-error bg-error/10 rounded-xl px-3 py-2 shrink-0">{error}</div>
       )}
 
-      <div className="flex items-center justify-between px-6 py-3 border-t border-[var(--editor-border)] shrink-0">
+      <div className="flex items-center justify-between px-6 py-3 border-t border-(--editor-border) shrink-0">
         <div className="relative">
           <button
             type="button"
             onClick={() => (isReadonly ? handleDownloadOriginal() : setIsExportMenuOpen((v) => !v))}
-            className="flex items-center gap-2 px-3 py-2 rounded-full border border-[var(--editor-border)] text-sm font-medium text-[var(--editor-text-secondary)] hover:bg-[var(--editor-hover)] transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-full border border-(--editor-border) text-sm font-medium text-(--editor-text-secondary) hover:bg-(--editor-hover) transition-colors"
           >
             <DownloadSimpleIcon size={16} />
             {t('textEditor.export')}
           </button>
           {!isReadonly && isExportMenuOpen && (
-            <div className="absolute bottom-full mb-2 left-0 w-44 bg-[var(--editor-surface)] border border-[var(--editor-border)] rounded-xl shadow-card-hover overflow-hidden p-1">
-              <button onClick={() => handleExport('txt')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[var(--editor-hover)]">
+            <div className="absolute bottom-full mb-2 left-0 w-44 bg-(--editor-surface) border border-(--editor-border) rounded-xl shadow-card-hover overflow-hidden p-1">
+              <button onClick={() => handleExport('txt')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-(--editor-hover)">
                 {t('textEditor.exportTxt')}
               </button>
-              <button onClick={() => handleExport('pdf')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[var(--editor-hover)]">
+              <button onClick={() => handleExport('pdf')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-(--editor-hover)">
                 {t('textEditor.exportPdf')}
               </button>
-              <button onClick={() => handleExport('docx')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[var(--editor-hover)]">
+              <button onClick={() => handleExport('docx')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-(--editor-hover)">
                 {t('textEditor.exportDocx')}
               </button>
             </div>
@@ -336,14 +336,14 @@ export default function DocumentEditorPage({ initialTarget, onClose }: DocumentE
   return (
     <div
       data-editor-theme={editorTheme}
-      className="fixed inset-0 z-[60] flex bg-[var(--editor-bg)] text-[var(--editor-text-primary)]"
+      className="fixed inset-0 z-60 flex bg-(--editor-bg) text-(--editor-text-primary)"
     >
-      <div className="w-72 shrink-0 border-r border-[var(--editor-border)] bg-[var(--editor-sidebar-bg)] flex flex-col">
+      <div className="w-72 shrink-0 border-r border-(--editor-border) bg-(--editor-sidebar-bg) flex flex-col">
         <div className="p-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t('documentEditor.title')}</h2>
           <button
             onClick={() => setIsCreatingNew(true)}
-            className="p-1.5 rounded-md hover:bg-[var(--editor-hover)]"
+            className="p-1.5 rounded-md hover:bg-(--editor-hover)"
             title={t('documentEditor.newDocument')}
           >
             <PlusIcon size={16} />
@@ -352,19 +352,19 @@ export default function DocumentEditorPage({ initialTarget, onClose }: DocumentE
 
         <div className="px-4 pb-3 flex flex-col gap-2">
           <div className="relative">
-            <MagnifyingGlassIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--editor-text-secondary)]" />
+            <MagnifyingGlassIcon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-(--editor-text-secondary)" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('documentEditor.searchPlaceholder')}
-              className="w-full pl-8 pr-2 py-1.5 rounded-md border border-[var(--editor-border)] bg-[var(--editor-bg)] text-xs text-[var(--editor-text-primary)] focus:outline-none"
+              className="w-full pl-8 pr-2 py-1.5 rounded-md border border-(--editor-border) bg-(--editor-bg) text-xs text-(--editor-text-primary) focus:outline-none"
             />
           </div>
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-            className="w-full px-2 py-1.5 rounded-md border border-[var(--editor-border)] bg-[var(--editor-bg)] text-xs text-[var(--editor-text-primary)] focus:outline-none"
+            className="w-full px-2 py-1.5 rounded-md border border-(--editor-border) bg-(--editor-bg) text-xs text-(--editor-text-primary) focus:outline-none"
           >
             <option value="newest">{t('documentEditor.sortNewest')}</option>
             <option value="oldest">{t('documentEditor.sortOldest')}</option>
@@ -374,7 +374,7 @@ export default function DocumentEditorPage({ initialTarget, onClose }: DocumentE
 
         <div className="flex-1 overflow-y-auto px-2 pb-4">
           {sidebarDocs.length === 0 && (
-            <p className="text-xs text-[var(--editor-text-secondary)] text-center py-8">{t('documentEditor.empty')}</p>
+            <p className="text-xs text-(--editor-text-secondary) text-center py-8">{t('documentEditor.empty')}</p>
           )}
           {sidebarDocs.map((doc) => {
             const isActive = activeTarget.document?.id === doc.id;
@@ -383,14 +383,14 @@ export default function DocumentEditorPage({ initialTarget, onClose }: DocumentE
                 key={doc.id}
                 onClick={() => handleSelectDoc(doc)}
                 className={`w-full text-left px-3 py-2 rounded-md mb-0.5 transition-colors ${
-                  isActive ? 'bg-[var(--editor-active)]' : 'hover:bg-[var(--editor-hover)]'
+                  isActive ? 'bg-(--editor-active)' : 'hover:bg-(--editor-hover)'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <FileTextIcon size={13} className="shrink-0 text-[var(--editor-text-secondary)]" />
+                  <FileTextIcon size={13} className="shrink-0 text-(--editor-text-secondary)" />
                   <p className="text-xs font-medium truncate">{doc.title}</p>
                 </div>
-                <p className="text-[10px] text-[var(--editor-text-secondary)] pl-5 truncate">
+                <p className="text-[10px] text-(--editor-text-secondary) pl-5 truncate">
                   {doc.isPersonal ? t('documentEditor.personalLabel') : clientNameById.get(doc.clientId ?? '') ?? t('common.dash')}
                   {' · '}
                   {new Date(doc.updatedAt).toLocaleDateString('ru-RU')}

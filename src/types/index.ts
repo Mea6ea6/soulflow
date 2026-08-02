@@ -34,6 +34,7 @@ export interface Document {
   isPersonal: boolean;
   createdAt: string;
   updatedAt: string;
+  origin?: 'created' | 'imported';
 }
 
 export interface CalendarEvent {

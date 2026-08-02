@@ -54,6 +54,7 @@ export default function ImportDocumentModal({ clientId, isPersonal = false, onCl
             content: JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: text ? [{ type: 'text', text }] : [] }] }),
             clientId: isPersonal ? null : clientId,
             isPersonal,
+            origin: 'imported',
           },
           masterKey
         );
@@ -62,7 +63,7 @@ export default function ImportDocumentModal({ clientId, isPersonal = false, onCl
         const originalFileBase64 = await fileToBase64(file);
 
         await addDocument(
-          { title: finalTitle, type, content: extractedText, originalFileBase64, clientId: isPersonal ? null : clientId, isPersonal },
+          { title: finalTitle, type, content: extractedText, originalFileBase64, clientId: isPersonal ? null : clientId, isPersonal, origin: 'imported' },
           masterKey
         );
       }

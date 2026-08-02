@@ -135,7 +135,8 @@
     "scope": {
       "all": "Все документы",
       "client": "Клиентские",
-      "personal": "Личные"
+      "personal": "Личные",
+      "imported": "Импортированные"
     },
     "type": {
       "all": "Все типы",
@@ -154,7 +155,8 @@
     "personalLabel": "Личный",
     "confirmDelete": "Удалить документ \"{{title}}\"?",
     "newTitle": "Новый документ",
-    "importTitle": "Импортировать документ"
+    "importTitle": "Импортировать документ",
+    "badgeNote": "NOTE"
   },
   "profile": {
     "title": "Профиль",
@@ -194,7 +196,12 @@
     "empty": "Ничего не найдено",
     "lightTheme": "Светлая тема редактора",
     "darkTheme": "Тёмная тема редактора",
-    "personalLabel": "Личный"
+    "personalLabel": "Личный",
+    "saving": "Сохранение..."
+  },
+  "documentType": {
+    "title": "Тип документа",
+    "changeAction": "Изменить тип"
   },
   "import": {
     "title": "Импортировать документ",

@@ -135,7 +135,8 @@
     "scope": {
       "all": "All documents",
       "client": "Client",
-      "personal": "Personal"
+      "personal": "Personal",
+      "imported": "Imported"
     },
     "type": {
       "all": "All types",
@@ -154,7 +155,8 @@
     "personalLabel": "Personal",
     "confirmDelete": "Delete document \"{{title}}\"?",
     "newTitle": "New document",
-    "importTitle": "Import document"
+    "importTitle": "Import document",
+    "badgeNote": "NOTE"
   },
   "profile": {
     "title": "Profile",
@@ -182,7 +184,8 @@
     "exportDocx": "Download as DOCX",
     "discardConfirmTitle": "Discard changes?",
     "discardConfirmMessage": "Unsaved changes to this document will be lost.",
-    "discardConfirm": "Discard"
+    "discardConfirm": "Discard",
+    "saving": "Saving..."
   },
   "documentEditor": {
     "title": "Documents",
@@ -195,6 +198,10 @@
     "lightTheme": "Light editor theme",
     "darkTheme": "Dark editor theme",
     "personalLabel": "Personal"
+  },
+  "documentType": {
+    "title": "Document type",
+    "changeAction": "Change type"
   },
   "import": {
     "title": "Import document",

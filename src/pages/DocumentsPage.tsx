@@ -1,18 +1,19 @@
 import { useState, useMemo } from 'react';
-import { MagnifyingGlassIcon, FileTextIcon, DownloadSimpleIcon, TrashIcon, PencilSimpleIcon, ArrowsDownUpIcon, PlusIcon, UploadSimpleIcon } from '@phosphor-icons/react';
+import { MagnifyingGlassIcon, FileTextIcon, DownloadSimpleIcon, TrashIcon, PencilSimpleIcon, ArrowsDownUpIcon, PlusIcon, UploadSimpleIcon, ArrowsLeftRightIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
-import { useDocuments, useClients, deleteDocument } from '../hooks/useDB';
+import { useDocuments, useClients, deleteDocument, updateDocument } from '../hooks/useDB';
 import type { Document, DocumentType } from '../types';
 import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
-import ImportDocumentModal from '../components/ImportDocumentModal';
 import DocumentTargetModal, { type DocumentTarget } from '../components/DocumentTargetModal';
+import DocumentTypeModal, { type DocumentTypeChange } from '../components/DocumentTypeModal';
+import ImportDocumentModal from '../components/ImportDocumentModal';
 import Select from '../components/Select';
 
 type SortOrder = 'newest' | 'oldest';
-type ScopeFilter = 'all' | 'client' | 'personal';
+type ScopeFilter = 'all' | 'client' | 'personal' | 'imported';
 
 export default function DocumentsPage() {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ export default function DocumentsPage() {
   const [creatingStep, setCreatingStep] = useState<'choose' | null>(null);
   const [importingStep, setImportingStep] = useState<'choose' | 'import' | null>(null);
   const [pendingTarget, setPendingTarget] = useState<DocumentTarget | null>(null);
+  const [changingTypeDoc, setChangingTypeDoc] = useState<Document | null>(null);
 
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -41,6 +43,7 @@ export default function DocumentsPage() {
     let list = allDocuments ?? [];
     if (scopeFilter === 'client') list = list.filter((d) => !d.isPersonal);
     if (scopeFilter === 'personal') list = list.filter((d) => d.isPersonal);
+    if (scopeFilter === 'imported') list = list.filter((d) => d.origin === 'imported');
     if (typeFilter !== 'all') list = list.filter((d) => d.type === typeFilter);
     if (scopeFilter !== 'personal' && clientFilter !== 'all') list = list.filter((d) => d.clientId === clientFilter);
 
@@ -64,6 +67,19 @@ export default function DocumentsPage() {
     if (!confirm(t('documents.confirmDelete', { title: doc.title }))) return;
     await deleteDocument(doc.id);
     showToast('success', t('common.delete'));
+  };
+
+  const handleTypeChangeConfirm = async (change: DocumentTypeChange) => {
+    if (changingTypeDoc && masterKey) {
+      await updateDocument(changingTypeDoc.id, change, masterKey);
+      showToast('success', t('common.save'));
+    }
+    setChangingTypeDoc(null);
+  };
+
+  const badgeFor = (doc: Document) => {
+    if (doc.type === 'txt' && (doc.origin ?? 'created') === 'created') return t('documents.badgeNote');
+    return doc.type.toUpperCase();
   };
 
   return (
@@ -108,6 +124,7 @@ export default function DocumentsPage() {
               { value: 'all', label: t('documents.scope.all') },
               { value: 'client', label: t('documents.scope.client') },
               { value: 'personal', label: t('documents.scope.personal') },
+              { value: 'imported', label: t('documents.scope.imported') },
             ]}
             placeholder={t('documents.scope.all')}
           />
@@ -167,7 +184,7 @@ export default function DocumentsPage() {
             <div key={doc.id} className="flex items-center justify-between p-3 rounded-2xl bg-surface shadow-card">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface-hover text-text-tertiary uppercase">
-                  {doc.type}
+                  {badgeFor(doc)}
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">{doc.title}</p>
@@ -184,6 +201,9 @@ export default function DocumentsPage() {
                     <PencilSimpleIcon size={16} />
                   </button>
                 )}
+                <button onClick={() => setChangingTypeDoc(doc)} title={t('documentType.changeAction')} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                  <ArrowsLeftRightIcon size={16} />
+                </button>
                 <button onClick={() => handleDownload(doc)} title={t('common.download')} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
                   <DownloadSimpleIcon size={16} />
                 </button>
@@ -221,6 +241,15 @@ export default function DocumentsPage() {
           clientId={pendingTarget.clientId}
           isPersonal={pendingTarget.isPersonal}
           onClose={() => { setImportingStep(null); setPendingTarget(null); }}
+        />
+      )}
+
+      {changingTypeDoc && (
+        <DocumentTypeModal
+          initialIsPersonal={changingTypeDoc.isPersonal}
+          initialClientId={changingTypeDoc.clientId}
+          onConfirm={handleTypeChangeConfirm}
+          onClose={() => setChangingTypeDoc(null)}
         />
       )}
     </div>

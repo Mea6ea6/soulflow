@@ -4,18 +4,20 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import {
   TextBolderIcon, TextItalicIcon, TextUnderlineIcon, ListBulletsIcon, ListNumbersIcon,
-  TextHOneIcon, TextHTwoIcon, TextHThreeIcon, DownloadSimpleIcon, FloppyDiskIcon, XIcon,
-  MagnifyingGlassIcon, PlusIcon, FileTextIcon, SunIcon, MoonIcon,
+  TextHOneIcon, TextHTwoIcon, TextHThreeIcon, DownloadSimpleIcon, XIcon,
+  MagnifyingGlassIcon, PlusIcon, FileTextIcon, SunIcon, MoonIcon, DotsThreeIcon,
+  TrashIcon, ArrowsLeftRightIcon, CircleIcon,
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { Document } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
-import { useDocuments, useClients, addDocument, updateDocument } from '../hooks/useDB';
+import { useDocuments, useClients, addDocument, updateDocument, deleteDocument } from '../hooks/useDB';
 import { downloadAsTxt, downloadAsPdf, downloadAsDocx, downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
 import type { DocumentEditorTarget, EditorTab } from '../context/DocumentEditorContextDef';
 import ConfirmDialog from './ConfirmDialog';
 import DocumentTargetModal, { type DocumentTarget } from './DocumentTargetModal';
+import DocumentTypeModal, { type DocumentTypeChange } from './DocumentTypeModal';
 
 interface DocumentEditorPageProps {
   tabs: EditorTab[];
@@ -31,34 +33,23 @@ type SortOrder = 'newest' | 'oldest' | 'title';
 type ContentTheme = 'light' | 'dark';
 
 const CONTENT_THEME_STORAGE_KEY = 'soulflow_editor_content_theme';
+const AUTOSAVE_DELAY_MS = 1200;
 
-const CONTENT_THEME_VARS: Record<ContentTheme, Record<string, string>> = {
-  light: {
-    '--page-bg': '#ffffff',
-    '--page-text': '#191919',
-    '--page-secondary': '#8b8b89',
-    '--page-border': '#e9e9e7',
-    '--page-hover': '#f1f1ef',
-  },
-  dark: {
-    '--page-bg': '#1f1f1f',
-    '--page-text': '#e9e9e7',
-    '--page-secondary': '#9b9b9b',
-    '--page-border': '#333335',
-    '--page-hover': '#2a2a2c',
-  },
+const CONTENT_THEME_VARS: Record<ContentTheme, { bg: string; text: string; secondary: string; hover: string }> = {
+  light: { bg: '#ffffff', text: '#191919', secondary: '#8b8b89', hover: '#f1f1ef' },
+  dark: { bg: '#1f1f1f', text: '#e9e9e7', secondary: '#9b9b9b', hover: '#2a2a2c' },
 };
 
-function ToolbarButton({ onClick, active, children, title }: { onClick: () => void; active?: boolean; children: React.ReactNode; title: string }) {
+function ToolbarButton({ onClick, active, children, title, theme }: { onClick: () => void; active?: boolean; children: React.ReactNode; title: string; theme: ContentTheme }) {
+  const colors = CONTENT_THEME_VARS[theme];
   return (
     <button
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
-      className={`p-1.5 rounded-md transition-colors ${
-        active ? 'text-primary bg-primary-tint' : 'text-text-secondary hover:bg-surface-hover'
-      }`}
+      style={{ color: active ? undefined : colors.secondary }}
+      className={`p-1.5 rounded-md transition-colors ${active ? 'text-primary bg-primary-tint' : 'hover:bg-(--tb-hover)'}`}
     >
       {children}
     </button>
@@ -83,9 +74,10 @@ interface DocumentEditorPanelProps {
   contentTheme: ContentTheme;
   onDirtyChange: (dirty: boolean) => void;
   onSavedDocument: (doc: Document) => void;
+  onDeleted: () => void;
 }
 
-function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, onSavedDocument }: DocumentEditorPanelProps) {
+function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, onSavedDocument, onDeleted }: DocumentEditorPanelProps) {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
   const { showToast } = useToast();
@@ -93,9 +85,14 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
   const isReadonly = !!target.document && target.document.type !== 'txt';
   const [title, setTitle] = useState(target.document?.title ?? '');
   const [isSaving, setIsSaving] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isExportSubOpen, setIsExportSubOpen] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isChangingType, setIsChangingType] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isInitializingRef = useRef(true);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentTargetRef = useRef(target);
 
   const editor = useEditor({
     extensions: [StarterKit, Underline],
@@ -108,50 +105,67 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
   }, []);
 
   useEffect(() => {
-    if (!editor) return;
-    const handleUpdate = () => { if (!isInitializingRef.current) onDirtyChange(true); };
-    editor.on('update', handleUpdate);
-    return () => { editor.off('update', handleUpdate); };
-  }, [editor, onDirtyChange]);
+    currentTargetRef.current = target;
+  }, [target]);
 
-  const handleTitleChange = (value: string) => {
-    setTitle(value);
-    if (!isInitializingRef.current) onDirtyChange(true);
-  };
-
-  const handleSave = useCallback(async () => {
+  const doSave = useCallback(async () => {
     if (!editor || !masterKey || isReadonly) return;
-
-    setError(null);
+    const target = currentTargetRef.current;
     const plainText = editor.getText();
-    const finalTitle = title.trim() || plainText.slice(0, 50) || t('textEditor.titlePlaceholder');
     const contentJson = JSON.stringify(editor.getJSON());
 
     setIsSaving(true);
     try {
       if (target.document) {
+        const finalTitle = title.trim() || plainText.slice(0, 50) || 'Untitled';
         await updateDocument(target.document.id, { title: finalTitle, content: contentJson }, masterKey);
         onSavedDocument({ ...target.document, title: finalTitle, content: contentJson, updatedAt: new Date().toISOString() });
       } else {
+        const finalTitle = title.trim() || plainText.slice(0, 50) || 'Untitled';
         const now = new Date().toISOString();
         const newId = await addDocument(
-          { title: finalTitle, type: 'txt', content: contentJson, clientId: target.isPersonal ? null : target.clientId, isPersonal: target.isPersonal },
+          { title: finalTitle, type: 'txt', content: contentJson, clientId: target.isPersonal ? null : target.clientId, isPersonal: target.isPersonal, origin: 'created' },
           masterKey
         );
         onSavedDocument({
           id: newId, title: finalTitle, type: 'txt', content: contentJson,
           clientId: target.isPersonal ? null : target.clientId, isPersonal: target.isPersonal,
-          createdAt: now, updatedAt: now,
+          origin: 'created', createdAt: now, updatedAt: now,
         });
       }
-      showToast('success', t('common.save'));
       onDirtyChange(false);
     } catch {
       setError(t('textEditor.saveFailed'));
     } finally {
       setIsSaving(false);
     }
-  }, [editor, masterKey, isReadonly, title, target, t, showToast, onDirtyChange, onSavedDocument]);
+  }, [editor, masterKey, isReadonly, title, onDirtyChange, onSavedDocument]);
+
+  const scheduleAutosave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => { doSave(); }, AUTOSAVE_DELAY_MS);
+  }, [doSave]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const handleUpdate = () => {
+      if (isInitializingRef.current) return;
+      onDirtyChange(true);
+      scheduleAutosave();
+    };
+    editor.on('update', handleUpdate);
+    return () => { editor.off('update', handleUpdate); };
+  }, [editor, onDirtyChange, scheduleAutosave]);
+
+  useEffect(() => () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); }, []);
+
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    if (!isInitializingRef.current) {
+      onDirtyChange(true);
+      scheduleAutosave();
+    }
+  };
 
   const handleExport = (format: 'txt' | 'pdf' | 'docx') => {
     if (!editor) return;
@@ -160,7 +174,8 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
     if (format === 'txt') downloadAsTxt(text, filename);
     if (format === 'pdf') downloadAsPdf(text, filename);
     if (format === 'docx') downloadAsDocx(text, filename);
-    setIsExportMenuOpen(false);
+    setIsMenuOpen(false);
+    setIsExportSubOpen(false);
   };
 
   const handleDownloadOriginal = () => {
@@ -169,7 +184,26 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
     downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
   };
 
+  const handleDeleteConfirm = async () => {
+    if (target.document) {
+      await deleteDocument(target.document.id);
+      showToast('success', t('common.delete'));
+    }
+    setIsConfirmingDelete(false);
+    onDeleted();
+  };
+
+  const handleTypeChange = async (change: DocumentTypeChange) => {
+    setIsChangingType(false);
+    if (target.document && masterKey) {
+      await updateDocument(target.document.id, change, masterKey);
+      onSavedDocument({ ...target.document, ...change });
+      showToast('success', t('common.save'));
+    }
+  };
+
   if (!editor) return null;
+  const colors = CONTENT_THEME_VARS[contentTheme];
 
   return (
     <div className="flex-1 flex-col min-h-0" style={{ display: isActive ? 'flex' : 'none' }}>
@@ -180,58 +214,109 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
       )}
 
       {!isReadonly && (
-        <div className="flex items-center gap-1 px-6 py-2 border-b border-border shrink-0">
-          <ToolbarButton title={t('textEditor.toolbar.bold')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
-            <TextBolderIcon size={16} />
-          </ToolbarButton>
-          <ToolbarButton title={t('textEditor.toolbar.italic')} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
-            <TextItalicIcon size={16} />
-          </ToolbarButton>
-          <ToolbarButton title={t('textEditor.toolbar.underline')} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
-            <TextUnderlineIcon size={16} />
-          </ToolbarButton>
-          <div className="w-px h-5 bg-border mx-1" />
-          <ToolbarButton title={t('textEditor.toolbar.heading1')} active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
-            <TextHOneIcon size={16} />
-          </ToolbarButton>
-          <ToolbarButton title={t('textEditor.toolbar.heading2')} active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-            <TextHTwoIcon size={16} />
-          </ToolbarButton>
-          <ToolbarButton title={t('textEditor.toolbar.heading3')} active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
-            <TextHThreeIcon size={16} />
-          </ToolbarButton>
-          <div className="w-px h-5 bg-border mx-1" />
-          <ToolbarButton title={t('textEditor.toolbar.bulletList')} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-            <ListBulletsIcon size={16} />
-          </ToolbarButton>
-          <ToolbarButton title={t('textEditor.toolbar.orderedList')} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-            <ListNumbersIcon size={16} />
-          </ToolbarButton>
+        <div
+          className="flex items-center justify-between gap-1 px-6 py-2 border-b shrink-0"
+          style={{ borderColor: colors.hover, backgroundColor: colors.bg, ['--tb-hover' as string]: colors.hover }}
+        >
+          <div className="flex items-center gap-1">
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.bold')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+              <TextBolderIcon size={16} />
+            </ToolbarButton>
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.italic')} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+              <TextItalicIcon size={16} />
+            </ToolbarButton>
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.underline')} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+              <TextUnderlineIcon size={16} />
+            </ToolbarButton>
+            <div className="w-px h-5 mx-1" style={{ backgroundColor: colors.hover }} />
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.heading1')} active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+              <TextHOneIcon size={16} />
+            </ToolbarButton>
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.heading2')} active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+              <TextHTwoIcon size={16} />
+            </ToolbarButton>
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.heading3')} active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+              <TextHThreeIcon size={16} />
+            </ToolbarButton>
+            <div className="w-px h-5 mx-1" style={{ backgroundColor: colors.hover }} />
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.bulletList')} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+              <ListBulletsIcon size={16} />
+            </ToolbarButton>
+            <ToolbarButton theme={contentTheme} title={t('textEditor.toolbar.orderedList')} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+              <ListNumbersIcon size={16} />
+            </ToolbarButton>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isSaving && <span className="text-[11px]" style={{ color: colors.secondary }}>{t('documentEditor.saving')}</span>}
+            <div className="relative">
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setIsMenuOpen((v) => !v)}
+                className="p-1.5 rounded-md hover:bg-(--tb-hover)"
+                style={{ color: colors.secondary }}
+              >
+                <DotsThreeIcon size={18} weight="bold" />
+              </button>
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-card-hover overflow-hidden p-1 z-20">
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsExportSubOpen((v) => !v)}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-text-primary hover:bg-surface-hover"
+                    >
+                      <span className="flex items-center gap-2"><DownloadSimpleIcon size={14} />{t('textEditor.export')}</span>
+                    </button>
+                    {isExportSubOpen && (
+                      <div className="pl-3 flex flex-col">
+                        <button onClick={() => handleExport('txt')} className="text-left px-3 py-1.5 rounded-lg text-sm text-text-secondary hover:bg-surface-hover">{t('textEditor.exportTxt')}</button>
+                        <button onClick={() => handleExport('pdf')} className="text-left px-3 py-1.5 rounded-lg text-sm text-text-secondary hover:bg-surface-hover">{t('textEditor.exportPdf')}</button>
+                        <button onClick={() => handleExport('docx')} className="text-left px-3 py-1.5 rounded-lg text-sm text-text-secondary hover:bg-surface-hover">{t('textEditor.exportDocx')}</button>
+                      </div>
+                    )}
+                  </div>
+                  {target.document && (
+                    <button
+                      onClick={() => { setIsMenuOpen(false); setIsChangingType(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-primary hover:bg-surface-hover"
+                    >
+                      <ArrowsLeftRightIcon size={14} />
+                      {t('documentType.changeAction')}
+                    </button>
+                  )}
+                  {target.document && (
+                    <button
+                      onClick={() => { setIsMenuOpen(false); setIsConfirmingDelete(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-error hover:bg-error/10"
+                    >
+                      <TrashIcon size={14} />
+                      {t('common.delete')}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto bg-bg px-6 py-10 cursor-text" onClick={() => editor.chain().focus().run()}>
-        <div
-          className="max-w-3xl mx-auto rounded-xl shadow-card-hover border"
-          style={{
-            backgroundColor: CONTENT_THEME_VARS[contentTheme]['--page-bg'],
-            borderColor: CONTENT_THEME_VARS[contentTheme]['--page-border'],
-            color: CONTENT_THEME_VARS[contentTheme]['--page-text'],
-          }}
-        >
-          <div className="px-10 pt-8 pb-2">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              disabled={isReadonly}
-              placeholder={t('textEditor.titlePlaceholder')}
-              className="w-full text-3xl font-display font-semibold bg-transparent focus:outline-none disabled:opacity-70"
-              style={{ color: CONTENT_THEME_VARS[contentTheme]['--page-text'] }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-          <div className="px-10 pb-10 [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[50vh]" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex-1 overflow-y-auto cursor-text"
+        style={{ backgroundColor: colors.bg, color: colors.text }}
+        onClick={() => editor.chain().focus().run()}
+      >
+        <div className="max-w-3xl mx-auto px-10 py-10">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            disabled={isReadonly}
+            placeholder={t('textEditor.titlePlaceholder')}
+            className="w-full text-3xl font-display font-semibold bg-transparent focus:outline-none disabled:opacity-70 mb-4"
+            style={{ color: colors.text }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="[&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[50vh]" onClick={(e) => e.stopPropagation()}>
             <EditorContent editor={editor} className="prose prose-sm max-w-none" />
           </div>
         </div>
@@ -241,42 +326,35 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
         <div className="mx-6 mb-2 text-sm text-error bg-error/10 rounded-xl px-3 py-2 shrink-0">{error}</div>
       )}
 
-      <div className="flex items-center justify-between px-6 py-3 border-t border-border shrink-0">
-        <div className="relative">
+      {isReadonly && (
+        <div className="flex items-center justify-end px-6 py-3 border-t border-border shrink-0">
           <button
-            type="button"
-            onClick={() => (isReadonly ? handleDownloadOriginal() : setIsExportMenuOpen((v) => !v))}
+            onClick={handleDownloadOriginal}
             className="flex items-center gap-2 px-3 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
           >
             <DownloadSimpleIcon size={16} />
-            {t('textEditor.export')}
+            {t('common.download')}
           </button>
-          {!isReadonly && isExportMenuOpen && (
-            <div className="absolute bottom-full mb-2 left-0 w-44 bg-surface border border-border rounded-xl shadow-card-hover overflow-hidden p-1">
-              <button onClick={() => handleExport('txt')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-surface-hover">
-                {t('textEditor.exportTxt')}
-              </button>
-              <button onClick={() => handleExport('pdf')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-surface-hover">
-                {t('textEditor.exportPdf')}
-              </button>
-              <button onClick={() => handleExport('docx')} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-surface-hover">
-                {t('textEditor.exportDocx')}
-              </button>
-            </div>
-          )}
         </div>
+      )}
 
-        {!isReadonly && (
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="btn-lift flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
-          >
-            <FloppyDiskIcon size={16} />
-            {isSaving ? t('common.saving') : t('common.save')}
-          </button>
-        )}
-      </div>
+      {isConfirmingDelete && (
+        <ConfirmDialog
+          title={t('documents.confirmDelete', { title: target.document?.title ?? '' })}
+          message=""
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setIsConfirmingDelete(false)}
+        />
+      )}
+
+      {isChangingType && target.document && (
+        <DocumentTypeModal
+          initialIsPersonal={target.isPersonal}
+          initialClientId={target.clientId}
+          onConfirm={handleTypeChange}
+          onClose={() => setIsChangingType(false)}
+        />
+      )}
     </div>
   );
 }
@@ -293,9 +371,9 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
   const [contentTheme, setContentTheme] = useState<ContentTheme>(
     () => (localStorage.getItem(CONTENT_THEME_STORAGE_KEY) as ContentTheme | null) ?? 'light'
   );
-  const dirtyMapRef = useRef<Record<string, boolean>>({});
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
   const [tabPendingClose, setTabPendingClose] = useState<string | null>(null);
+  const [isClosingAll, setIsClosingAll] = useState(false);
 
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -322,7 +400,7 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
   };
 
   const requestCloseTab = (id: string) => {
-    if (dirtyMapRef.current[id]) {
+    if (dirtyTabs[id]) {
       setTabPendingClose(id);
     } else {
       onCloseTab(id);
@@ -331,26 +409,24 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
 
   const confirmCloseTab = () => {
     if (tabPendingClose) {
-      delete dirtyMapRef.current[tabPendingClose];
+      setDirtyTabs((prev) => { const next = { ...prev }; delete next[tabPendingClose]; return next; });
       onCloseTab(tabPendingClose);
     }
     setTabPendingClose(null);
   };
 
   const requestCloseAll = () => {
-    const anyDirty = Object.values(dirtyMapRef.current).some(Boolean);
-    if (anyDirty) {
-      setPendingAction(() => onCloseAll);
+    if (Object.values(dirtyTabs).some(Boolean)) {
+      setIsClosingAll(true);
     } else {
       onCloseAll();
     }
   };
 
-  const confirmPendingAction = () => {
-    const action = pendingAction;
-    setPendingAction(null);
-    dirtyMapRef.current = {};
-    action?.();
+  const confirmCloseAll = () => {
+    setIsClosingAll(false);
+    setDirtyTabs({});
+    onCloseAll();
   };
 
   const handleNewDocConfirm = (target: DocumentTarget) => {
@@ -361,11 +437,8 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
   return (
     <div className="fixed inset-0 z-60 flex bg-bg text-text-primary">
       <div className="w-72 shrink-0 border-r border-border bg-surface flex flex-col">
-        <div className="p-4 flex items-center justify-between">
+        <div className="p-4">
           <h2 className="text-sm font-semibold">{t('documentEditor.title')}</h2>
-          <button onClick={() => setIsCreatingNew(true)} className="p-1.5 rounded-md hover:bg-surface-hover" title={t('documentEditor.newDocument')}>
-            <PlusIcon size={16} />
-          </button>
         </div>
 
         <div className="px-4 pb-3 flex flex-col gap-2">
@@ -422,19 +495,32 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex items-center border-b border-border bg-surface shrink-0 pr-2">
+          <button
+            onClick={() => setIsCreatingNew(true)}
+            className="shrink-0 p-2.5 border-r border-border text-text-secondary hover:bg-surface-hover"
+            title={t('documentEditor.newDocument')}
+          >
+            <PlusIcon size={16} />
+          </button>
+
           <div className="flex-1 flex items-center overflow-x-auto">
             {tabs.map((tab) => {
               const label = tab.target.document?.title || t('textEditor.titlePlaceholder');
               const isActive = tab.id === activeTabId;
+              const isDirty = dirtyTabs[tab.id];
               return (
                 <div
                   key={tab.id}
                   onClick={() => onSelectTab(tab.id)}
-                  className={`group flex items-center gap-2 px-4 py-2.5 border-r border-border cursor-pointer max-w-45 shrink-0 ${
+                  className={`group flex items-center gap-2 px-4 py-2.5 border-r border-border cursor-pointer max-w-50 shrink-0 ${
                     isActive ? 'bg-bg' : 'hover:bg-surface-hover'
                   }`}
                 >
-                  <FileTextIcon size={13} className="shrink-0 text-text-tertiary" />
+                  {isDirty ? (
+                    <CircleIcon size={7} weight="fill" className="shrink-0 text-primary" />
+                  ) : (
+                    <FileTextIcon size={13} className="shrink-0 text-text-tertiary" />
+                  )}
                   <span className="text-xs truncate">{label}</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); requestCloseTab(tab.id); }}
@@ -446,6 +532,7 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
               );
             })}
           </div>
+
           <button
             onClick={handleToggleContentTheme}
             className="p-2 rounded-md hover:bg-surface-hover text-text-secondary shrink-0"
@@ -464,8 +551,9 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
             target={tab.target}
             isActive={tab.id === activeTabId}
             contentTheme={contentTheme}
-            onDirtyChange={(dirty) => { dirtyMapRef.current[tab.id] = dirty; }}
-            onSavedDocument={(doc) => onUpdateTabTarget(tab.id, { ...tab.target, document: doc })}
+            onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tab.id]: dirty }))}
+            onSavedDocument={(doc) => onUpdateTabTarget(tab.id, { ...tab.target, document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal })}
+            onDeleted={() => { setDirtyTabs((prev) => { const n = { ...prev }; delete n[tab.id]; return n; }); onCloseTab(tab.id); }}
           />
         ))}
       </div>
@@ -489,13 +577,13 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
         />
       )}
 
-      {pendingAction && (
+      {isClosingAll && (
         <ConfirmDialog
           title={t('textEditor.discardConfirmTitle')}
           message={t('textEditor.discardConfirmMessage')}
           confirmLabel={t('textEditor.discardConfirm')}
-          onConfirm={confirmPendingAction}
-          onClose={() => setPendingAction(null)}
+          onConfirm={confirmCloseAll}
+          onClose={() => setIsClosingAll(false)}
         />
       )}
     </div>

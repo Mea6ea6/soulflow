@@ -7,6 +7,11 @@ export interface DocumentEditorTarget {
   isPersonal: boolean;
 }
 
+export interface EditorTab {
+  id: string;
+  target: DocumentEditorTarget;
+}
+
 export interface DocumentEditorContextValue {
   openDocument: (target: DocumentEditorTarget) => void;
   closeDocument: () => void;

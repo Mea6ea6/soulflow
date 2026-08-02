@@ -57,7 +57,7 @@ export interface UserProfile {
   updatedAt: string;           // ISO-строка
 }
 
-export type ThemeId = 'dawn' | 'dusk';
+export type ThemeId = 'dawn' | 'dusk' | 'onyx';
 
 export interface AppSettings {
   id: string;                  // UUID

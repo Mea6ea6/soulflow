@@ -179,7 +179,10 @@
     "export": "Export",
     "exportTxt": "Download as TXT",
     "exportPdf": "Download as PDF",
-    "exportDocx": "Download as DOCX"
+    "exportDocx": "Download as DOCX",
+    "discardConfirmTitle": "Discard changes?",
+    "discardConfirmMessage": "Unsaved changes to this document will be lost.",
+    "discardConfirm": "Discard"
   },
   "documentEditor": {
     "title": "Documents",
@@ -244,8 +247,9 @@
     "changePassword": "Change master password",
     "appearanceSection": "Appearance",
     "defaultThemes": "Default Themes",
-    "themeDawn": "Amber",
-    "themeDusk": "Ember",
+    "themeDawn": "Azure",
+    "themeDusk": "Midnight",
+    "themeOnyx": "Onyx",
     "languageSection": "Language",
     "aboutSection": "About",
     "description": "Description",

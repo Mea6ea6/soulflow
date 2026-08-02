@@ -1,5 +1,4 @@
 @import './styles/themes.css';
-@import './styles/editorTheme.css';
 
 @import "tailwindcss";
 @config "../tailwind.config.js";
@@ -44,6 +43,13 @@ h1, .text-display-xl {
 }
 h2, .text-display-lg {
   letter-spacing: -0.01em;
+}
+
+button:not(:disabled), a, [role="button"], [role="tab"], [role="radio"], [role="checkbox"] {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
 }
 
 @keyframes toast-in {

@@ -16,6 +16,7 @@ const APP_VERSION = '0.1.0';
 const THEMES: { id: ThemeId; labelKey: string }[] = [
   { id: 'dawn', labelKey: 'settings.themeDawn' },
   { id: 'dusk', labelKey: 'settings.themeDusk' },
+  { id: 'onyx', labelKey: 'settings.themeOnyx' },
 ];
 
 export default function SettingsPage() {

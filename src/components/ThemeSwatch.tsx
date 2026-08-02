@@ -2,8 +2,9 @@ import { CheckIcon } from '@phosphor-icons/react';
 import type { ThemeId } from '../types';
 
 const SWATCH_COLORS: Record<ThemeId, { bg: string; accent: string }> = {
-  dawn: { bg: '#F5F5F7', accent: '#E2632F' },
-  dusk: { bg: '#000000', accent: '#FF7A47' },
+  dawn: { bg: '#F5F6F8', accent: '#2E6FE2' },
+  dusk: { bg: '#0B0E14', accent: '#5B93F5' },
+  onyx: { bg: '#0A0A0B', accent: '#4C8DF5' },
 };
 
 interface ThemeSwatchProps {

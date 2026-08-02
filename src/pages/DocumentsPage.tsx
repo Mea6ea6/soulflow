@@ -68,19 +68,19 @@ export default function DocumentsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-display font-semibold text-text-primary">{t('documents.title')}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <button
             onClick={() => setCreatingStep('choose')}
-            className="btn-lift flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
+            className="btn-lift flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
           >
             <PlusIcon size={16} />
             {t('documents.create')}
           </button>
           <button
             onClick={() => setImportingStep('choose')}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
           >
             <UploadSimpleIcon size={16} />
             {t('documents.import')}

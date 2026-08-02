@@ -8,52 +8,77 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* Dawn — светлая, тёплая оранжево-янтарная гамма */
+/* Dawn — светлая, сине-голубая гамма */
 [data-theme='dawn'] {
-  --color-bg: #F5F5F7;
+  --color-bg: #F5F6F8;
   --color-surface: #FFFFFF;
-  --color-surface-hover: #F7F6F5;
-  --color-border: #E7E6E4;
-  --color-text-primary: #1D1D1F;
-  --color-text-secondary: #6E6E73;
-  --color-text-tertiary: #86868B;
-  --color-primary: #E2632F;
-  --color-primary-hover: #C94F1F;
-  --color-primary-tint: rgba(226, 99, 47, 0.12);
-  --color-secondary: #9C7414;
-  --color-secondary-tint: rgba(226, 165, 47, 0.16);
-  --color-accent-gradient: linear-gradient(135deg, #E2632F 0%, #E2A52F 100%);
+  --color-surface-hover: #F0F3F7;
+  --color-border: #E2E7ED;
+  --color-text-primary: #1A1D24;
+  --color-text-secondary: #656C78;
+  --color-text-tertiary: #94A0AC;
+  --color-primary: #2E6FE2;
+  --color-primary-hover: #1F5AC9;
+  --color-primary-tint: rgba(46, 111, 226, 0.12);
+  --color-secondary: #14A8C9;
+  --color-secondary-tint: rgba(20, 168, 201, 0.14);
+  --color-accent-gradient: linear-gradient(135deg, #2E6FE2 0%, #14A8C9 100%);
 
-  --color-success: #227A49;
-  --color-error: #D0402A;
-  --color-warning: #9C7414;
-  --color-info: #6E6E73;
+  --color-success: #1F9D6B;
+  --color-error: #D5473A;
+  --color-warning: #C98A14;
+  --color-info: #656C78;
 
-  --color-shadow: rgba(0, 0, 0, 0.04);
-  --color-shadow-hover: rgba(0, 0, 0, 0.06);
+  --color-shadow: rgba(20, 30, 50, 0.05);
+  --color-shadow-hover: rgba(20, 30, 50, 0.08);
 }
 
-/* Dusk — тёмная, та же гамма */
+/* Dusk — тёмная, та же сине-голубая гамма */
 [data-theme='dusk'] {
-  --color-bg: #000000;
-  --color-surface: #1C1C1E;
-  --color-surface-hover: #242426;
-  --color-border: #3A3A3C;
-  --color-text-primary: #F5F5F7;
-  --color-text-secondary: #98989D;
-  --color-text-tertiary: #6E6E73;
-  --color-primary: #FF7A47;
-  --color-primary-hover: #FF9166;
-  --color-primary-tint: rgba(255, 122, 71, 0.16);
-  --color-secondary: #F0B429;
-  --color-secondary-tint: rgba(255, 189, 71, 0.20);
-  --color-accent-gradient: linear-gradient(135deg, #FF7A47 0%, #F0B429 100%);
+  --color-bg: #0B0E14;
+  --color-surface: #141822;
+  --color-surface-hover: #1B202C;
+  --color-border: #262C3A;
+  --color-text-primary: #EFF2F7;
+  --color-text-secondary: #A0A8B6;
+  --color-text-tertiary: #6B7280;
+  --color-primary: #5B93F5;
+  --color-primary-hover: #7BA5F7;
+  --color-primary-tint: rgba(91, 147, 245, 0.16);
+  --color-secondary: #3ECAE9;
+  --color-secondary-tint: rgba(62, 202, 233, 0.18);
+  --color-accent-gradient: linear-gradient(135deg, #5B93F5 0%, #3ECAE9 100%);
 
-  --color-success: #4AC985;
-  --color-error: #FF8066;
-  --color-warning: #F0B429;
-  --color-info: #98989D;
+  --color-success: #4FCB92;
+  --color-error: #F27367;
+  --color-warning: #E9B94A;
+  --color-info: #A0A8B6;
 
   --color-shadow: rgba(0, 0, 0, 0.3);
   --color-shadow-hover: rgba(0, 0, 0, 0.4);
+}
+
+/* Onyx — тёмная, нейтральная чёрно-серая база, синий только как акцент */
+[data-theme='onyx'] {
+  --color-bg: #0A0A0B;
+  --color-surface: #151517;
+  --color-surface-hover: #1D1D20;
+  --color-border: #2A2A2D;
+  --color-text-primary: #F0F0F0;
+  --color-text-secondary: #9A9A9E;
+  --color-text-tertiary: #68686C;
+  --color-primary: #4C8DF5;
+  --color-primary-hover: #6BA0F7;
+  --color-primary-tint: rgba(76, 141, 245, 0.14);
+  --color-secondary: #7A7A80;
+  --color-secondary-tint: rgba(122, 122, 128, 0.16);
+  --color-accent-gradient: linear-gradient(135deg, #3E7BE0 0%, #7BB4FF 100%);
+
+  --color-success: #4FCB92;
+  --color-error: #F27367;
+  --color-warning: #E9B94A;
+  --color-info: #9A9A9E;
+
+  --color-shadow: rgba(0, 0, 0, 0.35);
+  --color-shadow-hover: rgba(0, 0, 0, 0.45);
 }

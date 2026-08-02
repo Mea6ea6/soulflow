@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react';
 import { FileTextIcon, PencilSimpleIcon, DownloadSimpleIcon, CalendarCheckIcon, UsersIcon, FolderOpenIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
+import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
 import { useDocuments, useCalendarEvents, useClients } from '../hooks/useDB';
-import { downloadOriginalFile, downloadAsTxt, MIME_TYPES } from '../utils/fileExport';
+import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
 import type { Document } from '../types';
 import { toYMD } from '../utils/date';
 
@@ -29,6 +30,7 @@ function pickGreetingKey(): string {
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { userProfile, masterKey } = useAuth();
+  const { openDocument } = useDocumentEditor();
   const documents = useDocuments(masterKey);
   const events = useCalendarEvents(masterKey);
   const clients = useClients(masterKey);
@@ -73,13 +75,9 @@ export default function HomePage() {
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }, [documents, cutoff]);
 
-  const handleDownload = (doc: Document) => {
+  const handleDocumentClick = (doc: Document) => {
     if (doc.type === 'txt') {
-      try {
-        downloadAsTxt(extractPlainText(JSON.parse(doc.content)), doc.title);
-      } catch {
-        downloadAsTxt(doc.content, doc.title);
-      }
+      openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal });
     } else if (doc.originalFileBase64) {
       downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
     }
@@ -179,7 +177,7 @@ export default function HomePage() {
               {recentDocuments.map((doc) => (
                 <button
                   key={doc.id}
-                  onClick={() => handleDownload(doc)}
+                  onClick={() => handleDocumentClick(doc)}
                   className="w-full flex items-center gap-3 p-4 rounded-xl bg-surface shadow-card hover:shadow-card-hover transition-shadow text-left"
                   title={doc.type === 'txt' ? t('home.downloadTxt') : t('home.downloadOriginal')}
                 >
@@ -203,10 +201,4 @@ export default function HomePage() {
       </div>
     </div>
   );
-}
-
-function extractPlainText(node: { text?: string; content?: unknown[] }): string {
-  if (node.text) return node.text;
-  if (node.content) return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
-  return '';
 }

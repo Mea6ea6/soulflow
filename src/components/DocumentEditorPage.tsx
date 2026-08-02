@@ -430,7 +430,7 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
                 <div
                   key={tab.id}
                   onClick={() => onSelectTab(tab.id)}
-                  className={`group flex items-center gap-2 px-4 py-2.5 border-r border-border cursor-pointer max-w-[180px] shrink-0 ${
+                  className={`group flex items-center gap-2 px-4 py-2.5 border-r border-border cursor-pointer max-w-45 shrink-0 ${
                     isActive ? 'bg-bg' : 'hover:bg-surface-hover'
                   }`}
                 >

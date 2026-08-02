@@ -7,12 +7,12 @@ import { useTranslation } from 'react-i18next';
 import type { Client, Document } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
+import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
 import { updateClient, deleteClient, useClientEvents, addCalendarEvent, useClientDocuments, deleteDocument } from '../hooks/useDB';
 import { formatDateRu, toYMD } from '../utils/date';
-import { downloadOriginalFile, downloadAsTxt, MIME_TYPES } from '../utils/fileExport';
+import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
 import Avatar from './Avatar';
 import ModalShell from './ModalShell';
-import TextEditor from './TextEditor';
 import ImportDocumentModal from './ImportDocumentModal';
 import DateInput from './DateInput';
 import TimeInput from './TimeInput';
@@ -30,6 +30,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   const { t } = useTranslation();
   const { masterKey } = useAuth();
   const { showToast } = useToast();
+  const { openDocument } = useDocumentEditor();
   const clientEvents = useClientEvents(client.id, masterKey);
   const clientDocuments = useClientDocuments(client.id, masterKey);
 
@@ -37,8 +38,6 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [newSessionDate, setNewSessionDate] = useState('');
   const [newSessionTime, setNewSessionTime] = useState('');
-  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
-  const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [sessionsView, setSessionsView] = useState<SessionsView>('upcoming');
@@ -67,11 +66,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
 
   const handleDownloadDoc = (doc: Document) => {
     if (doc.type === 'txt') {
-      try {
-        downloadAsTxt(extractPlainText(JSON.parse(doc.content)), doc.title);
-      } catch {
-        downloadAsTxt(doc.content, doc.title);
-      }
+      openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal });
     } else if (doc.originalFileBase64) {
       downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
     }
@@ -215,7 +210,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                     <span className="truncate text-text-primary">{doc.title}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       {doc.type === 'txt' && (
-                        <button onClick={() => setEditingDoc(doc)} className="p-1.5 rounded text-text-secondary hover:bg-surface" title={t('common.open')}>
+                        <button onClick={() => openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal })} className="p-1.5 rounded text-text-secondary hover:bg-surface" title={t('common.open')}>
                           <FilePlusIcon size={14} />
                         </button>
                       )}
@@ -233,7 +228,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
 
             <div className="flex gap-2">
               <button
-                onClick={() => setIsCreatingDoc(true)}
+                onClick={() => openDocument({ document: null, clientId: client.id, isPersonal: false })}
                 className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full border border-border text-sm text-text-secondary hover:bg-surface-hover transition-colors"
               >
                 <FilePlusIcon size={14} />
@@ -251,8 +246,6 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
         </div>
       </ModalShell>
 
-      {editingDoc && <TextEditor document={editingDoc} clientId={client.id} onClose={() => setEditingDoc(null)} />}
-      {isCreatingDoc && <TextEditor document={null} clientId={client.id} onClose={() => setIsCreatingDoc(false)} />}
       {isImporting && <ImportDocumentModal clientId={client.id} onClose={() => setIsImporting(false)} />}
       {isConfirmingDelete && (
         <ConfirmDialog
@@ -264,12 +257,4 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
       )}
     </>
   );
-}
-
-function extractPlainText(node: { text?: string; content?: unknown[] }): string {
-  if (node.text) return node.text;
-  if (node.content) {
-    return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
-  }
-  return '';
 }

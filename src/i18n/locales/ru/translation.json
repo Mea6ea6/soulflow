@@ -184,6 +184,18 @@
     "discardConfirmMessage": "Несохранённые изменения в документе будут потеряны.",
     "discardConfirm": "Не сохранять"
   },
+  "documentEditor": {
+    "title": "Документы",
+    "searchPlaceholder": "Поиск...",
+    "sortNewest": "Сначала новые",
+    "sortOldest": "Сначала старые",
+    "sortTitle": "По названию",
+    "newDocument": "Новый документ",
+    "empty": "Ничего не найдено",
+    "lightTheme": "Светлая тема редактора",
+    "darkTheme": "Тёмная тема редактора",
+    "personalLabel": "Личный"
+  },
   "import": {
     "title": "Импортировать документ",
     "file": "Файл",

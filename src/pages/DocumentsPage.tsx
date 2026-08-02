@@ -3,10 +3,10 @@ import { MagnifyingGlassIcon, FileTextIcon, DownloadSimpleIcon, TrashIcon, Penci
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
+import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
 import { useDocuments, useClients, deleteDocument } from '../hooks/useDB';
 import type { Document, DocumentType } from '../types';
-import { downloadAsTxt, downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
-import TextEditor from '../components/TextEditor';
+import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
 import ImportDocumentModal from '../components/ImportDocumentModal';
 import DocumentTargetModal, { type DocumentTarget } from '../components/DocumentTargetModal';
 import Select from '../components/Select';
@@ -18,6 +18,7 @@ export default function DocumentsPage() {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
   const { showToast } = useToast();
+  const { openDocument } = useDocumentEditor();
   const allDocuments = useDocuments(masterKey);
   const clients = useClients(masterKey);
 
@@ -26,8 +27,7 @@ export default function DocumentsPage() {
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
-  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
-  const [creatingStep, setCreatingStep] = useState<'choose' | 'editor' | null>(null);
+  const [creatingStep, setCreatingStep] = useState<'choose' | null>(null);
   const [importingStep, setImportingStep] = useState<'choose' | 'import' | null>(null);
   const [pendingTarget, setPendingTarget] = useState<DocumentTarget | null>(null);
 
@@ -54,11 +54,7 @@ export default function DocumentsPage() {
 
   const handleDownload = (doc: Document) => {
     if (doc.type === 'txt') {
-      try {
-        downloadAsTxt(extractPlainText(JSON.parse(doc.content)), doc.title);
-      } catch {
-        downloadAsTxt(doc.content, doc.title);
-      }
+      openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal });
     } else if (doc.originalFileBase64) {
       downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
     }
@@ -93,7 +89,7 @@ export default function DocumentsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-50">
+        <div className="relative flex-1 min-w-[200px]">
           <MagnifyingGlassIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
           <input
             type="text"
@@ -184,7 +180,7 @@ export default function DocumentsPage() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {doc.type === 'txt' && (
-                  <button onClick={() => setEditingDoc(doc)} title={t('common.open')} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                  <button onClick={() => openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal })} title={t('common.open')} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
                     <PencilSimpleIcon size={16} />
                   </button>
                 )}
@@ -200,24 +196,15 @@ export default function DocumentsPage() {
         </div>
       )}
 
-      {editingDoc && (
-        <TextEditor document={editingDoc} clientId={editingDoc.clientId} isPersonal={editingDoc.isPersonal} onClose={() => setEditingDoc(null)} />
-      )}
-
       {creatingStep === 'choose' && (
         <DocumentTargetModal
           title={t('documents.newTitle')}
           icon="create"
           onClose={() => setCreatingStep(null)}
-          onConfirm={(target) => { setPendingTarget(target); setCreatingStep('editor'); }}
-        />
-      )}
-      {creatingStep === 'editor' && pendingTarget && (
-        <TextEditor
-          document={null}
-          clientId={pendingTarget.clientId}
-          isPersonal={pendingTarget.isPersonal}
-          onClose={() => { setCreatingStep(null); setPendingTarget(null); }}
+          onConfirm={(target) => {
+            setCreatingStep(null);
+            openDocument({ document: null, clientId: target.clientId, isPersonal: target.isPersonal });
+          }}
         />
       )}
 
@@ -238,10 +225,4 @@ export default function DocumentsPage() {
       )}
     </div>
   );
-}
-
-function extractPlainText(node: { text?: string; content?: unknown[] }): string {
-  if (node.text) return node.text;
-  if (node.content) return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
-  return '';
 }

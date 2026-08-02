@@ -3,22 +3,22 @@ import { FileTextIcon, UploadSimpleIcon, DownloadSimpleIcon, TrashIcon, FilePlus
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
+import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
 import { usePersonalDocuments, deleteDocument } from '../hooks/useDB';
 import type { Document } from '../types';
-import { downloadOriginalFile, downloadAsTxt, MIME_TYPES } from '../utils/fileExport';
+import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
 import { fileToBase64 } from '../utils/fileImport';
 import Avatar from '../components/Avatar';
-import TextEditor from '../components/TextEditor';
 import ImportDocumentModal from '../components/ImportDocumentModal';
 
 export default function ProfilePage() {
   const { t } = useTranslation();
   const { userProfile, masterKey, updateProfile } = useAuth();
   const { showToast } = useToast();
+  const { openDocument } = useDocumentEditor();
   const personalDocuments = usePersonalDocuments(masterKey);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,11 +32,7 @@ export default function ProfilePage() {
 
   const handleDownload = (doc: Document) => {
     if (doc.type === 'txt') {
-      try {
-        downloadAsTxt(extractPlainText(JSON.parse(doc.content)), doc.title);
-      } catch {
-        downloadAsTxt(doc.content, doc.title);
-      }
+      openDocument({ document: doc, clientId: null, isPersonal: true });
     } else if (doc.originalFileBase64) {
       downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
     }
@@ -85,7 +81,7 @@ export default function ProfilePage() {
                 <span className="text-sm text-text-primary truncate">{doc.title}</span>
                 <div className="flex items-center gap-1 shrink-0">
                   {doc.type === 'txt' && (
-                    <button onClick={() => setEditingDoc(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.open')}>
+                    <button onClick={() => openDocument({ document: doc, clientId: null, isPersonal: true })} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.open')}>
                       <FilePlusIcon size={16} />
                     </button>
                   )}
@@ -110,14 +106,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {editingDoc && <TextEditor document={editingDoc} clientId={null} isPersonal onClose={() => setEditingDoc(null)} />}
       {isImporting && <ImportDocumentModal clientId={null} isPersonal onClose={() => setIsImporting(false)} />}
     </div>
   );
-}
-
-function extractPlainText(node: { text?: string; content?: unknown[] }): string {
-  if (node.text) return node.text;
-  if (node.content) return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
-  return '';
 }

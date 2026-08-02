@@ -181,6 +181,18 @@
     "exportPdf": "Download as PDF",
     "exportDocx": "Download as DOCX"
   },
+  "documentEditor": {
+    "title": "Documents",
+    "searchPlaceholder": "Search...",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortTitle": "By title",
+    "newDocument": "New document",
+    "empty": "Nothing found",
+    "lightTheme": "Light editor theme",
+    "darkTheme": "Dark editor theme",
+    "personalLabel": "Personal"
+  },
   "import": {
     "title": "Import document",
     "file": "File",

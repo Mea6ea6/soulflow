@@ -359,7 +359,7 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex bg-bg text-text-primary">
+    <div className="fixed inset-0 z-60 flex bg-bg text-text-primary">
       <div className="w-72 shrink-0 border-r border-border bg-surface flex flex-col">
         <div className="p-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t('documentEditor.title')}</h2>

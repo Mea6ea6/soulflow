@@ -176,7 +176,15 @@
       "heading2": "Заголовок 2",
       "heading3": "Заголовок 3",
       "bulletList": "Маркированный список",
-      "orderedList": "Нумерованный список"
+      "orderedList": "Нумерованный список",
+      "collapseSidebar": "Свернуть панель",
+      "expandSidebar": "Развернуть панель",
+      "font": "Шрифт",
+      "shortcuts": {
+        "indent": "Отступ",
+        "save": "Сохранить",
+        "switchTab": "Переключить вкладку"
+      }
     },
     "export": "Экспорт",
     "exportTxt": "Скачать как TXT",
@@ -184,7 +192,8 @@
     "exportDocx": "Скачать как DOCX",
     "discardConfirmTitle": "Закрыть без сохранения?",
     "discardConfirmMessage": "Несохранённые изменения в документе будут потеряны.",
-    "discardConfirm": "Не сохранять"
+    "discardConfirm": "Не сохранять",
+    "saving": "Сохранение..."
   },
   "documentEditor": {
     "title": "Документы",
@@ -205,7 +214,10 @@
       "indent": "Отступ",
       "save": "Сохранить",
       "switchTab": "Переключить вкладку"
-    }
+    },
+    "newDocumentShort": "Новый",
+    "menuDownload": "Скачать",
+    "menuOther": "Другое"
   },
   "documentType": {
     "title": "Тип документа",
@@ -221,7 +233,10 @@
       "fileRequired": "Выберите файл",
       "unsupportedType": "Поддерживаются только файлы TXT, PDF и DOCX"
     },
-    "failed": "Не удалось импортировать файл"
+    "failed": "Не удалось импортировать файл",
+    "discardConfirmTitle": "Закрыть без сохранения?",
+    "discardConfirmMessage": "Несохранённые изменения в документе будут потеряны.",
+    "discardConfirm": "Не сохранять"
   },
   "auth": {
     "login": "Войти",
@@ -301,6 +316,9 @@
     "quote": "Цитата",
     "divider": "Разделитель",
     "codeBlock": "Блок кода",
-    "table": "Таблица"
+    "table": "Таблица",
+    "groupBasic": "Основное",
+    "groupLists": "Списки",
+    "groupOther": "Другое"
   }
 }

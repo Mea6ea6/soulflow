@@ -205,7 +205,19 @@
     "empty": "Nothing found",
     "lightTheme": "Light editor theme",
     "darkTheme": "Dark editor theme",
-    "personalLabel": "Personal"
+    "personalLabel": "Personal",
+    "saving": "Saving...",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "font": "Font",
+    "shortcuts": {
+      "indent": "Indent",
+      "save": "Save",
+      "switchTab": "Switch tab"
+    },
+    "newDocumentShort": "New",
+    "menuDownload": "Download",
+    "menuOther": "Other"
   },
   "documentType": {
     "title": "Document type",
@@ -304,6 +316,9 @@
     "quote": "Quote",
     "divider": "Divider",
     "codeBlock": "Code block",
-    "table": "Table"
+    "table": "Table",
+    "groupBasic": "Basic",
+    "groupLists": "Lists",
+    "groupOther": "Other"
   }
 }

@@ -151,3 +151,30 @@ button:disabled {
   border-top: 1px solid var(--color-border);
   margin: 1.5rem 0;
 }
+
+.ProseMirror ul[data-type='taskList'] li > label input[type='checkbox'] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-bg);
+  cursor: pointer;
+  position: relative;
+  margin-top: 2px;
+}
+.ProseMirror ul[data-type='taskList'] li > label input[type='checkbox']:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.ProseMirror ul[data-type='taskList'] li > label input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}

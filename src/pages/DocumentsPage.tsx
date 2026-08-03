@@ -5,15 +5,18 @@ import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
 import { useDocuments, useClients, deleteDocument, updateDocument } from '../hooks/useDB';
-import type { Document, DocumentType } from '../types';
+import type { Document } from '../types';
 import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
 import DocumentTargetModal, { type DocumentTarget } from '../components/DocumentTargetModal';
 import DocumentTypeModal, { type DocumentTypeChange } from '../components/DocumentTypeModal';
 import ImportDocumentModal from '../components/ImportDocumentModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import Select from '../components/Select';
+import Tooltip from '../components/Tooltip';
 
 type SortOrder = 'newest' | 'oldest';
 type ScopeFilter = 'all' | 'client' | 'personal' | 'imported';
+type TypeFilter = 'all' | 'note' | 'txt' | 'pdf' | 'docx';
 
 export default function DocumentsPage() {
   const { t } = useTranslation();
@@ -24,7 +27,7 @@ export default function DocumentsPage() {
   const clients = useClients(masterKey);
 
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<DocumentType | 'all'>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
@@ -32,6 +35,7 @@ export default function DocumentsPage() {
   const [importingStep, setImportingStep] = useState<'choose' | 'import' | null>(null);
   const [pendingTarget, setPendingTarget] = useState<DocumentTarget | null>(null);
   const [changingTypeDoc, setChangingTypeDoc] = useState<Document | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState<Document | null>(null);
 
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -44,16 +48,26 @@ export default function DocumentsPage() {
     if (scopeFilter === 'client') list = list.filter((d) => !d.isPersonal);
     if (scopeFilter === 'personal') list = list.filter((d) => d.isPersonal);
     if (scopeFilter === 'imported') list = list.filter((d) => d.origin === 'imported');
-    if (typeFilter !== 'all') list = list.filter((d) => d.type === typeFilter);
+
+    if (typeFilter === 'note') list = list.filter((d) => d.type === 'txt' && (d.origin ?? 'created') === 'created');
+    if (typeFilter === 'txt') list = list.filter((d) => d.type === 'txt' && d.origin === 'imported');
+    if (typeFilter === 'pdf') list = list.filter((d) => d.type === 'pdf');
+    if (typeFilter === 'docx') list = list.filter((d) => d.type === 'docx');
+
     if (scopeFilter !== 'personal' && clientFilter !== 'all') list = list.filter((d) => d.clientId === clientFilter);
 
     const query = search.trim().toLowerCase();
-    if (query) list = list.filter((d) => d.title.toLowerCase().includes(query));
+    if (query) {
+      list = list.filter((d) => {
+        const clientName = d.clientId ? (clientNameById.get(d.clientId) ?? '') : '';
+        return d.title.toLowerCase().includes(query) || clientName.toLowerCase().includes(query);
+      });
+    }
 
     return [...list].sort((a, b) =>
       sortOrder === 'newest' ? b.updatedAt.localeCompare(a.updatedAt) : a.updatedAt.localeCompare(b.updatedAt)
     );
-  }, [allDocuments, scopeFilter, typeFilter, clientFilter, search, sortOrder]);
+  }, [allDocuments, scopeFilter, typeFilter, clientFilter, search, sortOrder, clientNameById]);
 
   const handleDownload = (doc: Document) => {
     if (doc.type === 'txt') {
@@ -63,10 +77,12 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDelete = async (doc: Document) => {
-    if (!confirm(t('documents.confirmDelete', { title: doc.title }))) return;
-    await deleteDocument(doc.id);
-    showToast('success', t('common.delete'));
+  const handleDeleteConfirm = async () => {
+    if (deletingDoc) {
+      await deleteDocument(deletingDoc.id);
+      showToast('success', t('common.delete'));
+    }
+    setDeletingDoc(null);
   };
 
   const handleTypeChangeConfirm = async (change: DocumentTypeChange) => {
@@ -78,7 +94,7 @@ export default function DocumentsPage() {
   };
 
   const badgeFor = (doc: Document) => {
-    if (doc.type === 'txt' && (doc.origin ?? 'created') === 'created') return t('documents.badgeNote');
+    if (doc.type === 'txt' && (doc.origin ?? 'created') === 'created') return t('documents.type.note');
     return doc.type.toUpperCase();
   };
 
@@ -133,9 +149,10 @@ export default function DocumentsPage() {
         <div className="w-36">
           <Select
             value={typeFilter}
-            onChange={(v) => setTypeFilter(v as DocumentType | 'all')}
+            onChange={(v) => setTypeFilter(v as TypeFilter)}
             options={[
               { value: 'all', label: t('documents.type.all') },
+              { value: 'note', label: t('documents.type.note') },
               { value: 'txt', label: t('documents.type.txt') },
               { value: 'pdf', label: t('documents.type.pdf') },
               { value: 'docx', label: t('documents.type.docx') },
@@ -197,19 +214,27 @@ export default function DocumentsPage() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {doc.type === 'txt' && (
-                  <button onClick={() => openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal })} title={t('common.open')} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
-                    <PencilSimpleIcon size={16} />
-                  </button>
+                  <Tooltip label={t('common.open')}>
+                    <button onClick={() => openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal })} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                      <PencilSimpleIcon size={16} />
+                    </button>
+                  </Tooltip>
                 )}
-                <button onClick={() => setChangingTypeDoc(doc)} title={t('documentType.changeAction')} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
-                  <ArrowsLeftRightIcon size={16} />
-                </button>
-                <button onClick={() => handleDownload(doc)} title={t('common.download')} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
-                  <DownloadSimpleIcon size={16} />
-                </button>
-                <button onClick={() => handleDelete(doc)} title={t('common.delete')} className="p-2 rounded-md text-error hover:bg-error/10">
-                  <TrashIcon size={16} />
-                </button>
+                <Tooltip label={t('documentType.changeAction')}>
+                  <button onClick={() => setChangingTypeDoc(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                    <ArrowsLeftRightIcon size={16} />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t('common.download')}>
+                  <button onClick={() => handleDownload(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                    <DownloadSimpleIcon size={16} />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t('common.delete')}>
+                  <button onClick={() => setDeletingDoc(doc)} className="p-2 rounded-md text-error hover:bg-error/10">
+                    <TrashIcon size={16} />
+                  </button>
+                </Tooltip>
               </div>
             </div>
           ))}
@@ -250,6 +275,15 @@ export default function DocumentsPage() {
           initialClientId={changingTypeDoc.clientId}
           onConfirm={handleTypeChangeConfirm}
           onClose={() => setChangingTypeDoc(null)}
+        />
+      )}
+
+      {deletingDoc && (
+        <ConfirmDialog
+          title={t('documents.confirmDelete', { title: deletingDoc.title })}
+          message=""
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setDeletingDoc(null)}
         />
       )}
     </div>

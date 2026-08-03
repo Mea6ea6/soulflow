@@ -99,3 +99,55 @@ button:disabled {
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-text-tertiary);
 }
+
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+.ProseMirror table td,
+.ProseMirror table th {
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+  vertical-align: top;
+  position: relative;
+}
+.ProseMirror table th {
+  font-weight: 600;
+  background-color: var(--color-surface-hover);
+}
+
+.ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+.ProseMirror ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ProseMirror ul[data-type='taskList'] li > label {
+  margin-top: 3px;
+}
+.ProseMirror ul[data-type='taskList'] li > div {
+  flex: 1;
+}
+
+.ProseMirror pre {
+  background: var(--color-surface-hover);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: monospace;
+  font-size: 0.85em;
+  overflow-x: auto;
+}
+.ProseMirror blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 12px;
+  color: var(--color-text-secondary);
+}
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1.5rem 0;
+}

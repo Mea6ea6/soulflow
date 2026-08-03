@@ -142,7 +142,8 @@
       "all": "All types",
       "txt": "TXT",
       "pdf": "PDF",
-      "docx": "DOCX"
+      "docx": "DOCX",
+      "note": "NOTE"
     },
     "clientFilter": {
       "all": "All clients"
@@ -155,8 +156,7 @@
     "personalLabel": "Personal",
     "confirmDelete": "Delete document \"{{title}}\"?",
     "newTitle": "New document",
-    "importTitle": "Import document",
-    "badgeNote": "NOTE"
+    "importTitle": "Import document"
   },
   "profile": {
     "title": "Profile",
@@ -176,7 +176,15 @@
       "heading2": "Heading 2",
       "heading3": "Heading 3",
       "bulletList": "Bullet list",
-      "orderedList": "Numbered list"
+      "orderedList": "Numbered list",
+      "collapseSidebar": "Collapse sidebar",
+      "expandSidebar": "Expand sidebar",
+      "font": "Font",
+      "shortcuts": {
+        "indent": "Indent",
+        "save": "Save",
+        "switchTab": "Switch tab"
+      }
     },
     "export": "Export",
     "exportTxt": "Download as TXT",
@@ -243,7 +251,8 @@
     "forgetAccountConfirm": "Log out of this account and clear the saved sign-in data on this device? Access to your encrypted data without the password will be lost.",
     "notMe": "Not you? Use a different account",
     "noAccountYet": "No account? Register",
-    "haveAccount": "Already have an account? Log in"
+    "haveAccount": "Already have an account? Log in",
+    "forgetAccountTitle": "Log out of this account?"
   },
   "settings": {
     "title": "Settings",
@@ -283,5 +292,18 @@
   },
   "errors": {
     "invalidPassword": "Wrong password"
+  },
+  "slashMenu": {
+    "text": "Text",
+    "heading1": "Heading 1",
+    "heading2": "Heading 2",
+    "heading3": "Heading 3",
+    "bulletList": "Bulleted list",
+    "orderedList": "Numbered list",
+    "taskList": "To-do list",
+    "quote": "Quote",
+    "divider": "Divider",
+    "codeBlock": "Code block",
+    "table": "Table"
   }
 }

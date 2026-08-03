@@ -13,18 +13,16 @@ export function DocumentEditorProvider({ children }: { children: ReactNode }) {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
   const openDocument = (target: DocumentEditorTarget) => {
-    setTabs((prev) => {
-      if (target.document) {
-        const existing = prev.find((tab) => tab.target.document?.id === target.document!.id);
-        if (existing) {
-          setActiveTabId(existing.id);
-          return prev;
-        }
+    if (target.document) {
+      const existing = tabs.find((tab) => tab.target.document?.id === target.document!.id);
+      if (existing) {
+        setActiveTabId(existing.id);
+        return;
       }
-      const id = nextTabId();
-      setActiveTabId(id);
-      return [...prev, { id, target }];
-    });
+    }
+    const id = nextTabId();
+    setTabs((prev) => [...prev, { id, target }]);
+    setActiveTabId(id);
   };
 
   const closeTab = (id: string) => {
@@ -37,6 +35,18 @@ export function DocumentEditorProvider({ children }: { children: ReactNode }) {
 
   const updateTabTarget = (id: string, target: DocumentEditorTarget) => {
     setTabs((prev) => prev.map((tab) => (tab.id === id ? { ...tab, target } : tab)));
+  };
+
+  const reorderTabs = (fromId: string, toId: string) => {
+    setTabs((prev) => {
+      const fromIdx = prev.findIndex((t) => t.id === fromId);
+      const toIdx = prev.findIndex((t) => t.id === toId);
+      if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
   };
 
   const closeDocument = () => {
@@ -55,6 +65,7 @@ export function DocumentEditorProvider({ children }: { children: ReactNode }) {
           onCloseTab={closeTab}
           onOpenTab={openDocument}
           onUpdateTabTarget={updateTabTarget}
+          onReorderTabs={reorderTabs}
           onCloseAll={closeDocument}
         />
       )}

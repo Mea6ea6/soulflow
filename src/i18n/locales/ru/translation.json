@@ -142,7 +142,8 @@
       "all": "Все типы",
       "txt": "TXT",
       "pdf": "PDF",
-      "docx": "DOCX"
+      "docx": "DOCX",
+      "note": "NOTE"
     },
     "clientFilter": {
       "all": "Все клиенты"
@@ -155,8 +156,7 @@
     "personalLabel": "Личный",
     "confirmDelete": "Удалить документ \"{{title}}\"?",
     "newTitle": "Новый документ",
-    "importTitle": "Импортировать документ",
-    "badgeNote": "NOTE"
+    "importTitle": "Импортировать документ"
   },
   "profile": {
     "title": "Профиль",
@@ -197,7 +197,15 @@
     "lightTheme": "Светлая тема редактора",
     "darkTheme": "Тёмная тема редактора",
     "personalLabel": "Личный",
-    "saving": "Сохранение..."
+    "saving": "Сохранение...",
+    "collapseSidebar": "Свернуть панель",
+    "expandSidebar": "Развернуть панель",
+    "font": "Шрифт",
+    "shortcuts": {
+      "indent": "Отступ",
+      "save": "Сохранить",
+      "switchTab": "Переключить вкладку"
+    }
   },
   "documentType": {
     "title": "Тип документа",
@@ -240,7 +248,8 @@
     "forgetAccountConfirm": "Выйти из этого аккаунта и очистить сохранённые данные входа на этом устройстве? Доступ к вашим зашифрованным данным без пароля будет утерян.",
     "notMe": "Это не я — использовать другой аккаунт",
     "noAccountYet": "Нет аккаунта? Зарегистрироваться",
-    "haveAccount": "Уже есть аккаунт? Войти"
+    "haveAccount": "Уже есть аккаунт? Войти",
+    "forgetAccountTitle": "Выйти из аккаунта?"
   },
   "settings": {
     "title": "Настройки",
@@ -280,5 +289,18 @@
   },
   "errors": {
     "invalidPassword": "Неверный пароль"
+  },
+  "slashMenu": {
+    "text": "Текст",
+    "heading1": "Заголовок 1",
+    "heading2": "Заголовок 2",
+    "heading3": "Заголовок 3",
+    "bulletList": "Маркированный список",
+    "orderedList": "Нумерованный список",
+    "taskList": "Чек-лист",
+    "quote": "Цитата",
+    "divider": "Разделитель",
+    "codeBlock": "Блок кода",
+    "table": "Таблица"
   }
 }

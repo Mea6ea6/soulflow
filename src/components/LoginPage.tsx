@@ -3,6 +3,7 @@ import { SparkleIcon, LockIcon, EnvelopeSimpleIcon } from '@phosphor-icons/react
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import FloatingInput from '../components/FloatingInput';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -18,6 +19,8 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const showEmailField = mode === 'register' || !storedEmail;
+
+  const [isConfirmingForget, setIsConfirmingForget] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,11 +72,9 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgetAccount = () => {
-    if (confirm(t('auth.forgetAccountConfirm'))) {
-      localStorage.removeItem('soulflow_auth');
-      window.location.reload();
-    }
+  const handleForgetAccountConfirm = () => {
+    localStorage.removeItem('soulflow_auth');
+    window.location.reload();
   };
 
   return (
@@ -167,14 +168,23 @@ export default function LoginPage() {
           {storedEmail && (
             <button
               type="button"
-              onClick={handleForgetAccount}
-              className="mt-4 text-sm text-text-tertiary hover:underline w-full text-center"
+              onClick={() => setIsConfirmingForget(true)}
+              className="mt-3 text-sm text-text-tertiary hover:underline w-full text-center"
             >
               {t('auth.notMe')}
             </button>
           )}
         </div>
       </div>
+      {isConfirmingForget && (
+        <ConfirmDialog
+          title={t('auth.forgetAccountTitle')}
+          message={t('auth.forgetAccountConfirm')}
+          confirmLabel={t('auth.notMe')}
+          onConfirm={handleForgetAccountConfirm}
+          onClose={() => setIsConfirmingForget(false)}
+        />
+      )}
     </div>
   );
 }

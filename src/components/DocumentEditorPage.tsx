@@ -398,7 +398,7 @@ function DocumentEditorPanel({ target, isActive, contentTheme, editorFont, onFon
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => editor.chain().focus().toggleBold().run()}
-                    className="p-1.5 rounded-md hover:bg-[var(--fm-hover)]"
+                    className="p-1.5 rounded-md hover:bg-(--fm-hover)"
                     style={{ color: editor.isActive('bold') ? undefined : colors.secondary, ['--fm-hover' as string]: colors.hover }}
                   >
                     <TextBolderIcon size={14} />
@@ -406,7 +406,7 @@ function DocumentEditorPanel({ target, isActive, contentTheme, editorFont, onFon
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => editor.chain().focus().toggleItalic().run()}
-                    className="p-1.5 rounded-md hover:bg-[var(--fm-hover)]"
+                    className="p-1.5 rounded-md hover:bg-(--fm-hover)"
                     style={{ color: editor.isActive('italic') ? undefined : colors.secondary, ['--fm-hover' as string]: colors.hover }}
                   >
                     <TextItalicIcon size={14} />
@@ -414,7 +414,7 @@ function DocumentEditorPanel({ target, isActive, contentTheme, editorFont, onFon
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => editor.chain().focus().toggleUnderline().run()}
-                    className="p-1.5 rounded-md hover:bg-[var(--fm-hover)]"
+                    className="p-1.5 rounded-md hover:bg-(--fm-hover)"
                     style={{ color: editor.isActive('underline') ? undefined : colors.secondary, ['--fm-hover' as string]: colors.hover }}
                   >
                     <TextUnderlineIcon size={14} />
@@ -594,7 +594,7 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex bg-bg text-text-primary">
+    <div className="fixed inset-0 z-60 flex bg-bg text-text-primary">
       <motion.div
         animate={{ width: isSidebarCollapsed ? 40 : 288 }}
         transition={{ type: 'spring', mass: 1, stiffness: 200, damping: 24 }}
@@ -712,7 +712,7 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => handleTabDrop(tab.id)}
                   onClick={() => onSelectTab(tab.id)}
-                  className={`group flex items-center gap-2 px-4 py-2.5 border-r border-border cursor-pointer max-w-[200px] shrink-0 ${
+                  className={`group flex items-center gap-2 px-4 py-2.5 border-r border-border cursor-pointer max-w-50 shrink-0 ${
                     isActive ? 'bg-bg' : 'hover:bg-surface-hover'
                   } ${draggedTabId === tab.id ? 'opacity-50' : ''}`}
                 >

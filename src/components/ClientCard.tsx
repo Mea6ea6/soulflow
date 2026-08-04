@@ -17,6 +17,7 @@ import ImportDocumentModal from './ImportDocumentModal';
 import DateInput from './DateInput';
 import TimeInput from './TimeInput';
 import ConfirmDialog from './ConfirmDialog';
+import CopyButton from './CopyButton';
 
 interface ClientCardProps {
   client: Client;
@@ -129,9 +130,21 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
         </div>
 
         <div className="p-5 flex flex-col gap-6">
-          <div className="text-sm text-text-secondary flex flex-col gap-1">
-            {client.phone && <p>{t('client.phone')}: {client.phone}</p>}
-            {client.email && <p>{t('client.email')}: {client.email}</p>}
+          <div className="text-sm text-text-secondary flex flex-col gap-1.5">
+            {client.phone && (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-text-primary">{t('client.phone')}:</span>
+                <span>{client.phone}</span>
+                <CopyButton value={client.phone} />
+              </div>
+            )}
+            {client.email && (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-text-primary">{t('client.email')}:</span>
+                <span>{client.email}</span>
+                <CopyButton value={client.email} />
+              </div>
+            )}
             {client.workPlace && <p>{t('client.workPlace')}: {client.workPlace}</p>}
           </div>
 
@@ -204,7 +217,7 @@ export default function ClientCard({ client, onClose, onEdit }: ClientCardProps)
                 <span>{t('client.noDocuments')}</span>
               </div>
             ) : (
-              <ul className="flex flex-col gap-1.5 mb-3">
+              <ul className="flex flex-col gap-1.5 mb-3 max-h-48 overflow-y-auto pr-1">
                 {clientDocuments.map((doc) => (
                   <li key={doc.id} className="flex items-center justify-between text-sm bg-surface-hover rounded-xl px-3 py-2">
                     <span className="truncate text-text-primary">{doc.title}</span>

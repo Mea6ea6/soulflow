@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Extension } from '@tiptap/core';
+import { Extension, type Editor } from '@tiptap/core';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
@@ -15,6 +15,7 @@ import {
   DownloadSimpleIcon, XIcon, MagnifyingGlassIcon, PlusIcon, FileTextIcon,
   SunIcon, MoonIcon, DotsThreeIcon, TrashIcon, ArrowsLeftRightIcon, CircleIcon,
   CaretLineLeftIcon, CaretLineRightIcon, TextBolderIcon, TextItalicIcon, TextUnderlineIcon,
+  RowsIcon, ColumnsIcon,
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { Document } from '../types';
@@ -45,7 +46,6 @@ type SortOrder = 'newest' | 'oldest' | 'title';
 type ContentTheme = 'light' | 'dark';
 
 const CONTENT_THEME_STORAGE_KEY = 'soulflow_editor_content_theme';
-const FONT_STORAGE_KEY = 'soulflow_editor_font';
 const SIDEBAR_COLLAPSED_KEY = 'soulflow_editor_sidebar_collapsed';
 const AUTOSAVE_DELAY_MS = 1200;
 
@@ -54,18 +54,7 @@ const CONTENT_THEME_VARS: Record<ContentTheme, { bg: string; text: string; secon
   dark: { bg: '#1f1f1f', text: '#e9e9e7', secondary: '#9b9b9b', hover: '#2a2a2c' },
 };
 
-const FONT_OPTIONS = [
-  { id: 'inter', label: 'Inter', css: '"InterVariable", sans-serif' },
-  { id: 'system', label: 'System UI', css: '-apple-system, "Segoe UI", Roboto, sans-serif' },
-  { id: 'times', label: 'Times New Roman', css: '"Times New Roman", Times, serif' },
-  { id: 'georgia', label: 'Georgia', css: 'Georgia, serif' },
-  { id: 'courier', label: 'Courier New', css: '"Courier New", Courier, monospace' },
-] as const;
-type FontId = typeof FONT_OPTIONS[number]['id'];
-
-function fontCssFor(id: FontId): string {
-  return FONT_OPTIONS.find((f) => f.id === id)?.css ?? FONT_OPTIONS[0].css;
-}
+const EDITOR_FONT_CSS = '"InterVariable", sans-serif';
 
 function initialContentFor(doc: Document | null): string | object {
   if (!doc) return '';
@@ -75,16 +64,74 @@ function initialContentFor(doc: Document | null): string | object {
   return `<p>${doc.content.replace(/\n/g, '</p><p>')}</p>`;
 }
 
+interface TableControlsProps {
+  editor: Editor;
+}
+
+function TableControls({ editor }: TableControlsProps) {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [rowCount, setRowCount] = useState(1);
+  const [colCount, setColCount] = useState(1);
+
+  const addRows = () => { for (let i = 0; i < rowCount; i++) editor.chain().focus().addRowAfter().run(); setIsOpen(false); };
+  const addCols = () => { for (let i = 0; i < colCount; i++) editor.chain().focus().addColumnAfter().run(); setIsOpen(false); };
+  const deleteTable = () => { editor.chain().focus().deleteTable().run(); setIsOpen(false); };
+
+  return (
+    <div className="relative">
+      <button
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setIsOpen((v) => !v)}
+        className="w-7 h-7 flex items-center justify-center rounded-full bg-surface border border-border text-text-secondary shadow-card-hover hover:bg-surface-hover"
+        title={t('textEditor.tableControls')}
+      >
+        <PlusIcon size={14} />
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-full mt-1 w-56 bg-surface border border-border rounded-xl shadow-card-hover p-2 z-30 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <RowsIcon size={14} className="text-text-tertiary" />
+            <input
+              type="number"
+              min={1}
+              value={rowCount}
+              onChange={(e) => setRowCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+              className="w-14 px-2 py-1 rounded-md border border-border bg-bg text-xs text-text-primary"
+            />
+            <button onClick={addRows} className="flex-1 text-xs px-2 py-1 rounded-md bg-primary text-white hover:bg-primary-hover">{t('textEditor.addRows')}</button>
+          </div>
+          <button onClick={() => { editor.chain().focus().deleteRow().run(); setIsOpen(false); }} className="text-xs text-error text-left hover:underline">{t('textEditor.deleteRow')}</button>
+          <div className="h-px bg-border" />
+          <div className="flex items-center gap-2">
+            <ColumnsIcon size={14} className="text-text-tertiary" />
+            <input
+              type="number"
+              min={1}
+              value={colCount}
+              onChange={(e) => setColCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+              className="w-14 px-2 py-1 rounded-md border border-border bg-bg text-xs text-text-primary"
+            />
+            <button onClick={addCols} className="flex-1 text-xs px-2 py-1 rounded-md bg-primary text-white hover:bg-primary-hover">{t('textEditor.addColumns')}</button>
+          </div>
+          <button onClick={() => { editor.chain().focus().deleteColumn().run(); setIsOpen(false); }} className="text-xs text-error text-left hover:underline">{t('textEditor.deleteColumn')}</button>
+          <div className="h-px bg-border" />
+          <button onClick={deleteTable} className="text-xs text-error text-left hover:underline font-medium">{t('textEditor.deleteTable')}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface DocumentEditorPanelProps {
   target: DocumentEditorTarget;
   isActive: boolean;
   contentTheme: ContentTheme;
-  editorFont: FontId;
   onDirtyChange: (dirty: boolean) => void;
   onSavedDocument: (doc: Document) => void;
 }
 
-function DocumentEditorPanel({ target, isActive, contentTheme, editorFont, onDirtyChange, onSavedDocument }: DocumentEditorPanelProps) {
+function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, onSavedDocument }: DocumentEditorPanelProps) {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
 
@@ -188,7 +235,7 @@ function DocumentEditorPanel({ target, isActive, contentTheme, editorFont, onDir
 
       <div
         className="flex-1 overflow-y-auto cursor-text relative"
-        style={{ backgroundColor: colors.bg, color: colors.text, fontFamily: fontCssFor(editorFont) }}
+        style={{ backgroundColor: colors.bg, color: colors.text, fontFamily: EDITOR_FONT_CSS }}
         onClick={() => editor.chain().focus().run()}
       >
         <div className="max-w-3xl mx-auto px-10 py-10">
@@ -206,7 +253,6 @@ function DocumentEditorPanel({ target, isActive, contentTheme, editorFont, onDir
           <div className="[&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[50vh]" onClick={(e) => e.stopPropagation()}>
             {!isReadonly && (
               <>
-                {/* Плюсик слева от пустой строки — открывает то же меню блоков, что и "/" */}
                 <FloatingMenu editor={editor} options={{ placement: 'left-start', offset: 4 }}>
                   <button
                     onMouseDown={(e) => e.preventDefault()}
@@ -231,37 +277,63 @@ function DocumentEditorPanel({ target, isActive, contentTheme, editorFont, onDir
                   )}
                 </FloatingMenu>
 
-                {/* Панель форматирования — только при выделении текста */}
-                <BubbleMenu editor={editor} updateDelay={100}>
-                  <div
-                    className="flex items-center gap-0.5 p-1 rounded-lg border shadow-card-hover"
-                    style={{ backgroundColor: colors.bg, borderColor: colors.hover }}
-                  >
+                {/* Панель форматирования при выделении текста — стиль под проект */}
+                <BubbleMenu
+                  editor={editor}
+                  pluginKey="textBubbleMenu"
+                  updateDelay={100}
+                  shouldShow={({ editor: ed, state }) => {
+                    const { from, to } = state.selection;
+                    return from !== to && !ed.isActive('table');
+                  }}
+                >
+                  <div className="flex items-center gap-1 p-1 rounded-full bg-surface border border-border shadow-card-hover">
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => editor.chain().focus().toggleBold().run()}
-                      className="p-1.5 rounded-md hover:bg-(--fm-hover)"
-                      style={{ color: editor.isActive('bold') ? undefined : colors.secondary, ['--fm-hover' as string]: colors.hover }}
+                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${editor.isActive('bold') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
                     >
                       <TextBolderIcon size={14} />
                     </button>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => editor.chain().focus().toggleItalic().run()}
-                      className="p-1.5 rounded-md hover:bg-(--fm-hover)"
-                      style={{ color: editor.isActive('italic') ? undefined : colors.secondary, ['--fm-hover' as string]: colors.hover }}
+                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${editor.isActive('italic') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
                     >
                       <TextItalicIcon size={14} />
                     </button>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => editor.chain().focus().toggleUnderline().run()}
-                      className="p-1.5 rounded-md hover:bg-(--fm-hover)"
-                      style={{ color: editor.isActive('underline') ? undefined : colors.secondary, ['--fm-hover' as string]: colors.hover }}
+                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${editor.isActive('underline') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
                     >
                       <TextUnderlineIcon size={14} />
                     </button>
                   </div>
+                </BubbleMenu>
+
+                <BubbleMenu
+                  editor={editor}
+                  pluginKey="tableBubbleMenu"
+                  updateDelay={100}
+                  options={{
+                    placement: 'top-start',
+                    offset: 6,
+                  }}
+                  getReferencedVirtualElement={() => {
+                    const { selection } = editor.state;
+                    const domResult = editor.view.domAtPos(selection.from);
+                    const el = (domResult.node.nodeType === 3 ? domResult.node.parentElement : domResult.node) as HTMLElement | null;
+                    const tableEl = el?.closest('table');
+                    if (!tableEl) return null;
+                    return {
+                      getBoundingClientRect: () => tableEl.getBoundingClientRect(),
+                      contextElement: tableEl,
+                    };
+                  }}
+                  shouldShow={({ editor: ed }) => ed.isActive('table')}
+                >
+                  <TableControls editor={editor} />
                 </BubbleMenu>
               </>
             )}
@@ -287,7 +359,6 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [contentTheme, setContentTheme] = useState<ContentTheme>(() => (localStorage.getItem(CONTENT_THEME_STORAGE_KEY) as ContentTheme | null) ?? 'light');
-  const [editorFont, setEditorFont] = useState<FontId>(() => (localStorage.getItem(FONT_STORAGE_KEY) as FontId | null) ?? 'inter');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
   const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
   const [tabPendingClose, setTabPendingClose] = useState<string | null>(null);
@@ -558,15 +629,6 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
             })}
           </div>
 
-          <div className="w-40 mr-2">
-            <Select
-              value={editorFont}
-              onChange={(v) => { setEditorFont(v as FontId); localStorage.setItem(FONT_STORAGE_KEY, v); }}
-              options={FONT_OPTIONS.map((f) => ({ value: f.id, label: f.label }))}
-              placeholder={t('documentEditor.font')}
-            />
-          </div>
-
           <button
             onClick={() => setIsCreatingNew(true)}
             className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-tint text-primary text-xs font-medium hover:bg-primary hover:text-white transition-colors mr-1"
@@ -590,7 +652,6 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
             target={tab.target}
             isActive={tab.id === activeTabId}
             contentTheme={contentTheme}
-            editorFont={editorFont}
             onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tab.id]: dirty }))}
             onSavedDocument={(doc) => onUpdateTabTarget(tab.id, { ...tab.target, document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal })}
           />
@@ -600,19 +661,15 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
       {isCreatingNew && (
         <DocumentTargetModal title={t('documents.newTitle')} icon="create" onClose={() => setIsCreatingNew(false)} onConfirm={handleNewDocConfirm} />
       )}
-
       {tabPendingClose && (
         <ConfirmDialog title={t('textEditor.discardConfirmTitle')} message={t('textEditor.discardConfirmMessage')} confirmLabel={t('textEditor.discardConfirm')} onConfirm={confirmCloseTab} onClose={() => setTabPendingClose(null)} />
       )}
-
       {isClosingAll && (
         <ConfirmDialog title={t('textEditor.discardConfirmTitle')} message={t('textEditor.discardConfirmMessage')} confirmLabel={t('textEditor.discardConfirm')} onConfirm={confirmCloseAll} onClose={() => setIsClosingAll(false)} />
       )}
-
       {sidebarDeleteDoc && (
         <ConfirmDialog title={t('documents.confirmDelete', { title: sidebarDeleteDoc.title })} message="" onConfirm={handleSidebarDelete} onClose={() => setSidebarDeleteDoc(null)} />
       )}
-
       {sidebarTypeChangeDoc && (
         <DocumentTypeModal initialIsPersonal={sidebarTypeChangeDoc.isPersonal} initialClientId={sidebarTypeChangeDoc.clientId} onConfirm={handleSidebarTypeChange} onClose={() => setSidebarTypeChangeDoc(null)} />
       )}

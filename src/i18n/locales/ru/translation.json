@@ -51,7 +51,10 @@
     "noRecentDocuments": "Здесь появятся документы, которые вы создали или изменили за последнюю неделю.",
     "clientFallback": "Клиент",
     "downloadTxt": "Открыть / скачать",
-    "downloadOriginal": "Скачать"
+    "downloadOriginal": "Скачать",
+    "quickAddClient": "Клиент",
+    "quickAddEvent": "Событие",
+    "quickAddDocument": "Документ"
   },
   "clients": {
     "title": "Клиенты",
@@ -93,8 +96,8 @@
     "saveFailed": "Не удалось сохранить клиента",
     "deleteConfirmTitle": "Удалить клиента?",
     "deleteConfirmMessage": "Клиент \"{{name}}\" и все связанные с ним данные (документы, записи в календаре) будут удалены без возможности восстановления.",
-    "showCompletedSessions": "Завершённые ({{count}})", 
-    "showUpcomingSessions": "Предстоящие ({{count}})", 
+    "showCompletedSessions": "Завершённые ({{count}})",
+    "showUpcomingSessions": "Предстоящие ({{count}})",
     "noCompletedSessions": "Завершённых сеансов пока нет."
   },
   "calendar": {
@@ -162,12 +165,26 @@
     "title": "Профиль",
     "documentsTitle": "Мои документы",
     "noDocuments": "Здесь появятся ваши личные документы — сертификаты, дипломы, резюме.",
-    "upload": "Загрузить (сертификат, диплом...)"
+    "upload": "Загрузить (сертификат, диплом...)",
+    "tabDocuments": "Документы",
+    "tabStats": "Статистика",
+    "stats": {
+      "myDocuments": "Личных документов",
+      "archivedClients": "Архивных клиентов",
+      "completedSessions": "Проведённых сеансов",
+      "totalDocuments": "Всего документов"
+    }
   },
   "textEditor": {
     "saveFailed": "Не удалось сохранить документ",
     "titlePlaceholder": "Название документа",
     "readOnlyNotice": "Импортированный {{type}}-файл открыт только для чтения. Редактировать можно только TXT-документы, созданные в редакторе.",
+    "tableControls": "Управление таблицей",
+    "addRows": "Добавить строки",
+    "deleteRow": "Удалить текущую строку",
+    "addColumns": "Добавить колонки",
+    "deleteColumn": "Удалить текущую колонку",
+    "deleteTable": "Удалить таблицу",
     "toolbar": {
       "bold": "Жирный",
       "italic": "Курсив",
@@ -260,11 +277,12 @@
     "enterPassword": "Введите пароль",
     "passwordTooShort": "Пароль должен быть не менее 8 символов",
     "passwordsDoNotMatch": "Пароли не совпадают",
-    "forgetAccountConfirm": "Выйти из этого аккаунта и очистить сохранённые данные входа на этом устройстве? Доступ к вашим зашифрованным данным без пароля будет утерян.",
+    "forgetAccountConfirm": "Сохранённые данные входа на этом устройстве будут удалены.",
     "notMe": "Это не я — использовать другой аккаунт",
     "noAccountYet": "Нет аккаунта? Зарегистрироваться",
     "haveAccount": "Уже есть аккаунт? Войти",
-    "forgetAccountTitle": "Выйти из аккаунта?"
+    "forgetAccountTitle": "Выйти из аккаунта?",
+    "logoutAction": "Выйти из аккаунта"
   },
   "settings": {
     "title": "Настройки",
@@ -275,7 +293,7 @@
     "changePassword": "Сменить мастер-пароль",
     "appearanceSection": "Внешний вид",
     "defaultThemes": "Стандартные темы",
-    "themeDawn": "Лазурь", 
+    "themeDawn": "Лазурь",
     "themeDusk": "Полночь",
     "themeOnyx": "Оникс",
     "languageSection": "Язык",

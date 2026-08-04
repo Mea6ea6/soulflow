@@ -180,7 +180,7 @@ export default function LoginPage() {
         <ConfirmDialog
           title={t('auth.forgetAccountTitle')}
           message={t('auth.forgetAccountConfirm')}
-          confirmLabel={t('auth.notMe')}
+          confirmLabel={t('auth.logoutAction')}
           onConfirm={handleForgetAccountConfirm}
           onClose={() => setIsConfirmingForget(false)}
         />

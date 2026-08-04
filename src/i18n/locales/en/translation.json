@@ -51,7 +51,10 @@
     "recentDocuments": "Recent documents",
     "clientFallback": "Client",
     "downloadTxt": "Open / download",
-    "downloadOriginal": "Download"
+    "downloadOriginal": "Download",
+    "quickAddClient": "Client",
+    "quickAddEvent": "Event",
+    "quickAddDocument": "Document"
   },
   "clients": {
     "title": "Clients",
@@ -162,12 +165,26 @@
     "title": "Profile",
     "documentsTitle": "My documents",
     "noDocuments": "Documents you create or edit this week will show up here.",
-    "upload": "Upload (certificate, diploma...)"
+    "upload": "Upload (certificate, diploma...)",
+    "tabDocuments": "Documents",
+    "tabStats": "Statistics",
+    "stats": {
+      "myDocuments": "Personal documents",
+      "archivedClients": "Archived clients",
+      "completedSessions": "Completed sessions",
+      "totalDocuments": "Total documents"
+    }
   },
   "textEditor": {
     "saveFailed": "Could not save the document",
     "titlePlaceholder": "Document title",
     "readOnlyNotice": "Imported {{type}} file is read-only. Only TXT documents created in the editor can be edited.",
+    "tableControls": "Table controls",
+    "addRows": "Add rows",
+    "deleteRow": "Delete current row",
+    "addColumns": "Add columns",
+    "deleteColumn": "Delete current column",
+    "deleteTable": "Delete table",
     "toolbar": {
       "bold": "Bold",
       "italic": "Italic",
@@ -260,11 +277,12 @@
     "enterPassword": "Enter your password",
     "passwordTooShort": "Password must be at least 8 characters long",
     "passwordsDoNotMatch": "Passwords do not match",
-    "forgetAccountConfirm": "Log out of this account and clear the saved sign-in data on this device? Access to your encrypted data without the password will be lost.",
+    "forgetAccountConfirm": "Saved sign-in data on this device will be removed.",
     "notMe": "Not you? Use a different account",
     "noAccountYet": "No account? Register",
     "haveAccount": "Already have an account? Log in",
-    "forgetAccountTitle": "Log out of this account?"
+    "forgetAccountTitle": "Log out of this account?",
+    "logoutAction": "Log out"
   },
   "settings": {
     "title": "Settings",

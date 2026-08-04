@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon } from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuthHook';
@@ -20,7 +20,7 @@ const THEMES: { id: ThemeId; labelKey: string }[] = [
 ];
 
 export default function SettingsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { logout, userProfile, updateProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
@@ -30,12 +30,6 @@ export default function SettingsPage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-
-  useEffect(() => {
-    if (appSettings) {
-      i18n.changeLanguage(appSettings.language);
-    }
-  }, [appSettings, i18n]);
 
   const handleSaveProfile = async () => {
     await updateProfile({ name });

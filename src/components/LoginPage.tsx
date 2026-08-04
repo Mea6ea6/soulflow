@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { SparkleIcon, LockIcon, EnvelopeSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
+import { useAppSettings } from '../hooks/useDB';
 import FloatingInput from '../components/FloatingInput';
 import ConfirmDialog from './ConfirmDialog';
 
 export default function LoginPage() {
   const { t } = useTranslation();
   const { register, login, getStoredEmail } = useAuth();
+  const appSettings = useAppSettings();
+  const theme = appSettings?.theme ?? 'dawn';
 
   const storedEmail = getStoredEmail();
   const [mode, setMode] = useState<'login' | 'register'>(storedEmail ? 'login' : 'register');
@@ -17,28 +20,18 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmingForget, setIsConfirmingForget] = useState(false);
 
   const showEmailField = mode === 'register' || !storedEmail;
-
-  const [isConfirmingForget, setIsConfirmingForget] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (mode === 'register') {
-      if (!email.trim()) {
-        setError(t('auth.enterEmail'));
-        return;
-      }
-      if (password.length < 8) {
-        setError(t('auth.passwordTooShort'));
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError(t('auth.passwordsDoNotMatch'));
-        return;
-      }
+      if (!email.trim()) { setError(t('auth.enterEmail')); return; }
+      if (password.length < 8) { setError(t('auth.passwordTooShort')); return; }
+      if (password !== confirmPassword) { setError(t('auth.passwordsDoNotMatch')); return; }
 
       setIsSubmitting(true);
       try {
@@ -49,14 +42,8 @@ export default function LoginPage() {
         setIsSubmitting(false);
       }
     } else {
-      if (!storedEmail && !email.trim()) {
-        setError(t('auth.enterEmail'));
-        return;
-      }
-      if (!password) {
-        setError(t('auth.enterPassword'));
-        return;
-      }
+      if (!storedEmail && !email.trim()) { setError(t('auth.enterEmail')); return; }
+      if (!password) { setError(t('auth.enterPassword')); return; }
 
       setIsSubmitting(true);
       try {
@@ -79,9 +66,11 @@ export default function LoginPage() {
 
   return (
     <div
+      data-theme={theme}
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: 'var(--color-bg)' }}
-      data-theme="dawn"
+      style={{
+        background: 'radial-gradient(circle at 30% 20%, var(--color-primary-tint) 0%, var(--color-bg) 55%), var(--color-bg)',
+      }}
     >
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-10">
@@ -155,10 +144,7 @@ export default function LoginPage() {
           {!storedEmail && (
             <button
               type="button"
-              onClick={() => {
-                setMode(mode === 'login' ? 'register' : 'login');
-                setError(null);
-              }}
+              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(null); }}
               className="mt-5 text-sm text-primary hover:underline w-full text-center"
             >
               {mode === 'login' ? t('auth.noAccountYet') : t('auth.haveAccount')}
@@ -169,13 +155,14 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setIsConfirmingForget(true)}
-              className="mt-3 text-sm text-text-tertiary hover:underline w-full text-center"
+              className="mt-4 text-sm text-text-tertiary hover:underline w-full text-center"
             >
               {t('auth.notMe')}
             </button>
           )}
         </div>
       </div>
+
       {isConfirmingForget && (
         <ConfirmDialog
           title={t('auth.forgetAccountTitle')}

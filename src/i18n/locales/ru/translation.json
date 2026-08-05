@@ -288,12 +288,16 @@
     "enterPassword": "Введите пароль",
     "passwordTooShort": "Пароль должен быть не менее 8 символов",
     "passwordsDoNotMatch": "Пароли не совпадают",
-    "forgetAccountConfirm": "Сохранённые данные входа на этом устройстве будут удалены.",
     "notMe": "Это не я — использовать другой аккаунт",
     "noAccountYet": "Нет аккаунта? Зарегистрироваться",
     "haveAccount": "Уже есть аккаунт? Войти",
-    "forgetAccountTitle": "Выйти из аккаунта?",
-    "logoutAction": "Выйти из аккаунта"
+    "chooseAccount": "Выберите аккаунт",
+    "chooseAccountSubtitle": "На этом устройстве сохранено несколько аккаунтов",
+    "addAccount": "Добавить аккаунт",
+    "removeAccountAction": "Удалить аккаунт",
+    "removeAccountTitle": "Удалить аккаунт с устройства?",
+    "removeAccountMessage": "Сохранённые данные для входа в \"{{email}}\" на этом устройстве будут удалены.",
+    "accountExists": "Аккаунт с таким email уже сохранён на этом устройстве"
   },
   "settings": {
     "title": "Настройки",

@@ -288,12 +288,16 @@
     "enterPassword": "Enter your password",
     "passwordTooShort": "Password must be at least 8 characters long",
     "passwordsDoNotMatch": "Passwords do not match",
-    "forgetAccountConfirm": "Saved sign-in data on this device will be removed.",
     "notMe": "Not you? Use a different account",
     "noAccountYet": "No account? Register",
     "haveAccount": "Already have an account? Log in",
-    "forgetAccountTitle": "Log out of this account?",
-    "logoutAction": "Log out"
+    "chooseAccount": "Choose an account",
+    "chooseAccountSubtitle": "Multiple accounts are saved on this device",
+    "addAccount": "Add account",
+    "removeAccountAction": "Remove account",
+    "removeAccountTitle": "Remove this account from the device?",
+    "removeAccountMessage": "Saved sign-in data for \"{{email}}\" on this device will be removed.",
+    "accountExists": "An account with this email is already saved on this device"
   },
   "settings": {
     "title": "Settings",

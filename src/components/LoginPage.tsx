@@ -36,7 +36,11 @@ export default function LoginPage() {
   };
 
   const handleStartRegister = () => { setMode('register'); setEmail(''); resetFormState(); };
-  const handleBackToList = () => { setSelectedEmail(null); resetFormState(); };
+  const handleBackToList = () => {
+    setSelectedEmail(null);
+    setMode('password');
+    resetFormState();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

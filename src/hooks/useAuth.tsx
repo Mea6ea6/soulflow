@@ -78,8 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       description: '',
       createdAt: now,
       updatedAt: now,
-      statusText: null,
-      presence: 'available'
     };
 
     const encryptedProfile = await encryptData(JSON.stringify(profile), key);
@@ -140,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateProfile = useCallback(
-    async (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar' | 'presence' | 'statusText'>>) => {
+    async (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar'>>) => {
       if (!masterKey || !userProfile) return;
       const updated: UserProfile = { ...userProfile, ...updates, updatedAt: new Date().toISOString() };
       await persistProfile(updated, masterKey);

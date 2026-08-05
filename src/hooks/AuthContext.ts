@@ -16,7 +16,7 @@ export interface AuthContextValue {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   removeAccount: (email: string) => void;
-  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar' | 'statusText' | 'presence'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar'>>) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
 }

@@ -174,17 +174,7 @@
       "completedSessions": "Completed sessions",
       "totalDocuments": "Total documents"
     },
-    "bioEmpty": "Add a short bio in profile settings.",
-    "status": {
-      "editTitle": "Status",
-      "addPrompt": "Set a status",
-      "available": "Available",
-      "busy": "Busy",
-      "away": "Away",
-      "offline": "Offline",
-      "textPlaceholder": "e.g. In a session until 3 PM",
-      "clear": "Clear"
-    }
+    "bioEmpty": "Add a short bio in profile settings."
   },
   "textEditor": {
     "saveFailed": "Could not save the document",

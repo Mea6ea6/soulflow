@@ -48,12 +48,16 @@ export interface CalendarEvent {
   createdAt: string;           // ISO-строка
 }
 
+export type PresenceStatus = 'available' | 'busy' | 'away' | 'offline';
+
 export interface UserProfile {
   id: string;                  // UUID
   name: string;                // ФИО пользователя
-  email: string;               // Почта
-  avatar: string | null;       // base64 или null
-  description: string;         // Описание сайта (информативная заметка)
+  email: string;                // Почта
+  avatar: string | null;       // base64 (JPEG, после обработки) или null
+  description: string;         // Био — редактируется в Настройках, отображается в Профиле
+  statusText: string | null;   // Короткий текст статуса (как в Discord), опционально
+  presence: PresenceStatus;    // Индикатор присутствия рядом с аватаркой
   createdAt: string;           // ISO-строка
   updatedAt: string;           // ISO-строка
 }

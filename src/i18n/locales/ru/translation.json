@@ -173,6 +173,17 @@
       "archivedClients": "Архивных клиентов",
       "completedSessions": "Проведённых сеансов",
       "totalDocuments": "Всего документов"
+    },
+    "bioEmpty": "Добавьте короткое био в настройках профиля.",
+    "status": {
+      "editTitle": "Статус",
+      "addPrompt": "Добавить статус",
+      "available": "На связи",
+      "busy": "Занят(а)",
+      "away": "Отошёл(ла)",
+      "offline": "Не в сети",
+      "textPlaceholder": "Например: на сессии до 15:00",
+      "clear": "Очистить"
     }
   },
   "textEditor": {
@@ -313,7 +324,14 @@
     "changeEmailPasswordPlaceholder": "Текущий мастер-пароль",
     "changePasswordCurrentPlaceholder": "Текущий пароль",
     "changePasswordNewPlaceholder": "Новый пароль",
-    "changePasswordConfirmPlaceholder": "Повторите новый пароль"
+    "changePasswordConfirmPlaceholder": "Повторите новый пароль",
+    "changePhoto": "Изменить фото",
+    "removePhoto": "Удалить фото",
+    "bio": "О себе",
+    "bioPlaceholder": "Коротко о себе, специализации, подходе в работе...",
+    "avatarTooLarge": "Файл слишком большой (максимум 5 МБ)",
+    "avatarUnsupportedType": "Поддерживаются только JPEG, PNG и WebP",
+    "avatarUploadFailed": "Не удалось загрузить фото"
   },
   "documentTarget": {
     "personal": "Личный документ",

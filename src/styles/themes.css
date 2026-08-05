@@ -58,7 +58,7 @@
   --color-shadow-hover: rgba(0, 0, 0, 0.4);
 }
 
-/* Onyx — тёмная, нейтральная чёрно-серая база, синий только как акцент */
+/* Onyx — тёмная, нейтральная чёрно-серая база, синий как основной акцент*/
 [data-theme='onyx'] {
   --color-bg: #0A0A0B;
   --color-surface: #151517;
@@ -70,8 +70,8 @@
   --color-primary: #4C8DF5;
   --color-primary-hover: #6BA0F7;
   --color-primary-tint: rgba(76, 141, 245, 0.14);
-  --color-secondary: #7A7A80;
-  --color-secondary-tint: rgba(122, 122, 128, 0.16);
+  --color-secondary: #3ECAE9;
+  --color-secondary-tint: rgba(62, 202, 233, 0.18);
   --color-accent-gradient: linear-gradient(135deg, #3E7BE0 0%, #7BB4FF 100%);
 
   --color-success: #4FCB92;

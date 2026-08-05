@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Extension, type Editor } from '@tiptap/core';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, useEditorState } from '@tiptap/react';
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -15,7 +15,7 @@ import {
   DownloadSimpleIcon, XIcon, MagnifyingGlassIcon, PlusIcon, FileTextIcon,
   SunIcon, MoonIcon, DotsThreeIcon, TrashIcon, ArrowsLeftRightIcon, CircleIcon,
   CaretLineLeftIcon, CaretLineRightIcon, TextBolderIcon, TextItalicIcon, TextUnderlineIcon,
-  RowsIcon, ColumnsIcon,
+  RowsIcon, ColumnsIcon, TableIcon, MinusIcon,
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { Document } from '../types';
@@ -68,55 +68,131 @@ interface TableControlsProps {
   editor: Editor;
 }
 
+// Компактный степпер количества строк/колонок — заменяет нативный <input type="number">
+function CountStepper({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center rounded-lg border border-border bg-bg overflow-hidden shrink-0">
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onChange(Math.max(1, value - 1))}
+        className="w-6 h-7 flex items-center justify-center text-text-secondary hover:bg-surface-hover transition-colors"
+      >
+        <MinusIcon size={11} />
+      </button>
+      <span className="w-6 text-center text-xs font-medium text-text-primary tabular-nums select-none">
+        {value}
+      </span>
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onChange(value + 1)}
+        className="w-6 h-7 flex items-center justify-center text-text-secondary hover:bg-surface-hover transition-colors"
+      >
+        <PlusIcon size={11} />
+      </button>
+    </div>
+  );
+}
+
 function TableControls({ editor }: TableControlsProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [rowCount, setRowCount] = useState(1);
   const [colCount, setColCount] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const addRows = () => { for (let i = 0; i < rowCount; i++) editor.chain().focus().addRowAfter().run(); setIsOpen(false); };
-  const addCols = () => { for (let i = 0; i < colCount; i++) editor.chain().focus().addColumnAfter().run(); setIsOpen(false); };
+  // Закрытие по клику вне меню (как у остальных выпадающих меню в приложении)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false);
+    };
+    window.addEventListener('mousedown', handler);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  const addRows = () => {
+    for (let i = 0; i < rowCount; i++) editor.chain().focus().addRowAfter().run();
+    setRowCount(1);
+    setIsOpen(false);
+  };
+  const addCols = () => {
+    for (let i = 0; i < colCount; i++) editor.chain().focus().addColumnAfter().run();
+    setColCount(1);
+    setIsOpen(false);
+  };
+  const deleteRow = () => { editor.chain().focus().deleteRow().run(); setIsOpen(false); };
+  const deleteColumn = () => { editor.chain().focus().deleteColumn().run(); setIsOpen(false); };
   const deleteTable = () => { editor.chain().focus().deleteTable().run(); setIsOpen(false); };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => setIsOpen((v) => !v)}
-        className="w-7 h-7 flex items-center justify-center rounded-full bg-surface border border-border text-text-secondary shadow-card-hover hover:bg-surface-hover"
+        className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
+          isOpen ? 'bg-primary-tint text-primary' : 'bg-surface border border-border text-text-secondary hover:bg-surface-hover'
+        }`}
         title={t('textEditor.tableControls')}
       >
-        <PlusIcon size={14} />
+        <TableIcon size={14} />
       </button>
+
       {isOpen && (
-        <div className="absolute left-0 top-full mt-1 w-56 bg-surface border border-border rounded-xl shadow-card-hover p-2 z-30 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <RowsIcon size={14} className="text-text-tertiary" />
-            <input
-              type="number"
-              min={1}
-              value={rowCount}
-              onChange={(e) => setRowCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="w-14 px-2 py-1 rounded-md border border-border bg-bg text-xs text-text-primary"
-            />
-            <button onClick={addRows} className="flex-1 text-xs px-2 py-1 rounded-md bg-primary text-white hover:bg-primary-hover">{t('textEditor.addRows')}</button>
+        <div className="absolute left-0 top-full mt-1 w-56 bg-surface border border-border rounded-xl shadow-card-hover p-1 z-30 flex flex-col">
+          <div className="flex items-center gap-1.5 px-1 py-1">
+            <CountStepper value={rowCount} onChange={setRowCount} />
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={addRows}
+              className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left text-text-primary hover:bg-surface-hover transition-colors"
+            >
+              <RowsIcon size={14} className="shrink-0 text-text-tertiary" />
+              {t('textEditor.addRows')}
+            </button>
           </div>
-          <button onClick={() => { editor.chain().focus().deleteRow().run(); setIsOpen(false); }} className="text-xs text-error text-left hover:underline">{t('textEditor.deleteRow')}</button>
-          <div className="h-px bg-border" />
-          <div className="flex items-center gap-2">
-            <ColumnsIcon size={14} className="text-text-tertiary" />
-            <input
-              type="number"
-              min={1}
-              value={colCount}
-              onChange={(e) => setColCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="w-14 px-2 py-1 rounded-md border border-border bg-bg text-xs text-text-primary"
-            />
-            <button onClick={addCols} className="flex-1 text-xs px-2 py-1 rounded-md bg-primary text-white hover:bg-primary-hover">{t('textEditor.addColumns')}</button>
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={deleteRow}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-left text-error hover:bg-error/10 transition-colors"
+          >
+            <TrashIcon size={14} className="shrink-0" />
+            {t('textEditor.deleteRow')}
+          </button>
+
+          <div className="h-px bg-border my-1" />
+
+          <div className="flex items-center gap-1.5 px-1 py-1">
+            <CountStepper value={colCount} onChange={setColCount} />
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={addCols}
+              className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left text-text-primary hover:bg-surface-hover transition-colors"
+            >
+              <ColumnsIcon size={14} className="shrink-0 text-text-tertiary" />
+              {t('textEditor.addColumns')}
+            </button>
           </div>
-          <button onClick={() => { editor.chain().focus().deleteColumn().run(); setIsOpen(false); }} className="text-xs text-error text-left hover:underline">{t('textEditor.deleteColumn')}</button>
-          <div className="h-px bg-border" />
-          <button onClick={deleteTable} className="text-xs text-error text-left hover:underline font-medium">{t('textEditor.deleteTable')}</button>
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={deleteColumn}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-left text-error hover:bg-error/10 transition-colors"
+          >
+            <TrashIcon size={14} className="shrink-0" />
+            {t('textEditor.deleteColumn')}
+          </button>
+
+          <div className="h-px bg-border my-1" />
+
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={deleteTable}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-left font-medium text-error hover:bg-error/10 transition-colors"
+          >
+            <TrashIcon size={14} className="shrink-0" />
+            {t('textEditor.deleteTable')}
+          </button>
         </div>
       )}
     </div>
@@ -162,11 +238,27 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
   const editor = useEditor({
     extensions: [
       StarterKit, Underline, TaskList, TaskItem.configure({ nested: true }),
-      Table.configure({ resizable: false }), TableRow, TableHeader, TableCell,
+      Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
       SlashCommand, shortcutsExtension,
     ],
     content: initialContentFor(target.document),
     editable: !isReadonly,
+  });
+
+  // Активные состояния форматирования (bold/italic/underline) для панели выделения текста.
+  // useEditorState подписывается на транзакции редактора и переcчитывает селектор при каждом
+  // изменении selection/marks — без этого className в BubbleMenu считался бы один раз при
+  // рендере DocumentEditorPanel и не обновлялся бы при простом изменении выделения.
+  const bubbleMenuState = useEditorState({
+    editor,
+    selector: (ctx) => {
+      if (!ctx.editor) return { isBold: false, isItalic: false, isUnderline: false };
+      return {
+        isBold: ctx.editor.isActive('bold'),
+        isItalic: ctx.editor.isActive('italic'),
+        isUnderline: ctx.editor.isActive('underline'),
+      };
+    },
   });
 
   useEffect(() => { queueMicrotask(() => { isInitializingRef.current = false; }); }, []);
@@ -291,21 +383,21 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => editor.chain().focus().toggleBold().run()}
-                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${editor.isActive('bold') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
+                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${bubbleMenuState.isBold ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
                     >
                       <TextBolderIcon size={14} />
                     </button>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => editor.chain().focus().toggleItalic().run()}
-                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${editor.isActive('italic') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
+                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${bubbleMenuState.isItalic ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
                     >
                       <TextItalicIcon size={14} />
                     </button>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => editor.chain().focus().toggleUnderline().run()}
-                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${editor.isActive('underline') ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
+                      className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${bubbleMenuState.isUnderline ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
                     >
                       <TextUnderlineIcon size={14} />
                     </button>

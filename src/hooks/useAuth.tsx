@@ -40,6 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       avatar: null,
       description: '',
+      statusText: null,
+      presence: 'available',
       createdAt: now,
       updatedAt: now,
     };
@@ -100,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateProfile = useCallback(
-    async (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar'>>) => {
+    async (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar' | 'statusText' | 'presence'>>) => {
       if (!masterKey || !userProfile) return;
       const updated: UserProfile = { ...userProfile, ...updates, updatedAt: new Date().toISOString() };
       await persistProfile(updated, masterKey);

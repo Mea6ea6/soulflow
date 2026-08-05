@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon } from '@phosphor-icons/react';
+import { SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon, CameraIcon } from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useTheme } from '../context/useThemeHook';
 import { useToast } from '../hooks/useToastHook';
 import { useAppSettings, updateAppSettings } from '../hooks/useDB';
 import { exportAllData, downloadExport, importAllData, clearAllData } from '../utils/exportImport';
+import { processAvatarFile, AvatarProcessingError } from '../utils/avatarImage';
 import type { ThemeId } from '../types';
+import Avatar from '../components/Avatar';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import ChangeEmailModal from '../components/ChangeEmailModal';
 import ThemeSwatch from '../components/ThemeSwatch';
@@ -20,20 +22,58 @@ const THEMES: { id: ThemeId; labelKey: string }[] = [
 ];
 
 export default function SettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { logout, userProfile, updateProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
   const appSettings = useAppSettings();
 
   const [name, setName] = useState(userProfile?.name ?? '');
+  const [description, setDescription] = useState(userProfile?.description ?? '');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (appSettings) {
+      i18n.changeLanguage(appSettings.language);
+    }
+  }, [appSettings, i18n]);
 
   const handleSaveProfile = async () => {
-    await updateProfile({ name });
+    await updateProfile({ name, description });
     showToast('success', t('common.save'));
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setAvatarError(null);
+    setIsUploadingAvatar(true);
+    try {
+      const base64 = await processAvatarFile(file);
+      await updateProfile({ avatar: base64 });
+      showToast('success', t('settings.changePhoto'));
+    } catch (err) {
+      if (err instanceof AvatarProcessingError && err.code === 'too_large') {
+        setAvatarError(t('settings.avatarTooLarge'));
+      } else if (err instanceof AvatarProcessingError && err.code === 'unsupported_type') {
+        setAvatarError(t('settings.avatarUnsupportedType'));
+      } else {
+        setAvatarError(t('settings.avatarUploadFailed'));
+      }
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    await updateProfile({ avatar: null });
   };
 
   const handleThemeChange = (newTheme: ThemeId) => setTheme(newTheme);
@@ -78,25 +118,77 @@ export default function SettingsPage() {
       <div className="flex flex-col gap-8">
         <section>
           <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.profileSection')}</h2>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <Avatar name={userProfile?.name ?? '?'} photoBase64={userProfile?.avatar} size={56} />
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-50 transition-colors"
+                  >
+                    <CameraIcon size={14} />
+                    {t('settings.changePhoto')}
+                  </button>
+                  {userProfile?.avatar && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium text-error hover:bg-error/10 transition-colors"
+                    >
+                      {t('settings.removePhoto')}
+                    </button>
+                  )}
+                </div>
+                {avatarError && <p className="text-xs text-error">{avatarError}</p>}
+              </div>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+            </div>
+
             <div>
               <label className="text-sm text-text-secondary mb-1 block">{t('settings.fullName')}</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={name === userProfile?.name}
-                  className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
-                >
-                  {t('common.save')}
-                </button>
-              </div>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
+
+            <div>
+              <label className="text-sm text-text-secondary mb-1 block">{t('settings.bio')}</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                maxLength={280}
+                placeholder={t('settings.bioPlaceholder')}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveProfile}
+              disabled={name === userProfile?.name && description === (userProfile?.description ?? '')}
+              className="self-start px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+            >
+              {t('common.save')}
+            </button>
 
             <div>
               <label className="text-sm text-text-secondary mb-1 block">{t('auth.email')}</label>

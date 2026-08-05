@@ -10,7 +10,7 @@ export interface AuthContextValue {
   login: (password: string) => Promise<boolean>;
   logout: () => void;
   getStoredEmail: () => string | null;
-  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar' | 'statusText' | 'presence'>>) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
 }

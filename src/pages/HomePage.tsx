@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { FileTextIcon, PencilSimpleIcon, DownloadSimpleIcon, CalendarCheckIcon, UserPlusIcon, CalendarPlusIcon, FilePlusIcon } from '@phosphor-icons/react';
+import { useState, useMemo, useEffect } from 'react';
+import { FileTextIcon, PencilSimpleIcon, DownloadSimpleIcon, CalendarCheckIcon, UserPlusIcon, CalendarPlusIcon, FilePlusIcon, XIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
@@ -30,6 +30,34 @@ function pickGreetingKey(): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+function eventDateTime(dateYMD: string, time: string): Date {
+  const [h, m] = time.split(':').map(Number);
+  const [y, mo, d] = dateYMD.split('-').map(Number);
+  return new Date(y, mo - 1, d, h, m, 0);
+}
+
+function formatCountdown(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+
+function dismissedStorageKey(dateYMD: string): string {
+  return `soulflow_dismissed_events_${dateYMD}`;
+}
+
+function readDismissed(dateYMD: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(dismissedStorageKey(dateYMD));
+    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { userProfile, masterKey } = useAuth();
@@ -44,6 +72,13 @@ export default function HomePage() {
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => readDismissed(todayYMD));
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const dateLabel = useMemo(() => {
     return new Date().toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
@@ -58,8 +93,10 @@ export default function HomePage() {
   }, [clients]);
 
   const todayEvents = useMemo(
-    () => (events ?? []).filter((e) => e.date === todayYMD).sort((a, b) => a.time.localeCompare(b.time)),
-    [events, todayYMD]
+    () => (events ?? [])
+      .filter((e) => e.date === todayYMD && !dismissedIds.has(e.id))
+      .sort((a, b) => a.time.localeCompare(b.time)),
+    [events, todayYMD, dismissedIds]
   );
 
   const recentDocuments = useMemo(() => {
@@ -79,6 +116,19 @@ export default function HomePage() {
   const handleNewDocConfirm = (target: DocumentTarget) => {
     setIsCreatingDoc(false);
     openDocument({ document: null, clientId: target.clientId, isPersonal: target.isPersonal });
+  };
+
+  const handleDismissEvent = (eventId: string) => {
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      next.add(eventId);
+      try {
+        localStorage.setItem(dismissedStorageKey(todayYMD), JSON.stringify([...next]));
+      } catch {
+        /* localStorage недоступен — просто теряем сохранение между перезагрузками */
+      }
+      return next;
+    });
   };
 
   return (
@@ -134,19 +184,36 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {todayEvents.map((ev) => (
-                <div key={ev.id} className="flex items-center gap-3 p-4 rounded-xl bg-surface shadow-card hover:shadow-card-hover transition-shadow">
-                  <div className="shrink-0 w-11 h-11 rounded-lg bg-primary-tint text-primary flex items-center justify-center font-display font-semibold text-xs">
-                    {ev.time}
+              {todayEvents.map((ev) => {
+                const msUntil = eventDateTime(ev.date, ev.time).getTime() - now;
+                const hasStarted = msUntil <= 0;
+                return (
+                  <div key={ev.id} className="flex items-center gap-3 p-4 rounded-xl bg-surface shadow-card hover:shadow-card-hover transition-shadow">
+                    <div className="shrink-0 w-11 h-11 rounded-lg bg-primary-tint text-primary flex items-center justify-center font-display font-semibold text-xs">
+                      {ev.time}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-text-primary truncate">
+                        {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
+                      </p>
+                      {ev.isPersonal && <p className="text-xs text-text-tertiary">{t('calendar.personalEvent')}</p>}
+                    </div>
+                    {hasStarted ? (
+                      <button
+                        onClick={() => handleDismissEvent(ev.id)}
+                        className="shrink-0 p-2 rounded-md text-text-tertiary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                        title={t('home.dismissEvent')}
+                      >
+                        <XIcon size={16} />
+                      </button>
+                    ) : (
+                      <span className="shrink-0 text-xs font-mono font-medium text-text-tertiary tabular-nums">
+                        {formatCountdown(msUntil)}
+                      </span>
+                    )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-text-primary truncate">
-                      {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
-                    </p>
-                    {ev.isPersonal && <p className="text-xs text-text-tertiary">{t('calendar.personalEvent')}</p>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

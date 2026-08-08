@@ -9,6 +9,7 @@ import { toYMD } from '../utils/date';
 import CalendarEventModal from '../components/CalendarEventModal';
 import WeekCalendarView from '../components/WeekCalendarView';
 
+
 const MAX_VISIBLE_EVENTS = 2;
 type ViewMode = 'month' | 'week';
 

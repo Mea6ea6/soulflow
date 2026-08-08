@@ -93,11 +93,29 @@ export default function HomePage() {
     return map;
   }, [clients]);
 
+  const validDismissedIds = useMemo(() => {
+    if (dismissedIds.size === 0) return dismissedIds;
+
+    const stillValid = new Set<string>();
+    (events ?? []).forEach((e) => {
+      if (e.date === todayYMD && dismissedIds.has(e.id)) {
+        const hasStarted = eventDateTime(e.date, e.time).getTime() - now <= 0;
+        if (hasStarted) stillValid.add(e.id);
+      }
+    });
+
+    return stillValid;
+  }, [events, todayYMD, dismissedIds, now]);
+
   const todayEvents = useMemo(
     () => (events ?? [])
-      .filter((e) => e.date === todayYMD && !dismissedIds.has(e.id))
+      .filter((e) => {
+        if (e.date !== todayYMD) return false;
+        const hasStarted = eventDateTime(e.date, e.time).getTime() - now <= 0;
+        return !(validDismissedIds.has(e.id) && hasStarted);
+      })
       .sort((a, b) => a.time.localeCompare(b.time)),
-    [events, todayYMD, dismissedIds]
+    [events, todayYMD, validDismissedIds, now]
   );
 
   const recentDocuments = useMemo(() => {

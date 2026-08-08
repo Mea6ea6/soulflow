@@ -557,11 +557,21 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
 
   const handleSidebarExport = (doc: Document, format: 'txt' | 'pdf' | 'docx') => {
     if (doc.type === 'txt') {
+      let json: object | null = null;
       let text = doc.content;
-      try { text = extractPlainText(JSON.parse(doc.content)); } catch { /* already plain */ }
+      try {
+        json = JSON.parse(doc.content);
+        text = extractPlainText(json as { text?: string; content?: unknown[] });
+      } catch { /* уже plain text — оставляем как есть */ }
       if (format === 'txt') downloadAsTxt(text, doc.title);
-      if (format === 'pdf') downloadAsPdf(text, doc.title);
-      if (format === 'docx') downloadAsDocx(text, doc.title);
+      if (format === 'pdf') {
+        if (json) downloadAsPdf(json, doc.title);
+        else downloadAsPdf({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }, doc.title);
+      }
+      if (format === 'docx') {
+        if (json) downloadAsDocx(json, doc.title);
+        else downloadAsDocx({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }, doc.title);
+      }
     } else if (doc.originalFileBase64) {
       downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
     }

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { FileTextIcon, PencilSimpleIcon, DownloadSimpleIcon, CalendarCheckIcon, UserPlusIcon, CalendarPlusIcon, FilePlusIcon, XIcon } from '@phosphor-icons/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
@@ -184,36 +185,46 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {todayEvents.map((ev) => {
-                const msUntil = eventDateTime(ev.date, ev.time).getTime() - now;
-                const hasStarted = msUntil <= 0;
-                return (
-                  <div key={ev.id} className="flex items-center gap-3 p-4 rounded-xl bg-surface shadow-card hover:shadow-card-hover transition-shadow">
-                    <div className="shrink-0 w-11 h-11 rounded-lg bg-primary-tint text-primary flex items-center justify-center font-display font-semibold text-xs">
-                      {ev.time}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-text-primary truncate">
-                        {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
-                      </p>
-                      {ev.isPersonal && <p className="text-xs text-text-tertiary">{t('calendar.personalEvent')}</p>}
-                    </div>
-                    {hasStarted ? (
-                      <button
-                        onClick={() => handleDismissEvent(ev.id)}
-                        className="shrink-0 p-2 rounded-md text-text-tertiary hover:bg-surface-hover hover:text-text-primary transition-colors"
-                        title={t('home.dismissEvent')}
-                      >
-                        <XIcon size={16} />
-                      </button>
-                    ) : (
-                      <span className="shrink-0 text-xs font-mono font-medium text-text-tertiary tabular-nums">
-                        {formatCountdown(msUntil)}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+              <AnimatePresence initial={false}>
+                {todayEvents.map((ev) => {
+                  const msUntil = eventDateTime(ev.date, ev.time).getTime() - now;
+                  const hasStarted = msUntil <= 0;
+                  return (
+                    <motion.div
+                      key={ev.id}
+                      layout
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+                      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex items-center gap-3 p-4 rounded-xl bg-surface shadow-card hover:shadow-card-hover overflow-hidden"
+                    >
+                      <div className="shrink-0 w-11 h-11 rounded-lg bg-primary-tint text-primary flex items-center justify-center font-display font-semibold text-xs">
+                        {ev.time}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-text-primary truncate">
+                          {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
+                        </p>
+                        {ev.isPersonal && <p className="text-xs text-text-tertiary">{t('calendar.personalEvent')}</p>}
+                      </div>
+                      {hasStarted ? (
+                        <button
+                          onClick={() => handleDismissEvent(ev.id)}
+                          className="shrink-0 p-2 rounded-md text-text-tertiary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                          title={t('home.dismissEvent')}
+                        >
+                          <XIcon size={16} />
+                        </button>
+                      ) : (
+                        <span className="shrink-0 text-xs font-mono font-medium text-text-tertiary tabular-nums">
+                          {formatCountdown(msUntil)}
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
           )}
         </section>

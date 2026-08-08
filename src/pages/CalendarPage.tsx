@@ -136,7 +136,7 @@ export default function CalendarPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <div className="min-w-[720px] grid grid-cols-7 gap-px bg-border rounded-xl overflow-hidden border border-border shadow-card">
+              <div className="min-w-180 grid grid-cols-7 gap-px bg-border rounded-xl overflow-hidden border border-border shadow-card">
                 {weekdays.map((day) => (
                   <div key={day} className="bg-surface-hover text-center text-xs font-semibold tracking-wide uppercase text-text-tertiary py-3">
                     {day}

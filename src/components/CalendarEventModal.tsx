@@ -7,6 +7,7 @@ import { useToast } from '../hooks/useToastHook';
 import { useClients, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '../hooks/useDB';
 import { formatDateRu } from '../utils/date';
 import ModalShell from './ModalShell';
+import ConfirmDialog from './ConfirmDialog';
 import TimeInput from './TimeInput';
 import Checkbox from './Checkbox';
 import Select from './Select';
@@ -31,6 +32,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
   const [note, setNote] = useState(event?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,11 +66,11 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (!event) return;
-    if (!confirm(t('common.confirmDeleteEvent'))) return;
     await deleteCalendarEvent(event.id);
     showToast('success', t('common.delete'));
+    setIsConfirmingDelete(false);
     onClose();
   };
 
@@ -130,7 +132,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
           {event && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setIsConfirmingDelete(true)}
               className="px-3 py-2 rounded-full border border-error/30 text-error hover:bg-error/10 transition-colors"
               title={t('common.delete')}
             >
@@ -153,6 +155,15 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
           </button>
         </div>
       </form>
+
+      {isConfirmingDelete && (
+        <ConfirmDialog
+          title={t('common.confirmDeleteEvent')}
+          message=""
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setIsConfirmingDelete(false)}
+        />
+      )}
     </ModalShell>
   );
 }

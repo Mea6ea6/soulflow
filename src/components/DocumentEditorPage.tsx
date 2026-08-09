@@ -52,7 +52,7 @@ const AUTOSAVE_DELAY_MS = 1200;
 
 const CONTENT_THEME_VARS: Record<ContentTheme, { bg: string; text: string; secondary: string; hover: string }> = {
   light: { bg: '#ffffff', text: '#191919', secondary: '#8b8b89', hover: '#f1f1ef' },
-  dark: { bg: '#1f1f1f', text: '#e9e9e7', secondary: '#9b9b9b', hover: '#2a2a2c' },
+  dark: { bg: '#0A0A0B', text: '#F0F0F0', secondary: '#9A9A9E', hover: '#1D1D20' },
 };
 
 const EDITOR_FONT_CSS = '"InterVariable", sans-serif';
@@ -365,8 +365,15 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
           {t('textEditor.readOnlyNotice', { type: target.document?.type.toUpperCase() })}
         </div>
       )}
-
-      <div className="flex items-center justify-end px-6 py-2 border-b border-border shrink-0 bg-surface">
+      <div className="flex items-center gap-3 px-6 py-2 border-b border-border shrink-0 bg-surface">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          disabled={isReadonly}
+          placeholder={t('textEditor.titlePlaceholder')}
+          className="flex-1 min-w-0 bg-transparent text-sm font-medium text-text-primary focus:outline-none disabled:opacity-70 placeholder:text-text-tertiary placeholder:font-normal"
+        />
         <div className="relative">
           <button
             onMouseDown={(e) => e.preventDefault()}
@@ -422,17 +429,6 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
         onClick={() => editor.chain().focus().run()}
       >
         <div className="max-w-3xl mx-auto px-10 py-10">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            disabled={isReadonly}
-            placeholder={t('textEditor.titlePlaceholder')}
-            className="w-full text-3xl font-display font-semibold bg-transparent focus:outline-none disabled:opacity-70 mb-6"
-            style={{ color: colors.text }}
-            onClick={(e) => e.stopPropagation()}
-          />
-
           <div className="[&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[50vh]" onClick={(e) => e.stopPropagation()}>
             {!isReadonly && (
               <>

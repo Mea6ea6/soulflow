@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { MagnifyingGlassIcon, FileTextIcon, DownloadSimpleIcon, TrashIcon, PencilSimpleIcon, ArrowsDownUpIcon, PlusIcon, UploadSimpleIcon, ArrowsLeftRightIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
@@ -6,7 +6,7 @@ import { useToast } from '../hooks/useToastHook';
 import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
 import { useDocuments, useClients, deleteDocument, updateDocument } from '../hooks/useDB';
 import type { Document } from '../types';
-import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
+import { downloadOriginalFile, downloadAsTxt, downloadAsPdf, downloadAsDocx, MIME_TYPES } from '../utils/fileExport';
 import DocumentTargetModal, { type DocumentTarget } from '../components/DocumentTargetModal';
 import DocumentTypeModal, { type DocumentTypeChange } from '../components/DocumentTypeModal';
 import ImportDocumentModal from '../components/ImportDocumentModal';
@@ -17,6 +17,12 @@ import Tooltip from '../components/Tooltip';
 type SortOrder = 'newest' | 'oldest';
 type ScopeFilter = 'all' | 'client' | 'personal' | 'imported';
 type TypeFilter = 'all' | 'note' | 'txt' | 'pdf' | 'docx';
+
+function extractPlainText(node: { text?: string; content?: unknown[] }): string {
+  if (node.text) return node.text;
+  if (node.content) return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
+  return '';
+}
 
 export default function DocumentsPage() {
   const { t } = useTranslation();
@@ -36,6 +42,8 @@ export default function DocumentsPage() {
   const [pendingTarget, setPendingTarget] = useState<DocumentTarget | null>(null);
   const [changingTypeDoc, setChangingTypeDoc] = useState<Document | null>(null);
   const [deletingDoc, setDeletingDoc] = useState<Document | null>(null);
+  const [exportMenuDocId, setExportMenuDocId] = useState<string | null>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -69,10 +77,31 @@ export default function DocumentsPage() {
     );
   }, [allDocuments, scopeFilter, typeFilter, clientFilter, search, sortOrder, clientNameById]);
 
-  const handleDownload = (doc: Document) => {
-    if (doc.type === 'txt') {
-      openDocument({ document: doc, clientId: doc.clientId, isPersonal: doc.isPersonal });
-    } else if (doc.originalFileBase64) {
+  useEffect(() => {
+    if (!exportMenuDocId) return;
+    const handler = (e: MouseEvent) => {
+      if (!exportMenuRef.current?.contains(e.target as Node)) setExportMenuDocId(null);
+    };
+    window.addEventListener('mousedown', handler);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [exportMenuDocId]);
+
+  const handleExportFormat = (doc: Document, format: 'txt' | 'pdf' | 'docx') => {
+    let json: object | null = null;
+    let text = doc.content;
+    try {
+      json = JSON.parse(doc.content);
+      text = extractPlainText(json as { text?: string; content?: unknown[] });
+    } catch { /* уже plain text */ }
+
+    if (format === 'txt') downloadAsTxt(text, doc.title);
+    if (format === 'pdf') downloadAsPdf(json ?? { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }, doc.title);
+    if (format === 'docx') downloadAsDocx(json ?? { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }, doc.title);
+    setExportMenuDocId(null);
+  };
+
+  const handleDownloadOriginal = (doc: Document) => {
+    if (doc.originalFileBase64 && (doc.type === 'pdf' || doc.type === 'docx')) {
       downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
     }
   };
@@ -225,11 +254,33 @@ export default function DocumentsPage() {
                     <ArrowsLeftRightIcon size={16} />
                   </button>
                 </Tooltip>
-                <Tooltip label={t('common.download')}>
-                  <button onClick={() => handleDownload(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
-                    <DownloadSimpleIcon size={16} />
-                  </button>
-                </Tooltip>
+
+                {doc.type === 'txt' ? (
+                  <div className="relative" ref={exportMenuDocId === doc.id ? exportMenuRef : undefined}>
+                    <Tooltip label={t('common.download')}>
+                      <button
+                        onClick={() => setExportMenuDocId(exportMenuDocId === doc.id ? null : doc.id)}
+                        className="p-2 rounded-md text-text-secondary hover:bg-surface-hover"
+                      >
+                        <DownloadSimpleIcon size={16} />
+                      </button>
+                    </Tooltip>
+                    {exportMenuDocId === doc.id && (
+                      <div className="absolute right-0 top-full mt-1 w-32 bg-surface border border-border rounded-xl shadow-card-hover p-1 z-30">
+                        <button onClick={() => handleExportFormat(doc, 'txt')} className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-primary hover:bg-surface-hover">TXT</button>
+                        <button onClick={() => handleExportFormat(doc, 'pdf')} className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-primary hover:bg-surface-hover">PDF</button>
+                        <button onClick={() => handleExportFormat(doc, 'docx')} className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-primary hover:bg-surface-hover">DOCX</button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Tooltip label={t('common.download')}>
+                    <button onClick={() => handleDownloadOriginal(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                      <DownloadSimpleIcon size={16} />
+                    </button>
+                  </Tooltip>
+                )}
+
                 <Tooltip label={t('common.delete')}>
                   <button onClick={() => setDeletingDoc(doc)} className="p-2 rounded-md text-error hover:bg-error/10">
                     <TrashIcon size={16} />

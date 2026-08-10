@@ -1,16 +1,18 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { FileTextIcon, UploadSimpleIcon, DownloadSimpleIcon, TrashIcon, FilePlusIcon, UsersIcon, FolderOpenIcon, CalendarCheckIcon, ArchiveIcon, CheckCircleIcon } from '@phosphor-icons/react';
+import { FileTextIcon, UploadSimpleIcon, DownloadSimpleIcon, TrashIcon, PencilSimpleIcon, ArrowsLeftRightIcon, UsersIcon, FolderOpenIcon, CalendarCheckIcon, ArchiveIcon, CheckCircleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useToast } from '../hooks/useToastHook';
 import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
-import { usePersonalDocuments, useDocuments, useClients, useCalendarEvents, deleteDocument } from '../hooks/useDB';
+import { usePersonalDocuments, useDocuments, useClients, useCalendarEvents, deleteDocument, updateDocument } from '../hooks/useDB';
 import type { Document } from '../types';
 import { downloadOriginalFile, downloadAsTxt, downloadAsPdf, downloadAsDocx, MIME_TYPES } from '../utils/fileExport';
 import { toYMD } from '../utils/date';
 import Avatar from '../components/Avatar';
 import ImportDocumentModal from '../components/ImportDocumentModal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import DocumentTypeModal, { type DocumentTypeChange } from '../components/DocumentTypeModal';
+import Tooltip from '../components/Tooltip';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 type ProfileTab = 'documents' | 'stats';
@@ -37,6 +39,7 @@ export default function ProfilePage() {
   const [weekEndYMD] = useState(() => toYMD(new Date(Date.now() + SEVEN_DAYS_MS)));
   const [exportMenuDocId, setExportMenuDocId] = useState<string | null>(null);
   const [deletingDoc, setDeletingDoc] = useState<Document | null>(null);
+  const [changingTypeDoc, setChangingTypeDoc] = useState<Document | null>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const stats = useMemo(() => {
@@ -78,8 +81,7 @@ export default function ProfilePage() {
 
   const handleDownloadOriginal = (doc: Document) => {
     if (doc.originalFileBase64) {
-      const mimeType = doc.type === 'pdf' || doc.type === 'docx' ? MIME_TYPES[doc.type] : undefined;
-      if (!mimeType) return;
+      const mimeType = doc.type === 'txt' ? 'text/plain' : MIME_TYPES[doc.type];
       downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, mimeType);
     }
   };
@@ -90,6 +92,14 @@ export default function ProfilePage() {
       showToast('success', t('common.delete'));
     }
     setDeletingDoc(null);
+  };
+
+  const handleTypeChangeConfirm = async (change: DocumentTypeChange) => {
+    if (changingTypeDoc && masterKey) {
+      await updateDocument(changingTypeDoc.id, change, masterKey);
+      showToast('success', t('common.save'));
+    }
+    setChangingTypeDoc(null);
   };
 
   return (
@@ -178,20 +188,29 @@ export default function ProfilePage() {
                   <span className="text-sm text-text-primary truncate">{doc.title}</span>
                   <div className="flex items-center gap-1 shrink-0">
                     {doc.type === 'txt' && (
-                      <button onClick={() => openDocument({ document: doc, clientId: null, isPersonal: true })} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.open')}>
-                        <FilePlusIcon size={16} />
-                      </button>
+                      <Tooltip label={t('common.open')}>
+                        <button onClick={() => openDocument({ document: doc, clientId: null, isPersonal: true })} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                          <PencilSimpleIcon size={16} />
+                        </button>
+                      </Tooltip>
                     )}
+
+                    <Tooltip label={t('documentType.changeAction')}>
+                      <button onClick={() => setChangingTypeDoc(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                        <ArrowsLeftRightIcon size={16} />
+                      </button>
+                    </Tooltip>
 
                     {doc.type === 'txt' ? (
                       <div className="relative" ref={exportMenuDocId === doc.id ? exportMenuRef : undefined}>
-                        <button
-                          onClick={() => setExportMenuDocId(exportMenuDocId === doc.id ? null : doc.id)}
-                          className="p-2 rounded-md text-text-secondary hover:bg-surface-hover"
-                          title={t('common.download')}
-                        >
-                          <DownloadSimpleIcon size={16} />
-                        </button>
+                        <Tooltip label={t('common.download')}>
+                          <button
+                            onClick={() => setExportMenuDocId(exportMenuDocId === doc.id ? null : doc.id)}
+                            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover"
+                          >
+                            <DownloadSimpleIcon size={16} />
+                          </button>
+                        </Tooltip>
                         {exportMenuDocId === doc.id && (
                           <div className="absolute right-0 top-full mt-1 w-32 bg-surface border border-border rounded-xl shadow-card-hover p-1 z-30">
                             <button onClick={() => handleExportFormat(doc, 'txt')} className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-primary hover:bg-surface-hover">TXT</button>
@@ -201,14 +220,18 @@ export default function ProfilePage() {
                         )}
                       </div>
                     ) : (
-                      <button onClick={() => handleDownloadOriginal(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.download')}>
-                        <DownloadSimpleIcon size={16} />
-                      </button>
+                      <Tooltip label={t('common.download')}>
+                        <button onClick={() => handleDownloadOriginal(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover">
+                          <DownloadSimpleIcon size={16} />
+                        </button>
+                      </Tooltip>
                     )}
 
-                    <button onClick={() => setDeletingDoc(doc)} className="p-2 rounded-md text-error hover:bg-error/10" title={t('common.delete')}>
-                      <TrashIcon size={16} />
-                    </button>
+                    <Tooltip label={t('common.delete')}>
+                      <button onClick={() => setDeletingDoc(doc)} className="p-2 rounded-md text-error hover:bg-error/10">
+                        <TrashIcon size={16} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </li>
               ))}
@@ -233,6 +256,15 @@ export default function ProfilePage() {
           message=""
           onConfirm={handleDeleteConfirm}
           onClose={() => setDeletingDoc(null)}
+        />
+      )}
+
+      {changingTypeDoc && (
+        <DocumentTypeModal
+          initialIsPersonal={changingTypeDoc.isPersonal}
+          initialClientId={changingTypeDoc.clientId}
+          onConfirm={handleTypeChangeConfirm}
+          onClose={() => setChangingTypeDoc(null)}
         />
       )}
     </div>

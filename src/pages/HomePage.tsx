@@ -13,6 +13,8 @@ import CalendarEventModal from '../components/CalendarEventModal';
 import DocumentTargetModal, { type DocumentTarget } from '../components/DocumentTargetModal';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const GREETING_SESSION_KEY = 'soulflow_greeting_key';
+const NAME_TOKEN = '§NAME§';
 
 const GREETING_POOLS = {
   night: ['home.greetingNight1', 'home.greetingNight2'],
@@ -29,6 +31,20 @@ function pickGreetingKey(): string {
     hour < 18 ? GREETING_POOLS.day :
     GREETING_POOLS.evening;
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Фраза выбирается один раз за сеанс (пока не закрыта вкладка/браузер),
+// а не при каждом переключении между разделами сайта
+function getSessionGreetingKey(): string {
+  try {
+    const stored = sessionStorage.getItem(GREETING_SESSION_KEY);
+    if (stored) return stored;
+  } catch {
+    /* sessionStorage недоступен — просто выбираем заново */
+  }
+  const key = pickGreetingKey();
+  try { sessionStorage.setItem(GREETING_SESSION_KEY, key); } catch { /* игнорируем */ }
+  return key;
 }
 
 function eventDateTime(dateYMD: string, time: string): Date {
@@ -69,7 +85,7 @@ export default function HomePage() {
 
   const [cutoff] = useState(() => Date.now() - SEVEN_DAYS_MS);
   const [todayYMD] = useState(() => toYMD(new Date()));
-  const [greetingKey] = useState(() => pickGreetingKey());
+  const [greetingKey] = useState(() => getSessionGreetingKey());
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [isCreatingDoc, setIsCreatingDoc] = useState(false);
@@ -93,7 +109,7 @@ export default function HomePage() {
     return map;
   }, [clients]);
 
-  const validDismissedIds = useMemo(() => {
+  const activeDismissedIds = useMemo(() => {
     if (dismissedIds.size === 0) return dismissedIds;
 
     const stillValid = new Set<string>();
@@ -103,7 +119,6 @@ export default function HomePage() {
         if (hasStarted) stillValid.add(e.id);
       }
     });
-
     return stillValid;
   }, [events, todayYMD, dismissedIds, now]);
 
@@ -112,10 +127,10 @@ export default function HomePage() {
       .filter((e) => {
         if (e.date !== todayYMD) return false;
         const hasStarted = eventDateTime(e.date, e.time).getTime() - now <= 0;
-        return !(validDismissedIds.has(e.id) && hasStarted);
+        return !(activeDismissedIds.has(e.id) && hasStarted);
       })
       .sort((a, b) => a.time.localeCompare(b.time)),
-    [events, todayYMD, validDismissedIds, now]
+    [events, todayYMD, activeDismissedIds, now]
   );
 
   const recentDocuments = useMemo(() => {
@@ -144,23 +159,46 @@ export default function HomePage() {
       try {
         localStorage.setItem(dismissedStorageKey(todayYMD), JSON.stringify([...next]));
       } catch {
-        /* localStorage недоступен — просто теряем сохранение между перезагрузками */
+        /* localStorage недоступен */
       }
       return next;
     });
   };
 
+  const gradientStyle: React.CSSProperties = {
+    backgroundImage: 'var(--color-accent-gradient)',
+    WebkitBackgroundClip: 'text',
+    backgroundClip: 'text',
+    color: 'transparent',
+  };
+
+  const [greetingPrefix, greetingSuffix] = useMemo(() => {
+    if (!userProfile) return ['', ''];
+    const raw = t(greetingKey, { name: NAME_TOKEN });
+    const idx = raw.indexOf(NAME_TOKEN);
+    if (idx === -1) return [raw, ''];
+    return [raw.slice(0, idx), raw.slice(idx + NAME_TOKEN.length)];
+  }, [userProfile, greetingKey, t]);
+
   return (
     <div className="pt-[6vh] md:pt-[10vh]">
-      <div className="text-center max-w-2xl mx-auto mb-8">
+      <div className="text-center max-w-3xl mx-auto mb-8 px-4">
         <p className="text-xs font-semibold tracking-widest uppercase text-text-tertiary mb-3">
           {dateLabel}
         </p>
         <h1
-          className="font-display text-4xl md:text-6xl font-semibold leading-tight bg-clip-text text-transparent"
-          style={{ backgroundImage: 'var(--color-accent-gradient)' }}
+          className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight"
+          style={{ textWrap: 'balance' as React.CSSProperties['textWrap'] }}
         >
-          {userProfile ? t(greetingKey, { name: userProfile.name }) : t('home.welcome')}
+          {userProfile ? (
+            <>
+              <span style={gradientStyle}>{greetingPrefix}</span>
+              <span className="text-text-primary whitespace-nowrap">{userProfile.name}</span>
+              <span style={gradientStyle}>{greetingSuffix}</span>
+            </>
+          ) : (
+            <span style={gradientStyle}>{t('home.welcome')}</span>
+          )}
         </h1>
       </div>
 

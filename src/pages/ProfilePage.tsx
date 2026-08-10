@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { FileTextIcon, UploadSimpleIcon, DownloadSimpleIcon, TrashIcon, FilePlusIcon, UsersIcon, FolderOpenIcon, CalendarCheckIcon, ArchiveIcon, CheckCircleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
@@ -6,13 +6,20 @@ import { useToast } from '../hooks/useToastHook';
 import { useDocumentEditor } from '../hooks/useDocumentEditorHook';
 import { usePersonalDocuments, useDocuments, useClients, useCalendarEvents, deleteDocument } from '../hooks/useDB';
 import type { Document } from '../types';
-import { downloadOriginalFile, MIME_TYPES } from '../utils/fileExport';
+import { downloadOriginalFile, downloadAsTxt, downloadAsPdf, downloadAsDocx, MIME_TYPES } from '../utils/fileExport';
 import { toYMD } from '../utils/date';
 import Avatar from '../components/Avatar';
 import ImportDocumentModal from '../components/ImportDocumentModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 type ProfileTab = 'documents' | 'stats';
+
+function extractPlainText(node: { text?: string; content?: unknown[] }): string {
+  if (node.text) return node.text;
+  if (node.content) return (node.content as { text?: string; content?: unknown[] }[]).map((c) => extractPlainText(c)).join('\n');
+  return '';
+}
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -28,6 +35,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('documents');
   const [todayYMD] = useState(() => toYMD(new Date()));
   const [weekEndYMD] = useState(() => toYMD(new Date(Date.now() + SEVEN_DAYS_MS)));
+  const [exportMenuDocId, setExportMenuDocId] = useState<string | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState<Document | null>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const stats = useMemo(() => {
     const allClients = clients ?? [];
@@ -43,18 +53,43 @@ export default function ProfilePage() {
     };
   }, [clients, events, allDocuments, personalDocuments, todayYMD, weekEndYMD]);
 
-  const handleDownload = (doc: Document) => {
-    if (doc.type === 'txt') {
-      openDocument({ document: doc, clientId: null, isPersonal: true });
-    } else if (doc.originalFileBase64) {
-      downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, MIME_TYPES[doc.type]);
+  useEffect(() => {
+    if (!exportMenuDocId) return;
+    const handler = (e: MouseEvent) => {
+      if (!exportMenuRef.current?.contains(e.target as Node)) setExportMenuDocId(null);
+    };
+    window.addEventListener('mousedown', handler);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [exportMenuDocId]);
+
+  const handleExportFormat = (doc: Document, format: 'txt' | 'pdf' | 'docx') => {
+    let json: object | null = null;
+    let text = doc.content;
+    try {
+      json = JSON.parse(doc.content);
+      text = extractPlainText(json as { text?: string; content?: unknown[] });
+    } catch { /* уже plain text */ }
+
+    if (format === 'txt') downloadAsTxt(text, doc.title);
+    if (format === 'pdf') downloadAsPdf(json ?? { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }, doc.title);
+    if (format === 'docx') downloadAsDocx(json ?? { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] }, doc.title);
+    setExportMenuDocId(null);
+  };
+
+  const handleDownloadOriginal = (doc: Document) => {
+    if (doc.originalFileBase64) {
+      const mimeType = doc.type === 'pdf' || doc.type === 'docx' ? MIME_TYPES[doc.type] : undefined;
+      if (!mimeType) return;
+      downloadOriginalFile(doc.originalFileBase64, `${doc.title}.${doc.type}`, mimeType);
     }
   };
 
-  const handleDelete = async (doc: Document) => {
-    if (!confirm(t('client.confirmDeleteDocument', { title: doc.title }))) return;
-    await deleteDocument(doc.id);
-    showToast('success', t('common.delete'));
+  const handleDeleteConfirm = async () => {
+    if (deletingDoc) {
+      await deleteDocument(deletingDoc.id);
+      showToast('success', t('common.delete'));
+    }
+    setDeletingDoc(null);
   };
 
   return (
@@ -147,10 +182,31 @@ export default function ProfilePage() {
                         <FilePlusIcon size={16} />
                       </button>
                     )}
-                    <button onClick={() => handleDownload(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.download')}>
-                      <DownloadSimpleIcon size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(doc)} className="p-2 rounded-md text-error hover:bg-error/10" title={t('common.delete')}>
+
+                    {doc.type === 'txt' ? (
+                      <div className="relative" ref={exportMenuDocId === doc.id ? exportMenuRef : undefined}>
+                        <button
+                          onClick={() => setExportMenuDocId(exportMenuDocId === doc.id ? null : doc.id)}
+                          className="p-2 rounded-md text-text-secondary hover:bg-surface-hover"
+                          title={t('common.download')}
+                        >
+                          <DownloadSimpleIcon size={16} />
+                        </button>
+                        {exportMenuDocId === doc.id && (
+                          <div className="absolute right-0 top-full mt-1 w-32 bg-surface border border-border rounded-xl shadow-card-hover p-1 z-30">
+                            <button onClick={() => handleExportFormat(doc, 'txt')} className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-primary hover:bg-surface-hover">TXT</button>
+                            <button onClick={() => handleExportFormat(doc, 'pdf')} className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-primary hover:bg-surface-hover">PDF</button>
+                            <button onClick={() => handleExportFormat(doc, 'docx')} className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-text-primary hover:bg-surface-hover">DOCX</button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <button onClick={() => handleDownloadOriginal(doc)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover" title={t('common.download')}>
+                        <DownloadSimpleIcon size={16} />
+                      </button>
+                    )}
+
+                    <button onClick={() => setDeletingDoc(doc)} className="p-2 rounded-md text-error hover:bg-error/10" title={t('common.delete')}>
                       <TrashIcon size={16} />
                     </button>
                   </div>
@@ -170,6 +226,15 @@ export default function ProfilePage() {
       )}
 
       {isImporting && <ImportDocumentModal clientId={null} isPersonal onClose={() => setIsImporting(false)} />}
+
+      {deletingDoc && (
+        <ConfirmDialog
+          title={t('client.confirmDeleteDocument', { title: deletingDoc.title })}
+          message=""
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setDeletingDoc(null)}
+        />
+      )}
     </div>
   );
 }

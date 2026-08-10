@@ -230,6 +230,7 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentTargetRef = useRef(target);
   const saveRef = useRef<() => void>(() => {});
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { currentTargetRef.current = target; }, [target]);
 
@@ -267,6 +268,15 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
       };
     },
   });
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setIsMenuOpen(false);
+    };
+    window.addEventListener('mousedown', handler);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [isMenuOpen]);
 
   useEffect(() => { queueMicrotask(() => { isInitializingRef.current = false; }); }, []);
 
@@ -374,7 +384,7 @@ function DocumentEditorPanel({ target, isActive, contentTheme, onDirtyChange, on
           placeholder={t('textEditor.titlePlaceholder')}
           className="flex-1 min-w-0 bg-transparent text-sm font-medium text-text-primary focus:outline-none disabled:opacity-70 placeholder:text-text-tertiary placeholder:font-normal"
         />
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setIsMenuOpen((v) => !v)}

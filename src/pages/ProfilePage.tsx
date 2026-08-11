@@ -184,8 +184,14 @@ export default function ProfilePage() {
           ) : (
             <ul className="flex flex-col gap-2 mb-3">
               {personalDocuments.map((doc) => (
-                <li key={doc.id} className="flex items-center justify-between p-3 rounded-2xl bg-surface shadow-card">
-                  <span className="text-sm text-text-primary truncate">{doc.title}</span>
+                <li key={doc.id} className="flex items-center gap-3 p-3 rounded-2xl bg-surface shadow-card">
+                  <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface-hover text-text-tertiary uppercase">
+                    {doc.type === 'txt' ? t('documents.type.note') : doc.type.toUpperCase()}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-text-primary truncate">{doc.title}</p>
+                    <p className="text-xs text-text-tertiary">{new Date(doc.updatedAt).toLocaleDateString('ru-RU')}</p>
+                  </div>
                   <div className="flex items-center gap-1 shrink-0">
                     {doc.type === 'txt' && (
                       <Tooltip label={t('common.open')}>

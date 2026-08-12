@@ -12,6 +12,9 @@ import Avatar from '../components/Avatar';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import ChangeEmailModal from '../components/ChangeEmailModal';
 import ThemeSwatch from '../components/ThemeSwatch';
+import { useBackup } from '../hooks/useBackupHook';
+import Select from '../components/Select';
+import { FolderOpenIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
 
 const APP_VERSION = '0.1.0';
 
@@ -36,6 +39,13 @@ export default function SettingsPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const backup = useBackup();
+
+  const formatBackupDate = (iso: string | null) => {
+    if (!iso) return t('settings.backupNever');
+    return new Date(iso).toLocaleString('ru-RU');
+  };
 
   useEffect(() => {
     if (appSettings) {
@@ -269,6 +279,78 @@ export default function SettingsPage() {
             </button>
           </div>
           <p className="text-xs text-text-tertiary mt-4">{t('settings.version')}: {APP_VERSION}</p>
+        </section>
+
+        <section>
+          <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.backupSection')}</h2>
+
+          {!backup.isSupported ? (
+            <p className="text-sm text-text-tertiary max-w-md">{t('settings.backupUnsupported')}</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {backup.folderName ? (
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface-hover">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FolderOpenIcon size={16} className="shrink-0 text-text-secondary" />
+                    <span className="text-sm text-text-primary truncate">{backup.folderName}</span>
+                  </div>
+                  <button onClick={backup.chooseFolder} className="text-xs text-primary hover:underline shrink-0">
+                    {t('settings.backupChangeFolder')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={backup.chooseFolder}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
+                >
+                  <FolderOpenIcon size={16} />
+                  {t('settings.backupChooseFolder')}
+                </button>
+              )}
+
+              {backup.needsReauthorization && backup.folderName && (
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-warning/30 bg-warning/10">
+                  <span className="text-xs text-warning">{t('settings.backupReauthorizeNeeded')}</span>
+                  <button onClick={backup.reauthorize} className="flex items-center gap-1 text-xs text-warning hover:underline shrink-0">
+                    <ArrowClockwiseIcon size={12} />
+                    {t('settings.backupReauthorize')}
+                  </button>
+                </div>
+              )}
+
+              {backup.folderName && (
+                <>
+                  <div className="w-48">
+                    <Select
+                      value={backup.frequency}
+                      onChange={(v) => backup.setFrequency(v as typeof backup.frequency)}
+                      options={[
+                        { value: 'off', label: t('settings.backupFrequencyOff') },
+                        { value: 'daily', label: t('settings.backupFrequencyDaily') },
+                        { value: 'weekly', label: t('settings.backupFrequencyWeekly') },
+                      ]}
+                      placeholder={t('settings.backupFrequencyOff')}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={backup.createBackupNow}
+                      disabled={backup.isBackingUp}
+                      className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors w-fit"
+                    >
+                      {backup.isBackingUp ? t('settings.backupInProgress') : t('settings.backupNow')}
+                    </button>
+                    <span className="text-xs text-text-tertiary">
+                      {t('settings.backupLastLabel')}: {formatBackupDate(backup.lastBackupAt)}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-text-tertiary max-w-md">{t('settings.backupTabOpenNotice')}</p>
+                </>
+              )}
+            </div>
+          )}
         </section>
 
         <section>

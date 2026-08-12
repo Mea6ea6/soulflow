@@ -13,6 +13,7 @@ import CalendarEventModal from '../components/CalendarEventModal';
 import DocumentTargetModal, { type DocumentTarget } from '../components/DocumentTargetModal';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const HOME_WINDOW_MS = 24 * 60 * 60 * 1000;
 const GREETING_SESSION_KEY = 'soulflow_greeting_key';
 const NAME_TOKEN = '§NAME§';
 
@@ -109,9 +110,26 @@ export default function HomePage() {
     return map;
   }, [clients]);
 
-  const activeDismissedIds = useMemo(() => {
-    if (dismissedIds.size === 0) return dismissedIds;
+  // Показываем: (а) события, которые уже начались сегодня и ещё не скрыты крестиком,
+  // (б) любые ещё не начавшиеся события в пределах ближайших 24 часов — независимо от
+  // календарной даты, иначе событие на 00:00 следующего дня не появлялось бы заранее
+  const todayEvents = useMemo(
+    () => (events ?? [])
+      .filter((e) => {
+        const dt = eventDateTime(e.date, e.time).getTime();
+        const msUntil = dt - now;
+        const hasStarted = msUntil <= 0;
+        if (hasStarted) {
+          return e.date === todayYMD && !dismissedIds.has(e.id);
+        }
+        return msUntil <= HOME_WINDOW_MS;
+      })
+      .sort((a, b) => eventDateTime(a.date, a.time).getTime() - eventDateTime(b.date, b.time).getTime()),
+    [events, todayYMD, dismissedIds, now]
+  );
 
+  useEffect(() => {
+    if (dismissedIds.size === 0) return;
     const stillValid = new Set<string>();
     (events ?? []).forEach((e) => {
       if (e.date === todayYMD && dismissedIds.has(e.id)) {
@@ -119,19 +137,16 @@ export default function HomePage() {
         if (hasStarted) stillValid.add(e.id);
       }
     });
-    return stillValid;
-  }, [events, todayYMD, dismissedIds, now]);
-
-  const todayEvents = useMemo(
-    () => (events ?? [])
-      .filter((e) => {
-        if (e.date !== todayYMD) return false;
-        const hasStarted = eventDateTime(e.date, e.time).getTime() - now <= 0;
-        return !(activeDismissedIds.has(e.id) && hasStarted);
-      })
-      .sort((a, b) => a.time.localeCompare(b.time)),
-    [events, todayYMD, activeDismissedIds, now]
-  );
+    if (stillValid.size !== dismissedIds.size) {
+      setDismissedIds(stillValid);
+      try {
+        localStorage.setItem(dismissedStorageKey(todayYMD), JSON.stringify([...stillValid]));
+      } catch {
+        /* localStorage недоступен */
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events]);
 
   const recentDocuments = useMemo(() => {
     return (documents ?? [])
@@ -245,6 +260,7 @@ export default function HomePage() {
                 {todayEvents.map((ev) => {
                   const msUntil = eventDateTime(ev.date, ev.time).getTime() - now;
                   const hasStarted = msUntil <= 0;
+                  const isTomorrow = ev.date !== todayYMD;
                   return (
                     <motion.div
                       key={ev.id}
@@ -259,9 +275,16 @@ export default function HomePage() {
                         {ev.time}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-text-primary truncate">
-                          {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-text-primary truncate">
+                            {ev.isPersonal ? ev.title : clientNameById.get(ev.clientId ?? '') ?? t('home.clientFallback')}
+                          </p>
+                          {isTomorrow && (
+                            <span className="shrink-0 text-[10px] font-medium text-primary bg-primary-tint px-1.5 py-0.5 rounded">
+                              {t('home.tomorrowLabel')}
+                            </span>
+                          )}
+                        </div>
                         {ev.isPersonal && <p className="text-xs text-text-tertiary">{t('calendar.personalEvent')}</p>}
                       </div>
                       {hasStarted ? (

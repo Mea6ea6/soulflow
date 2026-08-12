@@ -6,6 +6,7 @@ import LoginPage from './components/LoginPage';
 import LoadingSpinner from './components/LoadingSpinner';
 import Layout from './components/Layout';
 import { DocumentEditorProvider } from './context/DocumentEditorProvider';
+import { BackupProvider } from './context/BackupProvider';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -28,7 +29,9 @@ function App() {
 
   return (
     <DocumentEditorProvider>
-      <Layout />
+      <BackupProvider>
+        <Layout />
+      </BackupProvider>
     </DocumentEditorProvider>
   );
 }

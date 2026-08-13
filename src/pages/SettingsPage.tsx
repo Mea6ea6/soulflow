@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon, CameraIcon } from '@phosphor-icons/react';
+import {
+  SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon, CameraIcon,
+  UserIcon, ShieldCheckIcon, PaintBrushIcon, HardDrivesIcon, CaretRightIcon,
+  FolderOpenIcon, ArrowClockwiseIcon,
+} from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useTheme } from '../context/useThemeHook';
 import { useToast } from '../hooks/useToastHook';
+import { useBackup } from '../hooks/useBackupHook';
 import { useAppSettings, updateAppSettings } from '../hooks/useDB';
 import { exportAllData, downloadExport, importAllData, clearAllData } from '../utils/exportImport';
 import { processAvatarFile, AvatarProcessingError } from '../utils/avatarImage';
@@ -12,9 +17,7 @@ import Avatar from '../components/Avatar';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import ChangeEmailModal from '../components/ChangeEmailModal';
 import ThemeSwatch from '../components/ThemeSwatch';
-import { useBackup } from '../hooks/useBackupHook';
 import Select from '../components/Select';
-import { FolderOpenIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
 
 const APP_VERSION = '0.1.0';
 
@@ -24,13 +27,32 @@ const THEMES: { id: ThemeId; labelKey: string }[] = [
   { id: 'onyx', labelKey: 'settings.themeOnyx' },
 ];
 
+// Порядок намеренно: en -> es -> fr -> ru (см. пункт 1.2.3 задания)
+const LANGUAGES: { code: 'en' | 'es' | 'fr' | 'ru'; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español' },
+  { code: 'fr', label: 'Français' },
+  { code: 'ru', label: 'Русский' },
+];
+
+type SettingsSection = 'profile' | 'privacy' | 'appearance' | 'data';
+
+const NAV_ITEMS: { id: SettingsSection; icon: React.ElementType; labelKey: string }[] = [
+  { id: 'profile', icon: UserIcon, labelKey: 'settings.navProfile' },
+  { id: 'privacy', icon: ShieldCheckIcon, labelKey: 'settings.navPrivacy' },
+  { id: 'appearance', icon: PaintBrushIcon, labelKey: 'settings.navAppearance' },
+  { id: 'data', icon: HardDrivesIcon, labelKey: 'settings.navData' },
+];
+
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { logout, userProfile, updateProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
   const appSettings = useAppSettings();
+  const backup = useBackup();
 
+  const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const [name, setName] = useState(userProfile?.name ?? '');
   const [description, setDescription] = useState(userProfile?.description ?? '');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -39,13 +61,6 @@ export default function SettingsPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  const backup = useBackup();
-
-  const formatBackupDate = (iso: string | null) => {
-    if (!iso) return t('settings.backupNever');
-    return new Date(iso).toLocaleString('ru-RU');
-  };
 
   useEffect(() => {
     if (appSettings) {
@@ -87,7 +102,7 @@ export default function SettingsPage() {
   };
 
   const handleThemeChange = (newTheme: ThemeId) => setTheme(newTheme);
-  const handleLanguageChange = async (language: 'ru' | 'en') => updateAppSettings({ language });
+  const handleLanguageChange = async (language: 'en' | 'es' | 'fr' | 'ru') => updateAppSettings({ language });
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -121,247 +136,292 @@ export default function SettingsPage() {
     window.location.reload();
   };
 
+  const formatBackupDate = (iso: string | null) => {
+    if (!iso) return t('settings.backupNever');
+    return new Date(iso).toLocaleString('ru-RU');
+  };
+
   return (
-    <div className="max-w-2xl">
+    <div>
       <h1 className="text-2xl font-display font-semibold text-text-primary mb-6">{t('settings.title')}</h1>
 
-      <div className="flex flex-col gap-8">
-        <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.profileSection')}</h2>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative shrink-0">
-                <Avatar name={userProfile?.name ?? '?'} photoBase64={userProfile?.avatar} size={56} />
-                {isUploadingAvatar && (
-                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => avatarInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-50 transition-colors"
-                  >
-                    <CameraIcon size={14} />
-                    {t('settings.changePhoto')}
-                  </button>
-                  {userProfile?.avatar && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveAvatar}
-                      className="px-3 py-1.5 rounded-full text-xs font-medium text-error hover:bg-error/10 transition-colors"
-                    >
-                      {t('settings.removePhoto')}
-                    </button>
-                  )}
-                </div>
-                {avatarError && <p className="text-xs text-error">{avatarError}</p>}
-              </div>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-text-secondary mb-1 block">{t('settings.fullName')}</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-text-secondary mb-1 block">{t('settings.bio')}</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                maxLength={280}
-                placeholder={t('settings.bioPlaceholder')}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              />
-            </div>
-
-            <button
-              onClick={handleSaveProfile}
-              disabled={name === userProfile?.name && description === (userProfile?.description ?? '')}
-              className="self-start px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
-            >
-              {t('common.save')}
-            </button>
-
-            <div>
-              <label className="text-sm text-text-secondary mb-1 block">{t('auth.email')}</label>
-              <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface-hover">
-                <span className="text-sm text-text-secondary">{userProfile?.email}</span>
-                <button onClick={() => setIsEmailModalOpen(true)} className="text-sm text-primary hover:underline">
-                  {t('settings.changeEmail')}
-                </button>
-              </div>
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* Левая колонка — профиль-карточка + навигация, в духе Telegram */}
+        <div className="w-full md:w-64 shrink-0 flex flex-col gap-4">
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface shadow-card">
+            <Avatar name={userProfile?.name ?? '?'} photoBase64={userProfile?.avatar} size={44} />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-text-primary truncate">{userProfile?.name}</p>
+              <p className="text-xs text-text-tertiary truncate">{userProfile?.email}</p>
             </div>
           </div>
-        </section>
 
-        <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.securitySection')}</h2>
-          <button
-            onClick={() => setIsPasswordModalOpen(true)}
-            className="px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
-          >
-            {t('settings.changePassword')}
-          </button>
-        </section>
-
-        <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-1">{t('settings.appearanceSection')}</h2>
-          <p className="text-xs text-text-tertiary mb-4">{t('settings.defaultThemes')}</p>
-          <div className="flex flex-wrap gap-4">
-            {THEMES.map((th) => (
-              <ThemeSwatch key={th.id} themeId={th.id} label={t(th.labelKey)} isSelected={theme === th.id} onClick={() => handleThemeChange(th.id)} />
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.languageSection')}</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleLanguageChange('ru')}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                appSettings?.language === 'ru' ? 'border-primary bg-primary-tint text-primary' : 'border-border text-text-secondary hover:bg-surface-hover'
-              }`}
-            >
-              Русский
-            </button>
-            <button
-              onClick={() => handleLanguageChange('en')}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                appSettings?.language === 'en' ? 'border-primary bg-primary-tint text-primary' : 'border-border text-text-secondary hover:bg-surface-hover'
-              }`}
-            >
-              English
-            </button>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.dataSection')}</h2>
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
-            >
-              <DownloadSimpleIcon size={16} />
-              {t('settings.exportData')}
-            </button>
-            <label className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit cursor-pointer">
-              <UploadSimpleIcon size={16} />
-              {t('settings.importData')}
-              <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-            </label>
-            <button
-              onClick={handleClearData}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-error/30 text-sm font-medium text-error hover:bg-error/10 transition-colors w-fit"
-            >
-              <TrashIcon size={16} />
-              {t('settings.clearData')}
-            </button>
-          </div>
-          <p className="text-xs text-text-tertiary mt-4">{t('settings.version')}: {APP_VERSION}</p>
-        </section>
-
-        <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.backupSection')}</h2>
-
-          {!backup.isSupported ? (
-            <p className="text-sm text-text-tertiary max-w-md">{t('settings.backupUnsupported')}</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {backup.folderName ? (
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface-hover">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FolderOpenIcon size={16} className="shrink-0 text-text-secondary" />
-                    <span className="text-sm text-text-primary truncate">{backup.folderName}</span>
-                  </div>
-                  <button onClick={backup.chooseFolder} className="text-xs text-primary hover:underline shrink-0">
-                    {t('settings.backupChangeFolder')}
-                  </button>
-                </div>
-              ) : (
+          <nav className="flex flex-col gap-0.5 p-1.5 rounded-2xl bg-surface shadow-card">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
                 <button
-                  onClick={backup.chooseFolder}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    isActive ? 'bg-primary-tint text-primary' : 'text-text-secondary hover:bg-surface-hover'
+                  }`}
                 >
-                  <FolderOpenIcon size={16} />
-                  {t('settings.backupChooseFolder')}
+                  <Icon size={18} weight={isActive ? 'fill' : 'regular'} className="shrink-0" />
+                  <span className="flex-1 text-left truncate">{t(item.labelKey)}</span>
+                  <CaretRightIcon size={14} className="shrink-0 opacity-50" />
                 </button>
-              )}
+              );
+            })}
+          </nav>
 
-              {backup.needsReauthorization && backup.folderName && (
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-warning/30 bg-warning/10">
-                  <span className="text-xs text-warning">{t('settings.backupReauthorizeNeeded')}</span>
-                  <button onClick={backup.reauthorize} className="flex items-center gap-1 text-xs text-warning hover:underline shrink-0">
-                    <ArrowClockwiseIcon size={12} />
-                    {t('settings.backupReauthorize')}
-                  </button>
-                </div>
-              )}
-
-              {backup.folderName && (
-                <>
-                  <div className="w-48">
-                    <Select
-                      value={backup.frequency}
-                      onChange={(v) => backup.setFrequency(v as typeof backup.frequency)}
-                      options={[
-                        { value: 'off', label: t('settings.backupFrequencyOff') },
-                        { value: 'daily', label: t('settings.backupFrequencyDaily') },
-                        { value: 'weekly', label: t('settings.backupFrequencyWeekly') },
-                      ]}
-                      placeholder={t('settings.backupFrequencyOff')}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={backup.createBackupNow}
-                      disabled={backup.isBackingUp}
-                      className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors w-fit"
-                    >
-                      {backup.isBackingUp ? t('settings.backupInProgress') : t('settings.backupNow')}
-                    </button>
-                    <span className="text-xs text-text-tertiary">
-                      {t('settings.backupLastLabel')}: {formatBackupDate(backup.lastBackupAt)}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-text-tertiary max-w-md">{t('settings.backupTabOpenNotice')}</p>
-                </>
-              )}
-            </div>
-          )}
-        </section>
-
-        <section>
           <button
             onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-error/10 text-error text-sm font-medium hover:bg-error/20 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-error/10 text-error text-sm font-medium hover:bg-error/20 transition-colors"
           >
             <SignOutIcon size={16} />
             {t('auth.logout')}
           </button>
-        </section>
+
+          <p className="text-xs text-text-tertiary px-1">{t('settings.version')}: {APP_VERSION}</p>
+        </div>
+
+        {/* Правая колонка — содержимое выбранного раздела */}
+        <div className="flex-1 min-w-0 w-full">
+          {activeSection === 'profile' && (
+            <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-4">
+              <h2 className="text-sm font-semibold text-text-primary">{t('settings.navProfile')}</h2>
+
+              <div className="flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <Avatar name={userProfile?.name ?? '?'} photoBase64={userProfile?.avatar} size={56} />
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-50 transition-colors"
+                    >
+                      <CameraIcon size={14} />
+                      {t('settings.changePhoto')}
+                    </button>
+                    {userProfile?.avatar && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveAvatar}
+                        className="px-3 py-1.5 rounded-full text-xs font-medium text-error hover:bg-error/10 transition-colors"
+                      >
+                        {t('settings.removePhoto')}
+                      </button>
+                    )}
+                  </div>
+                  {avatarError && <p className="text-xs text-error">{avatarError}</p>}
+                </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-text-secondary mb-1 block">{t('settings.fullName')}</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-text-secondary mb-1 block">{t('settings.bio')}</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  maxLength={280}
+                  placeholder={t('settings.bioPlaceholder')}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+
+              <button
+                onClick={handleSaveProfile}
+                disabled={name === userProfile?.name && description === (userProfile?.description ?? '')}
+                className="self-start px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+              >
+                {t('common.save')}
+              </button>
+            </div>
+          )}
+
+          {activeSection === 'privacy' && (
+            <div className="flex flex-col gap-4">
+              <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-3">
+                <h2 className="text-sm font-semibold text-text-primary">{t('settings.navPrivacy')}</h2>
+                <div>
+                  <label className="text-sm text-text-secondary mb-1 block">{t('auth.email')}</label>
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface-hover">
+                    <span className="text-sm text-text-secondary">{userProfile?.email}</span>
+                    <button onClick={() => setIsEmailModalOpen(true)} className="text-sm text-primary hover:underline">
+                      {t('settings.changeEmail')}
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="self-start px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
+                >
+                  {t('settings.changePassword')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'appearance' && (
+            <div className="flex flex-col gap-4">
+              <div className="rounded-2xl bg-surface shadow-card p-5">
+                <h2 className="text-sm font-semibold text-text-primary mb-1">{t('settings.appearanceSection')}</h2>
+                <p className="text-xs text-text-tertiary mb-4">{t('settings.defaultThemes')}</p>
+                <div className="flex flex-wrap gap-4">
+                  {THEMES.map((th) => (
+                    <ThemeSwatch key={th.id} themeId={th.id} label={t(th.labelKey)} isSelected={theme === th.id} onClick={() => handleThemeChange(th.id)} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-surface shadow-card p-5">
+                <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.languageSection')}</h2>
+                <div className="flex flex-wrap gap-2">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                        appSettings?.language === lang.code ? 'border-primary bg-primary-tint text-primary' : 'border-border text-text-secondary hover:bg-surface-hover'
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'data' && (
+            <div className="flex flex-col gap-4">
+              <div className="rounded-2xl bg-surface shadow-card p-5">
+                <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.dataSection')}</h2>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={handleExport}
+                    disabled={isExporting}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
+                  >
+                    <DownloadSimpleIcon size={16} />
+                    {t('settings.exportData')}
+                  </button>
+                  <label className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit cursor-pointer">
+                    <UploadSimpleIcon size={16} />
+                    {t('settings.importData')}
+                    <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+                  </label>
+                  <button
+                    onClick={handleClearData}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-error/30 text-sm font-medium text-error hover:bg-error/10 transition-colors w-fit"
+                  >
+                    <TrashIcon size={16} />
+                    {t('settings.clearData')}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-surface shadow-card p-5">
+                <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.backupSection')}</h2>
+
+                {!backup.isSupported ? (
+                  <p className="text-sm text-text-tertiary max-w-md">{t('settings.backupUnsupported')}</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {backup.folderName ? (
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface-hover">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FolderOpenIcon size={16} className="shrink-0 text-text-secondary" />
+                          <span className="text-sm text-text-primary truncate">{backup.folderName}</span>
+                        </div>
+                        <button onClick={backup.chooseFolder} className="text-xs text-primary hover:underline shrink-0">
+                          {t('settings.backupChangeFolder')}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={backup.chooseFolder}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
+                      >
+                        <FolderOpenIcon size={16} />
+                        {t('settings.backupChooseFolder')}
+                      </button>
+                    )}
+
+                    {backup.needsReauthorization && backup.folderName && (
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-warning/30 bg-warning/10">
+                        <span className="text-xs text-warning">{t('settings.backupReauthorizeNeeded')}</span>
+                        <button onClick={backup.reauthorize} className="flex items-center gap-1 text-xs text-warning hover:underline shrink-0">
+                          <ArrowClockwiseIcon size={12} />
+                          {t('settings.backupReauthorize')}
+                        </button>
+                      </div>
+                    )}
+
+                    {backup.folderName && (
+                      <>
+                        <div className="w-full sm:w-72">
+                          <Select
+                            value={backup.frequency}
+                            onChange={(v) => backup.setFrequency(v as typeof backup.frequency)}
+                            options={[
+                              { value: 'off', label: t('settings.backupFrequencyOff') },
+                              { value: 'daily', label: t('settings.backupFrequencyDaily') },
+                              { value: 'weekly', label: t('settings.backupFrequencyWeekly') },
+                            ]}
+                            placeholder={t('settings.backupFrequencyOff')}
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            onClick={backup.createBackupNow}
+                            disabled={backup.isBackingUp}
+                            className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors w-fit"
+                          >
+                            {backup.isBackingUp ? t('settings.backupInProgress') : t('settings.backupNow')}
+                          </button>
+                          <span className="text-xs text-text-tertiary">
+                            {t('settings.backupLastLabel')}: {formatBackupDate(backup.lastBackupAt)}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-text-tertiary max-w-md">{t('settings.backupTabOpenNotice')}</p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {isPasswordModalOpen && <ChangePasswordModal onClose={() => setIsPasswordModalOpen(false)} />}

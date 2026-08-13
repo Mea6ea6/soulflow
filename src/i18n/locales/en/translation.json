@@ -343,7 +343,11 @@
     "backupCreated": "Backup saved",
     "backupFailed": "Could not save backup",
     "backupPermissionDenied": "No access to the folder — please choose it again",
-    "backupTabOpenNotice": "Automatic backups only run while this tab is open in the browser."
+    "backupTabOpenNotice": "Automatic backups only run while this tab is open in the browser.",
+    "navProfile": "My Profile",
+    "navPrivacy": "Privacy",
+    "navAppearance": "Appearance",
+    "navData": "Data and Storage"
   },
   "documentTarget": {
     "personal": "Personal document",

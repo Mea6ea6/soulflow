@@ -63,8 +63,8 @@ export interface UserProfile {
 export type ThemeId = 'dawn' | 'dusk' | 'onyx';
 
 export interface AppSettings {
-  id: string;                  // UUID
-  theme: ThemeId;     // Тема
-  language: 'ru' | 'en';       // Язык
-  updatedAt: string;           // ISO-строка
+  id: string;                               // UUID
+  theme: ThemeId;                           // Тема
+  language: 'en' | 'es' | 'fr' | 'ru';      // Язык
+  updatedAt: string;                        // ISO-строка
 }

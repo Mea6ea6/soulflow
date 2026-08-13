@@ -34,8 +34,6 @@ function pickGreetingKey(): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// Фраза выбирается один раз за сеанс (пока не закрыта вкладка/браузер),
-// а не при каждом переключении между разделами сайта
 function getSessionGreetingKey(): string {
   try {
     const stored = sessionStorage.getItem(GREETING_SESSION_KEY);
@@ -112,7 +110,10 @@ export default function HomePage() {
 
   // Показываем: (а) события, которые уже начались сегодня и ещё не скрыты крестиком,
   // (б) любые ещё не начавшиеся события в пределах ближайших 24 часов — независимо от
-  // календарной даты, иначе событие на 00:00 следующего дня не появлялось бы заранее
+  // календарной даты, иначе событие на 00:00 следующего дня не появлялось бы заранее.
+  // dismissedIds намеренно не чистится отдельным эффектом: если событие перенесли на
+  // будущее, hasStarted пересчитывается на лету и событие показывается снова само —
+  // никакой синхронизации состояния через эффект для этого не требуется
   const todayEvents = useMemo(
     () => (events ?? [])
       .filter((e) => {
@@ -127,26 +128,6 @@ export default function HomePage() {
       .sort((a, b) => eventDateTime(a.date, a.time).getTime() - eventDateTime(b.date, b.time).getTime()),
     [events, todayYMD, dismissedIds, now]
   );
-
-  useEffect(() => {
-    if (dismissedIds.size === 0) return;
-    const stillValid = new Set<string>();
-    (events ?? []).forEach((e) => {
-      if (e.date === todayYMD && dismissedIds.has(e.id)) {
-        const hasStarted = eventDateTime(e.date, e.time).getTime() - now <= 0;
-        if (hasStarted) stillValid.add(e.id);
-      }
-    });
-    if (stillValid.size !== dismissedIds.size) {
-      setDismissedIds(stillValid);
-      try {
-        localStorage.setItem(dismissedStorageKey(todayYMD), JSON.stringify([...stillValid]));
-      } catch {
-        /* localStorage недоступен */
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events]);
 
   const recentDocuments = useMemo(() => {
     return (documents ?? [])

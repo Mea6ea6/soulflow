@@ -55,7 +55,9 @@
     "downloadOriginal": "Скачать",
     "quickAddClient": "Клиент",
     "quickAddEvent": "Событие",
-    "quickAddDocument": "Документ"
+    "quickAddDocument": "Документ",
+    "firstName": "Имя", 
+    "lastName": "Фамилия"
   },
   "clients": {
     "title": "Клиенты",

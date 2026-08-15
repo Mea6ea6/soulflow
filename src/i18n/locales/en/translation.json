@@ -55,7 +55,9 @@
     "downloadOriginal": "Download",
     "quickAddClient": "Client",
     "quickAddEvent": "Event",
-    "quickAddDocument": "Document"
+    "quickAddDocument": "Document",
+    "firstName": "First name", 
+    "lastName": "Last name"
   },
   "clients": {
     "title": "Clients",

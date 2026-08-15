@@ -25,7 +25,6 @@ function readAccounts(): StoredAuthData[] {
     }
   }
 
-  // Миграция со старой однопользовательской схемы хранения
   const legacyRaw = localStorage.getItem(LEGACY_AUTH_STORAGE_KEY);
   if (legacyRaw) {
     try {
@@ -52,8 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [masterKey, setMasterKey] = useState<CryptoKey | null>(null);
   const [isLoading] = useState(false);
-  // Инкрементируется после любой мутации списка аккаунтов, чтобы форсировать
-  // перечитывание localStorage и ререндер компонентов, читающих `accounts`
   const [accountsVersion, setAccountsVersion] = useState(0);
 
   const accounts: StoredAccountSummary[] = readAccounts().map((a) => ({ email: a.email }));
@@ -72,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     const profile: UserProfile = {
       id: crypto.randomUUID(),
+      firstName: 'Психолог',
+      lastName: '',
       name: 'Психолог',
       email,
       avatar: null,
@@ -138,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateProfile = useCallback(
-    async (updates: Partial<Pick<UserProfile, 'name' | 'description' | 'avatar'>>) => {
+    async (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar' >>) => {
       if (!masterKey || !userProfile) return;
       const updated: UserProfile = { ...userProfile, ...updates, updatedAt: new Date().toISOString() };
       await persistProfile(updated, masterKey);
@@ -154,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const idx = existing.findIndex((a) => a.email === userProfile.email);
       if (idx === -1) return false;
       if (existing.some((a, i) => i !== idx && a.email.toLowerCase() === newEmail.toLowerCase())) {
-        return false; // email уже занят другим локальным аккаунтом
+        return false;
       }
 
       const stored = existing[idx];

@@ -168,6 +168,8 @@ export default function HomePage() {
     color: 'transparent',
   };
 
+const displayFirstName = userProfile?.firstName || userProfile?.name?.split(' ')[0] || '';
+
   const [greetingPrefix, greetingSuffix] = useMemo(() => {
     if (!userProfile) return ['', ''];
     const raw = t(greetingKey, { name: NAME_TOKEN });
@@ -189,7 +191,7 @@ export default function HomePage() {
           {userProfile ? (
             <>
               <span style={gradientStyle}>{greetingPrefix}</span>
-              <span className="text-text-primary whitespace-nowrap">{userProfile.name}</span>
+              <span className="text-text-primary whitespace-nowrap">{displayFirstName}</span>
               <span style={gradientStyle}>{greetingSuffix}</span>
             </>
           ) : (

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon, CameraIcon,
   UserIcon, ShieldCheckIcon, PaintBrushIcon, HardDrivesIcon, CaretRightIcon,
-  FolderOpenIcon, ArrowClockwiseIcon,
+  FolderOpenIcon, ArrowClockwiseIcon, EnvelopeSimpleIcon, LockIcon,
 } from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuthHook';
 import { useTheme } from '../context/useThemeHook';
@@ -27,7 +27,6 @@ const THEMES: { id: ThemeId; labelKey: string }[] = [
   { id: 'onyx', labelKey: 'settings.themeOnyx' },
 ];
 
-// Порядок намеренно: en -> es -> fr -> ru (см. пункт 1.2.3 задания)
 const LANGUAGES: { code: 'en' | 'es' | 'fr' | 'ru'; label: string }[] = [
   { code: 'en', label: 'English' },
   { code: 'es', label: 'Español' },
@@ -44,6 +43,38 @@ const NAV_ITEMS: { id: SettingsSection; icon: React.ElementType; labelKey: strin
   { id: 'data', icon: HardDrivesIcon, labelKey: 'settings.navData' },
 ];
 
+// Полноширинная строка-действие: иконка слева, подпись/описание по центру,
+// значение или шеврон справа. Используется вместо узких кнопок-пилюль там,
+// где действие логичнее смотрится как пункт списка настроек
+interface SettingsActionRowProps {
+  icon: React.ElementType;
+  label: string;
+  description?: string;
+  trailing?: ReactNode;
+  onClick?: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+}
+
+function SettingsActionRow({ icon: Icon, label, description, trailing, onClick, danger, disabled }: SettingsActionRowProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-bg hover:bg-surface-hover disabled:opacity-50 transition-colors text-left ${
+        danger ? 'text-error' : 'text-text-primary'
+      }`}
+    >
+      <Icon size={18} className="shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{label}</p>
+        {description && <p className="text-xs text-text-tertiary truncate">{description}</p>}
+      </div>
+      {trailing ?? <CaretRightIcon size={14} className="shrink-0 opacity-50" />}
+    </button>
+  );
+}
+
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { logout, userProfile, updateProfile } = useAuth();
@@ -53,7 +84,8 @@ export default function SettingsPage() {
   const backup = useBackup();
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
-  const [name, setName] = useState(userProfile?.name ?? '');
+  const [firstName, setFirstName] = useState(userProfile?.firstName ?? userProfile?.name?.split(' ')[0] ?? '');
+  const [lastName, setLastName] = useState(userProfile?.lastName ?? userProfile?.name?.split(' ').slice(1).join(' ') ?? '');
   const [description, setDescription] = useState(userProfile?.description ?? '');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -68,8 +100,13 @@ export default function SettingsPage() {
     }
   }, [appSettings, i18n]);
 
+  const initialFirstName = userProfile?.firstName ?? userProfile?.name?.split(' ')[0] ?? '';
+  const initialLastName = userProfile?.lastName ?? userProfile?.name?.split(' ').slice(1).join(' ') ?? '';
+  const hasProfileChanges = firstName !== initialFirstName || lastName !== initialLastName || description !== (userProfile?.description ?? '');
+
   const handleSaveProfile = async () => {
-    await updateProfile({ name, description });
+    const fullName = `${firstName} ${lastName}`.trim() || userProfile?.name || '';
+    await updateProfile({ firstName, lastName, name: fullName, description });
     showToast('success', t('common.save'));
   };
 
@@ -136,6 +173,10 @@ export default function SettingsPage() {
     window.location.reload();
   };
 
+  const handleImportFileClick = () => {
+    document.getElementById('settings-import-input')?.click();
+  };
+
   const formatBackupDate = (iso: string | null) => {
     if (!iso) return t('settings.backupNever');
     return new Date(iso).toLocaleString('ru-RU');
@@ -146,16 +187,8 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-display font-semibold text-text-primary mb-6">{t('settings.title')}</h1>
 
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Левая колонка — профиль-карточка + навигация, в духе Telegram */}
+        {/* Левая колонка — только навигация, без статичной карточки профиля */}
         <div className="w-full md:w-64 shrink-0 flex flex-col gap-4">
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface shadow-card">
-            <Avatar name={userProfile?.name ?? '?'} photoBase64={userProfile?.avatar} size={44} />
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-text-primary truncate">{userProfile?.name}</p>
-              <p className="text-xs text-text-tertiary truncate">{userProfile?.email}</p>
-            </div>
-          </div>
-
           <nav className="flex flex-col gap-0.5 p-1.5 rounded-2xl bg-surface shadow-card">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
@@ -164,7 +197,7 @@ export default function SettingsPage() {
                 <button
                   key={item.id}
                   onClick={() => setActiveSection(item.id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                     isActive ? 'bg-primary-tint text-primary' : 'text-text-secondary hover:bg-surface-hover'
                   }`}
                 >
@@ -234,14 +267,25 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm text-text-secondary mb-1 block">{t('settings.fullName')}</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-text-secondary mb-1 block">{t('settings.firstName')}</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-text-secondary mb-1 block">{t('settings.lastName')}</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
               </div>
 
               <div>
@@ -258,8 +302,8 @@ export default function SettingsPage() {
 
               <button
                 onClick={handleSaveProfile}
-                disabled={name === userProfile?.name && description === (userProfile?.description ?? '')}
-                className="self-start px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                disabled={!hasProfileChanges}
+                className="w-full py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
               >
                 {t('common.save')}
               </button>
@@ -267,25 +311,22 @@ export default function SettingsPage() {
           )}
 
           {activeSection === 'privacy' && (
-            <div className="flex flex-col gap-4">
-              <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-3">
-                <h2 className="text-sm font-semibold text-text-primary">{t('settings.navPrivacy')}</h2>
-                <div>
-                  <label className="text-sm text-text-secondary mb-1 block">{t('auth.email')}</label>
-                  <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface-hover">
-                    <span className="text-sm text-text-secondary">{userProfile?.email}</span>
-                    <button onClick={() => setIsEmailModalOpen(true)} className="text-sm text-primary hover:underline">
-                      {t('settings.changeEmail')}
-                    </button>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsPasswordModalOpen(true)}
-                  className="self-start px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
-                >
-                  {t('settings.changePassword')}
-                </button>
-              </div>
+            <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-3">
+              <h2 className="text-sm font-semibold text-text-primary mb-1">{t('settings.navPrivacy')}</h2>
+
+              <SettingsActionRow
+                icon={EnvelopeSimpleIcon}
+                label={t('auth.email')}
+                description={userProfile?.email}
+                trailing={<span className="text-sm text-primary shrink-0">{t('settings.changeEmail')}</span>}
+                onClick={() => setIsEmailModalOpen(true)}
+              />
+
+              <SettingsActionRow
+                icon={LockIcon}
+                label={t('settings.changePassword')}
+                onClick={() => setIsPasswordModalOpen(true)}
+              />
             </div>
           )}
 
@@ -322,58 +363,47 @@ export default function SettingsPage() {
 
           {activeSection === 'data' && (
             <div className="flex flex-col gap-4">
-              <div className="rounded-2xl bg-surface shadow-card p-5">
-                <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.dataSection')}</h2>
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={handleExport}
-                    disabled={isExporting}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
-                  >
-                    <DownloadSimpleIcon size={16} />
-                    {t('settings.exportData')}
-                  </button>
-                  <label className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit cursor-pointer">
-                    <UploadSimpleIcon size={16} />
-                    {t('settings.importData')}
-                    <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-                  </label>
-                  <button
-                    onClick={handleClearData}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-error/30 text-sm font-medium text-error hover:bg-error/10 transition-colors w-fit"
-                  >
-                    <TrashIcon size={16} />
-                    {t('settings.clearData')}
-                  </button>
-                </div>
+              <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-3">
+                <h2 className="text-sm font-semibold text-text-primary mb-1">{t('settings.dataSection')}</h2>
+
+                <SettingsActionRow
+                  icon={DownloadSimpleIcon}
+                  label={t('settings.exportData')}
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  trailing={<span />}
+                />
+
+                <SettingsActionRow
+                  icon={UploadSimpleIcon}
+                  label={t('settings.importData')}
+                  onClick={handleImportFileClick}
+                  trailing={<span />}
+                />
+                <input id="settings-import-input" type="file" accept=".json" onChange={handleImport} className="hidden" />
+
+                <SettingsActionRow
+                  icon={TrashIcon}
+                  label={t('settings.clearData')}
+                  onClick={handleClearData}
+                  danger
+                  trailing={<span />}
+                />
               </div>
 
-              <div className="rounded-2xl bg-surface shadow-card p-5">
-                <h2 className="text-sm font-semibold text-text-primary mb-3">{t('settings.backupSection')}</h2>
+              <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-3">
+                <h2 className="text-sm font-semibold text-text-primary mb-1">{t('settings.backupSection')}</h2>
 
                 {!backup.isSupported ? (
-                  <p className="text-sm text-text-tertiary max-w-md">{t('settings.backupUnsupported')}</p>
+                  <p className="text-sm text-text-tertiary">{t('settings.backupUnsupported')}</p>
                 ) : (
-                  <div className="flex flex-col gap-3">
-                    {backup.folderName ? (
-                      <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-border bg-surface-hover">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FolderOpenIcon size={16} className="shrink-0 text-text-secondary" />
-                          <span className="text-sm text-text-primary truncate">{backup.folderName}</span>
-                        </div>
-                        <button onClick={backup.chooseFolder} className="text-xs text-primary hover:underline shrink-0">
-                          {t('settings.backupChangeFolder')}
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={backup.chooseFolder}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors w-fit"
-                      >
-                        <FolderOpenIcon size={16} />
-                        {t('settings.backupChooseFolder')}
-                      </button>
-                    )}
+                  <>
+                    <SettingsActionRow
+                      icon={FolderOpenIcon}
+                      label={backup.folderName ? t('settings.backupChangeFolder') : t('settings.backupChooseFolder')}
+                      description={backup.folderName ?? undefined}
+                      onClick={backup.chooseFolder}
+                    />
 
                     {backup.needsReauthorization && backup.folderName && (
                       <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-warning/30 bg-warning/10">
@@ -387,36 +417,32 @@ export default function SettingsPage() {
 
                     {backup.folderName && (
                       <>
-                        <div className="w-full sm:w-72">
-                          <Select
-                            value={backup.frequency}
-                            onChange={(v) => backup.setFrequency(v as typeof backup.frequency)}
-                            options={[
-                              { value: 'off', label: t('settings.backupFrequencyOff') },
-                              { value: 'daily', label: t('settings.backupFrequencyDaily') },
-                              { value: 'weekly', label: t('settings.backupFrequencyWeekly') },
-                            ]}
-                            placeholder={t('settings.backupFrequencyOff')}
-                          />
-                        </div>
+                        <Select
+                          value={backup.frequency}
+                          onChange={(v) => backup.setFrequency(v as typeof backup.frequency)}
+                          options={[
+                            { value: 'off', label: t('settings.backupFrequencyOff') },
+                            { value: 'daily', label: t('settings.backupFrequencyDaily') },
+                            { value: 'weekly', label: t('settings.backupFrequencyWeekly') },
+                          ]}
+                          placeholder={t('settings.backupFrequencyOff')}
+                        />
 
-                        <div className="flex flex-wrap items-center gap-3">
-                          <button
-                            onClick={backup.createBackupNow}
-                            disabled={backup.isBackingUp}
-                            className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors w-fit"
-                          >
-                            {backup.isBackingUp ? t('settings.backupInProgress') : t('settings.backupNow')}
-                          </button>
-                          <span className="text-xs text-text-tertiary">
-                            {t('settings.backupLastLabel')}: {formatBackupDate(backup.lastBackupAt)}
-                          </span>
-                        </div>
+                        <button
+                          onClick={backup.createBackupNow}
+                          disabled={backup.isBackingUp}
+                          className="w-full py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                        >
+                          {backup.isBackingUp ? t('settings.backupInProgress') : t('settings.backupNow')}
+                        </button>
 
-                        <p className="text-xs text-text-tertiary max-w-md">{t('settings.backupTabOpenNotice')}</p>
+                        <p className="text-xs text-text-tertiary">
+                          {t('settings.backupLastLabel')}: {formatBackupDate(backup.lastBackupAt)}
+                        </p>
+                        <p className="text-xs text-text-tertiary">{t('settings.backupTabOpenNotice')}</p>
                       </>
                     )}
-                  </div>
+                  </>
                 )}
               </div>
             </div>

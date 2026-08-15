@@ -52,6 +52,8 @@ export type PresenceStatus = 'available' | 'busy' | 'away' | 'offline';
 
 export interface UserProfile {
   id: string;                  // UUID
+  firstName?: string;          // ФИО пользователя
+  lastName?: string;           // ФИО пользователя
   name: string;                // ФИО пользователя
   email: string;                // Почта
   avatar: string | null;       // base64 (JPEG, после обработки) или null

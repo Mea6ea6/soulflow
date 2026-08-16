@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { SparkleIcon, LockIcon, EnvelopeSimpleIcon, TrashIcon, PlusIcon } from '@phosphor-icons/react';
+import { SparkleIcon, LockIcon, EnvelopeSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useAppSettings } from '../hooks/useDB';
 import FloatingInput from '../components/FloatingInput';
-import ConfirmDialog from './ConfirmDialog';
-
-function initialsFor(email: string): string {
-  return email.slice(0, 2).toUpperCase();
-}
+import ConfirmDialog from '../components/ConfirmDialog';
+import AccountList from '../components/auth/AccountList';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -36,11 +33,7 @@ export default function LoginPage() {
   };
 
   const handleStartRegister = () => { setMode('register'); setEmail(''); resetFormState(); };
-  const handleBackToList = () => {
-    setSelectedEmail(null);
-    setMode('password');
-    resetFormState();
-  };
+  const handleBackToList = () => { setSelectedEmail(null); setMode('password'); resetFormState(); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,38 +92,12 @@ export default function LoginPage() {
 
         <div className="bg-surface rounded-3xl p-7" style={{ boxShadow: '0 1px 2px var(--color-shadow), 0 8px 24px var(--color-shadow-hover)' }}>
           {showAccountList ? (
-            <>
-              <h2 className="text-lg font-semibold text-text-primary mb-1">{t('auth.chooseAccount')}</h2>
-              <p className="text-sm text-text-secondary mb-5">{t('auth.chooseAccountSubtitle')}</p>
-
-              <div className="flex flex-col gap-2 mb-4">
-                {accounts.map((a) => (
-                  <div key={a.email} className="group flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border hover:bg-surface-hover transition-colors">
-                    <button onClick={() => handleSelectAccount(a.email)} className="flex-1 flex items-center gap-3 text-left">
-                      <div className="w-9 h-9 rounded-full bg-primary-tint text-primary flex items-center justify-center text-xs font-semibold shrink-0">
-                        {initialsFor(a.email)}
-                      </div>
-                      <span className="text-sm text-text-primary truncate">{a.email}</span>
-                    </button>
-                    <button
-                      onClick={() => setRemovingEmail(a.email)}
-                      className="shrink-0 p-1.5 rounded-md text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-error/10 hover:text-error transition-opacity"
-                      title={t('auth.removeAccountAction')}
-                    >
-                      <TrashIcon size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={handleStartRegister}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover transition-colors"
-              >
-                <PlusIcon size={14} />
-                {t('auth.addAccount')}
-              </button>
-            </>
+            <AccountList
+              accounts={accounts}
+              onSelectAccount={handleSelectAccount}
+              onRemoveAccount={(email) => setRemovingEmail(email)}
+              onAddAccount={handleStartRegister}
+            />
           ) : (
             <>
               <h2 className="text-lg font-semibold text-text-primary mb-1">

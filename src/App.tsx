@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './hooks/useAuthHook';
 import { useAppSettings } from './hooks/useDB';
-import LoginPage from './components/LoginPage';
+import LoginPage from './pages/LoginPage';
 import LoadingSpinner from './components/LoadingSpinner';
 import Layout from './components/Layout';
 import { DocumentEditorProvider } from './context/DocumentEditorProvider';

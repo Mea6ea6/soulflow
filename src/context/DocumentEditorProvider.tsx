@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { DocumentEditorContext, type DocumentEditorTarget, type EditorTab } from './DocumentEditorContextDef';
-import DocumentEditorPage from '../components/DocumentEditorPage';
+import DocumentEditorPage from '../pages/DocumentEditorPage';
 
 let tabIdCounter = 0;
 function nextTabId() {

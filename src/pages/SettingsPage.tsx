@@ -6,7 +6,7 @@ import {
   FolderOpenIcon, ArrowClockwiseIcon, EnvelopeSimpleIcon, LockIcon,
 } from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuthHook';
-import { useTheme } from '../context/useThemeHook';
+import { useTheme } from '../hooks/useThemeHook';
 import { useToast } from '../hooks/useToastHook';
 import { useBackup } from '../hooks/useBackupHook';
 import { useAppSettings, updateAppSettings } from '../hooks/useDB';

@@ -1,7 +1,7 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
 import { deriveKey, encryptData, decryptData, generateSalt, uint8ArrayToBase64, base64ToUint8Array } from './useEncryption';
-import { AuthContext, type AuthContextValue, type StoredAccountSummary } from './AuthContext';
+import { AuthContext, type AuthContextValue, type StoredAccountSummary } from '../context/AuthContext';
 import { reencryptAllRecords } from '../utils/reencrypt';
 
 interface StoredAuthData {

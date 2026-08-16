@@ -55,9 +55,7 @@
     "downloadOriginal": "Скачать",
     "quickAddClient": "Клиент",
     "quickAddEvent": "Событие",
-    "quickAddDocument": "Документ",
-    "firstName": "Имя", 
-    "lastName": "Фамилия"
+    "quickAddDocument": "Документ"
   },
   "clients": {
     "title": "Клиенты",
@@ -349,7 +347,9 @@
     "navProfile": "Мой профиль",
     "navPrivacy": "Конфиденциальность",
     "navAppearance": "Оформление",
-    "navData": "Данные и память"
+    "navData": "Данные и память",
+    "firstName": "Имя", 
+    "lastName": "Фамилия"
   },
   "documentTarget": {
     "personal": "Личный документ",

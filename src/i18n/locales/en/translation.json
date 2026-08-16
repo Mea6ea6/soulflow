@@ -55,9 +55,7 @@
     "downloadOriginal": "Download",
     "quickAddClient": "Client",
     "quickAddEvent": "Event",
-    "quickAddDocument": "Document",
-    "firstName": "First name", 
-    "lastName": "Last name"
+    "quickAddDocument": "Document"
   },
   "clients": {
     "title": "Clients",
@@ -349,7 +347,9 @@
     "navProfile": "My Profile",
     "navPrivacy": "Privacy",
     "navAppearance": "Appearance",
-    "navData": "Data and Storage"
+    "navData": "Data and Storage",
+    "firstName": "First name", 
+    "lastName": "Last name"
   },
   "documentTarget": {
     "personal": "Personal document",

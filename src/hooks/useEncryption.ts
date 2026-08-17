@@ -1,5 +1,6 @@
 const PBKDF2_ITERATIONS = 600_000;
-const IV_LENGTH = 12; // bytes, рекомендовано для AES-GCM
+const IV_LENGTH = 12;
+const DATA_KEY_ALG = { name: 'AES-GCM', length: 256 };
 
 export async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
   const encoder = new TextEncoder();
@@ -54,6 +55,36 @@ export async function decryptData(encryptedBase64: string, key: CryptoKey): Prom
   );
 
   return new TextDecoder().decode(decrypted);
+}
+
+// ===== Ключ данных (DEK) и его "оборачивание" другими ключами (KEK) =====
+// Данные шифруются DEK — случайным ключом, который никогда не хранится в
+// открытом виде. Пароль (и каждый бэкап-код) превращается в KEK через
+// deriveKey и используется только чтобы зашифровать ("обернуть") сам DEK.
+// Это позволяет менять пароль или восстанавливать доступ по коду без
+// перешифровки уже существующих данных — переоборачивается только DEK.
+
+export async function generateDataKey(): Promise<CryptoKey> {
+  return crypto.subtle.generateKey(DATA_KEY_ALG, true, ['encrypt', 'decrypt']);
+}
+
+async function exportKeyRaw(key: CryptoKey): Promise<Uint8Array> {
+  const raw = await crypto.subtle.exportKey('raw', key);
+  return new Uint8Array(raw);
+}
+
+async function importKeyRaw(raw: Uint8Array): Promise<CryptoKey> {
+  return crypto.subtle.importKey('raw', raw as BufferSource, DATA_KEY_ALG, true, ['encrypt', 'decrypt']);
+}
+
+export async function wrapDataKey(dataKey: CryptoKey, kek: CryptoKey): Promise<string> {
+  const raw = await exportKeyRaw(dataKey);
+  return encryptData(uint8ArrayToBase64(raw), kek);
+}
+
+export async function unwrapDataKey(wrapped: string, kek: CryptoKey): Promise<CryptoKey> {
+  const rawStr = await decryptData(wrapped, kek);
+  return importKeyRaw(base64ToUint8Array(rawStr));
 }
 
 // ===== Утилиты base64 =====

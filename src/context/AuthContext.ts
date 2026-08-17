@@ -12,13 +12,16 @@ export interface AuthContextValue {
   isLoading: boolean;
   accounts: StoredAccountSummary[];
   lastActiveEmail: string | null;
+  backupCodesGeneratedAt: string | null;
   register: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   removeAccount: (email: string) => void;
-  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar' >>) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
+  generateBackupCodes: () => Promise<string[] | null>;
+  recoverWithBackupCode: (email: string, code: string, newPassword: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

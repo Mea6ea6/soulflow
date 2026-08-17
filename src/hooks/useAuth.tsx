@@ -1,19 +1,43 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
-import { deriveKey, encryptData, decryptData, generateSalt, uint8ArrayToBase64, base64ToUint8Array } from './useEncryption';
+import {
+  deriveKey, encryptData, decryptData, generateSalt, uint8ArrayToBase64, base64ToUint8Array,
+  generateDataKey, wrapDataKey, unwrapDataKey,
+} from './useEncryption';
 import { AuthContext, type AuthContextValue, type StoredAccountSummary } from '../context/AuthContext';
 import { reencryptAllRecords } from '../utils/reencrypt';
 import { accountDirectoryStub } from '../utils/accountDirectory';
 
+interface StoredBackupCode {
+  salt: string;
+  wrappedDataKey: string;
+}
+
 interface StoredAuthData {
   email: string;
   salt: string;
+  // Отсутствует у аккаунтов, созданных до появления бэкап-кодов — тогда
+  // masterKey является ключом, выведенным из пароля, напрямую (без DEK-обёртки)
+  wrappedDataKey?: string;
   encryptedProfile: string;
+  backupCodes?: StoredBackupCode[];
+  backupCodesGeneratedAt?: string;
 }
 
 const ACCOUNTS_STORAGE_KEY = 'soulflow_accounts';
 const ACTIVE_ACCOUNT_STORAGE_KEY = 'soulflow_active_account';
 const LEGACY_AUTH_STORAGE_KEY = 'soulflow_auth';
+
+// Алфавит без символов, которые легко перепутать при переписывании от руки (0/O, 1/I/L)
+const BACKUP_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function generateBackupCodeString(): string {
+  const part = (len: number) =>
+    Array.from(crypto.getRandomValues(new Uint8Array(len)))
+      .map((b) => BACKUP_CODE_ALPHABET[b % BACKUP_CODE_ALPHABET.length])
+      .join('');
+  return `${part(5)}-${part(5)}`;
+}
 
 function readAccounts(): StoredAuthData[] {
   const raw = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
@@ -58,14 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   void accountsVersion;
   const lastActiveEmail = localStorage.getItem(ACTIVE_ACCOUNT_STORAGE_KEY);
 
+  const currentAccountRecord = userProfile ? readAccounts().find((a) => a.email === userProfile.email) : null;
+  const backupCodesGeneratedAt = currentAccountRecord?.backupCodesGeneratedAt || null;
+
   const register = useCallback(async (email: string, password: string) => {
     const existing = readAccounts();
     if (existing.some((a) => a.email.toLowerCase() === email.toLowerCase())) {
       throw new Error('ACCOUNT_EXISTS');
     }
 
-    const salt = generateSalt();
-    const key = await deriveKey(password, salt);
+    const passwordSalt = generateSalt();
+    const kek = await deriveKey(password, passwordSalt);
+    const dataKey = await generateDataKey();
+    const wrappedDataKey = await wrapDataKey(dataKey, kek);
 
     const now = new Date().toISOString();
     const profile: UserProfile = {
@@ -80,15 +109,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updatedAt: now,
     };
 
-    const encryptedProfile = await encryptData(JSON.stringify(profile), key);
-    const stored: StoredAuthData = { email, salt: uint8ArrayToBase64(salt), encryptedProfile };
+    const encryptedProfile = await encryptData(JSON.stringify(profile), dataKey);
+    const stored: StoredAuthData = {
+      email,
+      salt: uint8ArrayToBase64(passwordSalt),
+      wrappedDataKey,
+      encryptedProfile,
+      backupCodes: [],
+      backupCodesGeneratedAt: '',
+    };
 
     writeAccounts([...existing, stored]);
-    void accountDirectoryStub;
     localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, email);
     setAccountsVersion((v) => v + 1);
 
-    setMasterKey(key);
+    // TODO: когда появится серверный API — раскомментировать и подключить
+    // реальный accountDirectoryClient вместо accountDirectoryStub
+    // await accountDirectoryStub.registerAccount({
+    //   email, saltBase64: stored.salt, encryptedProfileBlob: encryptedProfile, updatedAt: now,
+    // });
+    void accountDirectoryStub;
+
+    setMasterKey(dataKey);
     setUserProfile(profile);
     setIsAuthenticated(true);
   }, []);
@@ -100,12 +142,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const salt = base64ToUint8Array(stored.salt);
-      const key = await deriveKey(password, salt);
-      const decryptedProfileJson = await decryptData(stored.encryptedProfile, key);
+      const kek = await deriveKey(password, salt);
+      const dataKey = stored.wrappedDataKey ? await unwrapDataKey(stored.wrappedDataKey, kek) : kek;
+      const decryptedProfileJson = await decryptData(stored.encryptedProfile, dataKey);
       const profile: UserProfile = JSON.parse(decryptedProfileJson);
 
       localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, stored.email);
-      setMasterKey(key);
+      setMasterKey(dataKey);
       setUserProfile(profile);
       setIsAuthenticated(true);
       return true;
@@ -161,13 +204,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const stored = existing[idx];
       try {
         const salt = base64ToUint8Array(stored.salt);
-        const key = await deriveKey(currentPassword, salt);
-        await decryptData(stored.encryptedProfile, key);
+        const kek = await deriveKey(currentPassword, salt);
+        const dataKey = stored.wrappedDataKey ? await unwrapDataKey(stored.wrappedDataKey, kek) : kek;
+        await decryptData(stored.encryptedProfile, dataKey); // проверка пароля
 
         const updated: UserProfile = { ...userProfile, email: newEmail, updatedAt: new Date().toISOString() };
-        const encryptedProfile = await encryptData(JSON.stringify(updated), key);
+        const encryptedProfile = await encryptData(JSON.stringify(updated), dataKey);
 
-        existing[idx] = { email: newEmail, salt: stored.salt, encryptedProfile };
+        existing[idx] = { ...stored, email: newEmail, encryptedProfile };
         writeAccounts(existing);
         localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, newEmail);
         setAccountsVersion((v) => v + 1);
@@ -191,21 +235,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const stored = existing[idx];
       try {
         const oldSalt = base64ToUint8Array(stored.salt);
-        const oldKey = await deriveKey(oldPassword, oldSalt);
-        await decryptData(stored.encryptedProfile, oldKey);
+        const oldKek = await deriveKey(oldPassword, oldSalt);
+
+        let dataKey: CryptoKey;
+        let needsMigration = false;
+        if (stored.wrappedDataKey) {
+          dataKey = await unwrapDataKey(stored.wrappedDataKey, oldKek);
+        } else {
+          await decryptData(stored.encryptedProfile, oldKek); // проверка старого пароля
+          dataKey = oldKek;
+          needsMigration = true;
+        }
 
         const newSalt = generateSalt();
-        const newKey = await deriveKey(newPassword, newSalt);
+        const newKek = await deriveKey(newPassword, newSalt);
+        const now = new Date().toISOString();
+        const updatedProfile: UserProfile = { ...userProfile, updatedAt: now };
 
-        const updatedProfile: UserProfile = { ...userProfile, updatedAt: new Date().toISOString() };
-        const encryptedProfile = await encryptData(JSON.stringify(updatedProfile), newKey);
+        let finalDataKey = dataKey;
+        let encryptedProfile: string;
 
-        await reencryptAllRecords(oldKey, newKey);
+        if (needsMigration) {
+          // Легаси-аккаунт без разделения "ключ данных / ключ пароля" —
+          // заводим отдельный DEK впервые, перешифровываем содержимое один раз
+          finalDataKey = await generateDataKey();
+          await reencryptAllRecords(dataKey, finalDataKey);
+          encryptedProfile = await encryptData(JSON.stringify(updatedProfile), finalDataKey);
+        } else {
+          encryptedProfile = await encryptData(JSON.stringify(updatedProfile), finalDataKey);
+        }
 
-        existing[idx] = { email: stored.email, salt: uint8ArrayToBase64(newSalt), encryptedProfile };
+        const wrappedDataKey = await wrapDataKey(finalDataKey, newKek);
+
+        existing[idx] = {
+          ...stored,
+          salt: uint8ArrayToBase64(newSalt),
+          wrappedDataKey,
+          encryptedProfile,
+        };
         writeAccounts(existing);
 
-        setMasterKey(newKey);
+        setMasterKey(finalDataKey);
         setUserProfile(updatedProfile);
         return true;
       } catch {
@@ -215,9 +285,111 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [userProfile]
   );
 
+  const generateBackupCodes = useCallback(async (): Promise<string[] | null> => {
+    if (!masterKey || !userProfile) return null;
+    const existing = readAccounts();
+    const idx = existing.findIndex((a) => a.email === userProfile.email);
+    if (idx === -1) return null;
+    const stored = existing[idx];
+
+    let dataKey = masterKey;
+    let updatedStored = { ...stored };
+
+    if (!stored.wrappedDataKey) {
+      // Легаси-аккаунт — заводим DEK впервые, перешифровываем содержимое один раз,
+      // после чего пароль/коды можно менять без повторной перешифровки данных
+      const newDataKey = await generateDataKey();
+      await reencryptAllRecords(masterKey, newDataKey);
+      const updatedProfile: UserProfile = { ...userProfile, updatedAt: new Date().toISOString() };
+      const encryptedProfile = await encryptData(JSON.stringify(updatedProfile), newDataKey);
+      const wrappedDataKey = await wrapDataKey(newDataKey, masterKey); // masterKey здесь = пароль-ключ
+
+      updatedStored = { ...stored, wrappedDataKey, encryptedProfile };
+      dataKey = newDataKey;
+      setMasterKey(newDataKey);
+      setUserProfile(updatedProfile);
+    }
+
+    const plainCodes: string[] = [];
+    const codeEntries: StoredBackupCode[] = [];
+    for (let i = 0; i < 10; i++) {
+      const code = generateBackupCodeString();
+      plainCodes.push(code);
+      const salt = generateSalt();
+      const kek = await deriveKey(code, salt);
+      const wrappedDataKey = await wrapDataKey(dataKey, kek);
+      codeEntries.push({ salt: uint8ArrayToBase64(salt), wrappedDataKey });
+    }
+
+    const now = new Date().toISOString();
+    existing[idx] = { ...updatedStored, backupCodes: codeEntries, backupCodesGeneratedAt: now };
+    writeAccounts(existing);
+    setAccountsVersion((v) => v + 1);
+
+    return plainCodes;
+  }, [masterKey, userProfile]);
+
+  const recoverWithBackupCode = useCallback(
+    async (email: string, code: string, newPassword: string): Promise<boolean> => {
+      const existing = readAccounts();
+      const idx = existing.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
+      if (idx === -1) return false;
+      const stored = existing[idx];
+      const normalizedCode = code.trim().toUpperCase();
+
+      for (const entry of stored.backupCodes ?? []) {
+        try {
+          const salt = base64ToUint8Array(entry.salt);
+          const kek = await deriveKey(normalizedCode, salt);
+          const dataKey = await unwrapDataKey(entry.wrappedDataKey, kek);
+
+          const profileJson = await decryptData(stored.encryptedProfile, dataKey);
+          const profile: UserProfile = JSON.parse(profileJson);
+
+          const newSalt = generateSalt();
+          const newKek = await deriveKey(newPassword, newSalt);
+          const newWrappedDataKey = await wrapDataKey(dataKey, newKek);
+
+          // Использование любого кода аннулирует весь набор — сразу выпускаем новый
+          const freshEntries: StoredBackupCode[] = [];
+          for (let i = 0; i < 10; i++) {
+            const freshCode = generateBackupCodeString();
+            const freshSalt = generateSalt();
+            const freshKek = await deriveKey(freshCode, freshSalt);
+            const freshWrapped = await wrapDataKey(dataKey, freshKek);
+            freshEntries.push({ salt: uint8ArrayToBase64(freshSalt), wrappedDataKey: freshWrapped });
+          }
+
+          const now = new Date().toISOString();
+          existing[idx] = {
+            ...stored,
+            salt: uint8ArrayToBase64(newSalt),
+            wrappedDataKey: newWrappedDataKey,
+            backupCodes: freshEntries,
+            backupCodesGeneratedAt: now,
+          };
+          writeAccounts(existing);
+          setAccountsVersion((v) => v + 1);
+
+          setMasterKey(dataKey);
+          setUserProfile(profile);
+          setIsAuthenticated(true);
+          localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, stored.email);
+
+          return true;
+        } catch {
+          continue; // код не подошёл — пробуем следующий
+        }
+      }
+      return false;
+    },
+    []
+  );
+
   const value: AuthContextValue = {
-    isAuthenticated, userProfile, masterKey, isLoading, accounts, lastActiveEmail,
+    isAuthenticated, userProfile, masterKey, isLoading, accounts, lastActiveEmail, backupCodesGeneratedAt,
     register, login, logout, removeAccount, updateProfile, changeEmail, changePassword,
+    generateBackupCodes, recoverWithBackupCode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

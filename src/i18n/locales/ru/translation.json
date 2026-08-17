@@ -297,13 +297,14 @@
     "otpIncomplete": "Введите все 6 цифр кода",
     "otpInvalid": "Неверный код. Попробуйте снова.",
     "forgotPasswordLink": "Забыли пароль?",
-    "forgotPasswordTitle": "Восстановление пароля",
-    "forgotPasswordSubtitle": "Введите email, привязанный к аккаунту",
-    "forgotPasswordSendCode": "Отправить код",
     "newPasswordTitle": "Новый пароль",
     "newPasswordLabel": "Новый пароль",
-    "forgotPasswordDoneTitle": "Пароль обновлён",
-    "forgotPasswordDoneMessage": "Теперь можно войти с новым паролем."
+    "backupCodeRequired": "Введите код",
+    "backupCodeInvalid": "Неверный код восстановления",
+    "backupCodeLabel": "Код восстановления",
+    "recoveryCodeTitle": "Восстановление доступа",
+    "recoveryCodeSubtitle": "Введите один из 10 сохранённых кодов восстановления",
+    "recoverySuccessToast": "Пароль обновлён, вы вошли в аккаунт"
   },
   "settings": {
     "title": "Настройки",
@@ -364,7 +365,17 @@
     "navAppearance": "Оформление",
     "navData": "Данные и память",
     "firstName": "Имя", 
-    "lastName": "Фамилия"
+    "lastName": "Фамилия",
+    "backupCodesTitle": "Коды восстановления",
+    "backupCodesHint": "10 одноразовых кодов помогут войти, если вы забудете мастер-пароль. Использование любого кода аннулирует весь набор — рекомендуем обновлять его каждые 90 дней.",
+    "backupCodesGenerate": "Создать коды",
+    "backupCodesRegenerate": "Обновить коды",
+    "backupCodesNone": "Коды ещё не созданы",
+    "backupCodesGeneratedAt": "Созданы {{date}}",
+    "backupCodesShownOnce": "Коды показываются только один раз — сохраните их сейчас.",
+    "backupCodesDownload": "Скачать как TXT",
+    "backupCodesRegenerateConfirmTitle": "Обновить коды восстановления?",
+    "backupCodesRegenerateConfirmMessage": "Старые 10 кодов перестанут работать. Новые нужно будет сохранить заново."
   },
   "documentTarget": {
     "personal": "Личный документ",

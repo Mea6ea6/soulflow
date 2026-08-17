@@ -297,13 +297,14 @@
     "otpIncomplete": "Enter all 6 digits",
     "otpInvalid": "Invalid code. Please try again.",
     "forgotPasswordLink": "Forgot password?",
-    "forgotPasswordTitle": "Password recovery",
-    "forgotPasswordSubtitle": "Enter the email linked to your account",
-    "forgotPasswordSendCode": "Send code",
     "newPasswordTitle": "New password",
     "newPasswordLabel": "New password",
-    "forgotPasswordDoneTitle": "Password updated",
-    "forgotPasswordDoneMessage": "You can now log in with your new password."
+    "backupCodeRequired": "Enter the code",
+    "backupCodeInvalid": "Invalid recovery code",
+    "backupCodeLabel": "Recovery code",
+    "recoveryCodeTitle": "Account recovery",
+    "recoveryCodeSubtitle": "Enter one of your 10 saved recovery codes",
+    "recoverySuccessToast": "Password updated, you're signed in"
   },
   "settings": {
     "title": "Settings",

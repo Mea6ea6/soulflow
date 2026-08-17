@@ -3,6 +3,7 @@ import type { UserProfile } from '../types';
 import { deriveKey, encryptData, decryptData, generateSalt, uint8ArrayToBase64, base64ToUint8Array } from './useEncryption';
 import { AuthContext, type AuthContextValue, type StoredAccountSummary } from '../context/AuthContext';
 import { reencryptAllRecords } from '../utils/reencrypt';
+import { accountDirectoryStub } from '../utils/accountDirectory';
 
 interface StoredAuthData {
   email: string;
@@ -83,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored: StoredAuthData = { email, salt: uint8ArrayToBase64(salt), encryptedProfile };
 
     writeAccounts([...existing, stored]);
+    void accountDirectoryStub;
     localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, email);
     setAccountsVersion((v) => v + 1);
 

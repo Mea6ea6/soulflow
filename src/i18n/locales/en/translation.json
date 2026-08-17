@@ -288,7 +288,22 @@
     "removeAccountAction": "Remove account",
     "removeAccountTitle": "Remove this account from the device?",
     "removeAccountMessage": "Saved sign-in data for \"{{email}}\" on this device will be removed.",
-    "accountExists": "An account with this email is already saved on this device"
+    "accountExists": "An account with this email is already saved on this device",
+    "otpTitle": "Verification",
+    "otpTitleLogin": "Confirm sign-in",
+    "otpTitleRegister": "Confirm registration",
+    "otpSentTo": "Code sent to {{email}}",
+    "otpConfirm": "Confirm",
+    "otpIncomplete": "Enter all 6 digits",
+    "otpInvalid": "Invalid code. Please try again.",
+    "forgotPasswordLink": "Forgot password?",
+    "forgotPasswordTitle": "Password recovery",
+    "forgotPasswordSubtitle": "Enter the email linked to your account",
+    "forgotPasswordSendCode": "Send code",
+    "newPasswordTitle": "New password",
+    "newPasswordLabel": "New password",
+    "forgotPasswordDoneTitle": "Password updated",
+    "forgotPasswordDoneMessage": "You can now log in with your new password."
   },
   "settings": {
     "title": "Settings",

@@ -6,6 +6,14 @@ import { useAppSettings } from '../hooks/useDB';
 import FloatingInput from '../components/FloatingInput';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AccountList from '../components/auth/AccountList';
+import OtpModal from '../components/auth/OtpModal';
+import ForgotPasswordModal from '../components/auth/ForgotPasswordModal';
+
+interface PendingCredentials {
+  mode: 'login' | 'register';
+  email: string;
+  password: string;
+}
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -23,6 +31,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingEmail, setRemovingEmail] = useState<string | null>(null);
+  const [pendingCredentials, setPendingCredentials] = useState<PendingCredentials | null>(null);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   const resetFormState = () => { setPassword(''); setConfirmPassword(''); setError(null); };
 
@@ -35,7 +45,7 @@ export default function LoginPage() {
   const handleStartRegister = () => { setMode('register'); setEmail(''); resetFormState(); };
   const handleBackToList = () => { setSelectedEmail(null); setMode('password'); resetFormState(); };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -43,28 +53,35 @@ export default function LoginPage() {
       if (!email.trim()) { setError(t('auth.enterEmail')); return; }
       if (password.length < 8) { setError(t('auth.passwordTooShort')); return; }
       if (password !== confirmPassword) { setError(t('auth.passwordsDoNotMatch')); return; }
-
-      setIsSubmitting(true);
-      try {
-        await register(email.trim(), password);
-      } catch (err) {
-        setError(err instanceof Error && err.message === 'ACCOUNT_EXISTS' ? t('auth.accountExists') : t('auth.registerFailed'));
-      } finally {
-        setIsSubmitting(false);
-      }
+      setPendingCredentials({ mode: 'register', email: email.trim(), password });
     } else {
       if (!selectedEmail) { setError(t('auth.enterEmail')); return; }
       if (!password) { setError(t('auth.enterPassword')); return; }
+      setPendingCredentials({ mode: 'login', email: selectedEmail, password });
+    }
+  };
 
-      setIsSubmitting(true);
-      try {
-        const success = await login(selectedEmail, password);
-        if (!success) setError(t('auth.wrongPassword'));
-      } catch {
-        setError(t('auth.loginFailed'));
-      } finally {
-        setIsSubmitting(false);
+  const handleOtpConfirmed = async () => {
+    if (!pendingCredentials) return;
+    setIsSubmitting(true);
+    try {
+      if (pendingCredentials.mode === 'register') {
+        try {
+          await register(pendingCredentials.email, pendingCredentials.password);
+        } catch (err) {
+          setError(err instanceof Error && err.message === 'ACCOUNT_EXISTS' ? t('auth.accountExists') : t('auth.registerFailed'));
+        }
+      } else {
+        try {
+          const success = await login(pendingCredentials.email, pendingCredentials.password);
+          if (!success) setError(t('auth.wrongPassword'));
+        } catch {
+          setError(t('auth.loginFailed'));
+        }
       }
+    } finally {
+      setIsSubmitting(false);
+      setPendingCredentials(null);
     }
   };
 
@@ -124,6 +141,12 @@ export default function LoginPage() {
                   <FloatingInput type="password" label={t('auth.confirmPassword')} icon={<LockIcon size={16} />} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 )}
 
+                {mode === 'password' && (
+                  <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-xs text-text-tertiary hover:text-primary hover:underline self-end -mt-2">
+                    {t('auth.forgotPasswordLink')}
+                  </button>
+                )}
+
                 {error && <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">{error}</div>}
 
                 <button
@@ -157,6 +180,19 @@ export default function LoginPage() {
           onConfirm={handleRemoveConfirm}
           onClose={() => setRemovingEmail(null)}
         />
+      )}
+
+      {pendingCredentials && (
+        <OtpModal
+          email={pendingCredentials.email}
+          title={pendingCredentials.mode === 'register' ? t('auth.otpTitleRegister') : t('auth.otpTitleLogin')}
+          onConfirm={handleOtpConfirmed}
+          onClose={() => setPendingCredentials(null)}
+        />
+      )}
+
+      {isForgotPasswordOpen && (
+        <ForgotPasswordModal onClose={() => setIsForgotPasswordOpen(false)} />
       )}
     </div>
   );

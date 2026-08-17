@@ -288,7 +288,22 @@
     "removeAccountAction": "Удалить аккаунт",
     "removeAccountTitle": "Удалить аккаунт с устройства?",
     "removeAccountMessage": "Сохранённые данные для входа в \"{{email}}\" на этом устройстве будут удалены.",
-    "accountExists": "Аккаунт с таким email уже сохранён на этом устройстве"
+    "accountExists": "Аккаунт с таким email уже сохранён на этом устройстве",
+    "otpTitle": "Подтверждение",
+    "otpTitleLogin": "Подтверждение входа",
+    "otpTitleRegister": "Подтверждение регистрации",
+    "otpSentTo": "Код отправлен на {{email}}",
+    "otpConfirm": "Подтвердить",
+    "otpIncomplete": "Введите все 6 цифр кода",
+    "otpInvalid": "Неверный код. Попробуйте снова.",
+    "forgotPasswordLink": "Забыли пароль?",
+    "forgotPasswordTitle": "Восстановление пароля",
+    "forgotPasswordSubtitle": "Введите email, привязанный к аккаунту",
+    "forgotPasswordSendCode": "Отправить код",
+    "newPasswordTitle": "Новый пароль",
+    "newPasswordLabel": "Новый пароль",
+    "forgotPasswordDoneTitle": "Пароль обновлён",
+    "forgotPasswordDoneMessage": "Теперь можно войти с новым паролем."
   },
   "settings": {
     "title": "Настройки",

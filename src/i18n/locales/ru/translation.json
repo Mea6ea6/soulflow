@@ -304,7 +304,9 @@
     "backupCodeLabel": "Код восстановления",
     "recoveryCodeTitle": "Восстановление доступа",
     "recoveryCodeSubtitle": "Введите один из 10 сохранённых кодов восстановления",
-    "recoverySuccessToast": "Пароль обновлён, вы вошли в аккаунт"
+    "recoverySuccessToast": "Пароль обновлён, вы вошли в аккаунт",
+    "recoveryNewCodesTitle": "Новые коды восстановления", 
+    "recoveryNewCodesSubtitle": "Старые коды больше не действуют — сохраните новые."
   },
   "settings": {
     "title": "Настройки",

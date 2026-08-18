@@ -21,7 +21,8 @@ export interface AuthContextValue {
   changeEmail: (newEmail: string, currentPassword: string) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
   generateBackupCodes: () => Promise<string[] | null>;
-  recoverWithBackupCode: (email: string, code: string, newPassword: string) => Promise<boolean>;
+  verifyBackupCode: (email: string, code: string) => Promise<CryptoKey | null>;
+  completeBackupRecovery: (email: string, dataKey: CryptoKey, newPassword: string) => Promise<string[] | null>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

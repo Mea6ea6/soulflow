@@ -18,7 +18,7 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 import ChangeEmailModal from '../components/ChangeEmailModal';
 import ThemeSwatch from '../components/ThemeSwatch';
 import Select from '../components/Select';
-import BackupCodesSection from '../components/auth/BackupCodesDisplay';
+import BackupCodesSection from '../components/settings/BackupCodesSection';
 
 const APP_VERSION = '0.1.0';
 

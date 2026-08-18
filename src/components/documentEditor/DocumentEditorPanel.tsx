@@ -30,7 +30,7 @@ import DocumentTypeModal, { type DocumentTypeChange } from '../DocumentTypeModal
 import BlockMenuList from '../BlockMenuList';
 import TableControls from './TableControls';
 
-export type ContentTheme = 'light' | 'dark';
+type ContentTheme = 'light' | 'dark';
 
 const CONTENT_THEME_VARS: Record<ContentTheme, { bg: string; text: string; secondary: string; hover: string }> = {
   light: { bg: '#ffffff', text: '#191919', secondary: '#8b8b89', hover: '#f1f1ef' },
@@ -62,6 +62,12 @@ export default function DocumentEditorPanel({ target, isActive, contentTheme, on
   const [isChangingType, setIsChangingType] = useState(false);
   const isInitializingRef = useRef(true);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Локальный "прокси" для сохранения по Cmd/Ctrl+S — разрывает циклическую
+  // зависимость: shortcutsExtension нужен saveNow, а saveNow появляется только
+  // после useDocumentAutosave, которому нужен editor, а editor собирается из
+  // списка расширений, включающего shortcutsExtension. Реф не требует
+  // попадания в зависимости useMemo, поэтому цикл не возникает
+  const saveTriggerRef = useRef<() => void>(() => {});
 
   const shortcutsExtension = useMemo(
     () => Extension.create({
@@ -69,11 +75,11 @@ export default function DocumentEditorPanel({ target, isActive, contentTheme, on
       addKeyboardShortcuts() {
         return {
           Tab: () => { this.editor.commands.insertContent('\u00A0\u00A0\u00A0\u00A0'); return true; },
-          'Mod-s': () => { saveNow(); return true; },
+          'Mod-s': () => { saveTriggerRef.current(); return true; },
         };
       },
     }),
-    [],
+    []
   );
 
   const editor = useEditor({
@@ -114,6 +120,8 @@ export default function DocumentEditorPanel({ target, isActive, contentTheme, on
     onDirtyChange, onSavedDocument,
     onError: () => setError(t('textEditor.saveFailed')),
   });
+
+  useEffect(() => { saveTriggerRef.current = saveNow; }, [saveNow]);
 
   useEffect(() => {
     if (!editor) return;

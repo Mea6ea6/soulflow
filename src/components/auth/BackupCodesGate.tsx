@@ -10,7 +10,7 @@ export default function BackupCodesGate() {
   if (!pendingBackupCodesToShow) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-bg/95 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-bg/95 backdrop-blur-sm px-4">
       <div className="w-full max-w-md bg-surface rounded-3xl p-7" style={{ boxShadow: '0 1px 2px var(--color-shadow), 0 8px 24px var(--color-shadow-hover)' }}>
         <div className="flex flex-col items-center text-center mb-5">
           <div className="w-12 h-12 rounded-full bg-warning/15 text-warning flex items-center justify-center mb-3">

@@ -4,7 +4,7 @@ import {
   deriveKey, encryptData, decryptData, generateSalt, uint8ArrayToBase64, base64ToUint8Array,
   generateDataKey, wrapDataKey, unwrapDataKey,
 } from './useEncryption';
-import { AuthContext, type AuthContextValue, type StoredAccountSummary } from '../context/AuthContext';
+import { AuthContext, type AuthContextValue, type StoredAccountSummary, type GenerateBackupCodesOptions } from '../context/AuthContext';
 import { reencryptAllRecords } from '../utils/reencrypt';
 import { accountDirectoryStub } from '../utils/accountDirectory';
 
@@ -20,12 +20,16 @@ interface StoredAuthData {
   encryptedProfile: string;
   backupCodes?: StoredBackupCode[];
   backupCodesGeneratedAt?: string;
+  // Тот же набор кодов, что и в backupCodes, но зашифрованный DEK (не паролем/кодом) —
+  // нужен, чтобы можно было заново показать коды авторизованному пользователю в
+  // настройках. Это безопасно: расшифровать может только тот, кто уже вошёл в
+  // аккаунт и так имеет доступ ко всем остальным данным
+  backupCodesEncrypted?: string;
 }
 
 const ACCOUNTS_STORAGE_KEY = 'soulflow_accounts';
 const ACTIVE_ACCOUNT_STORAGE_KEY = 'soulflow_active_account';
 const LEGACY_AUTH_STORAGE_KEY = 'soulflow_auth';
-
 const BACKUP_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 function generateBackupCodeString(): string {
@@ -34,6 +38,20 @@ function generateBackupCodeString(): string {
       .map((b) => BACKUP_CODE_ALPHABET[b % BACKUP_CODE_ALPHABET.length])
       .join('');
   return `${part(5)}-${part(5)}`;
+}
+
+async function createBackupCodeSet(dataKey: CryptoKey): Promise<{ codes: string[]; entries: StoredBackupCode[] }> {
+  const codes: string[] = [];
+  const entries: StoredBackupCode[] = [];
+  for (let i = 0; i < 10; i++) {
+    const code = generateBackupCodeString();
+    codes.push(code);
+    const salt = generateSalt();
+    const kek = await deriveKey(code, salt);
+    const wrappedDataKey = await wrapDataKey(dataKey, kek);
+    entries.push({ salt: uint8ArrayToBase64(salt), wrappedDataKey });
+  }
+  return { codes, entries };
 }
 
 function readAccounts(): StoredAuthData[] {
@@ -74,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [masterKey, setMasterKey] = useState<CryptoKey | null>(null);
   const [isLoading] = useState(false);
   const [accountsVersion, setAccountsVersion] = useState(0);
+  const [pendingBackupCodesToShow, setPendingBackupCodesToShow] = useState<string[] | null>(null);
 
   const accounts: StoredAccountSummary[] = readAccounts().map((a) => ({ email: a.email }));
   void accountsVersion;
@@ -107,13 +126,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const encryptedProfile = await encryptData(JSON.stringify(profile), dataKey);
+    const { codes, entries } = await createBackupCodeSet(dataKey);
+    const backupCodesEncrypted = await encryptData(JSON.stringify(codes), dataKey);
+
     const stored: StoredAuthData = {
       email,
       salt: uint8ArrayToBase64(passwordSalt),
       wrappedDataKey,
       encryptedProfile,
-      backupCodes: [],
-      backupCodesGeneratedAt: '',
+      backupCodes: entries,
+      backupCodesGeneratedAt: now,
+      backupCodesEncrypted,
     };
 
     writeAccounts([...existing, stored]);
@@ -126,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMasterKey(dataKey);
     setUserProfile(profile);
     setIsAuthenticated(true);
+    setPendingBackupCodesToShow(codes);
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
@@ -148,6 +172,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       return false;
     }
+  }, []);
+
+  // Вход по бэкап-коду — сразу даёт доступ, без промежуточного шага смены
+  // пароля. Код НЕ аннулируется после использования (см. пояснение в чате):
+  // это осознанный компромисс ради UX, а не забытая деталь
+  const loginWithBackupCode = useCallback(async (email: string, code: string): Promise<boolean> => {
+    const existing = readAccounts();
+    const stored = existing.find((a) => a.email.toLowerCase() === email.toLowerCase());
+    if (!stored) return false;
+    const normalizedCode = code.trim().toUpperCase();
+
+    for (const entry of stored.backupCodes ?? []) {
+      try {
+        const salt = base64ToUint8Array(entry.salt);
+        const kek = await deriveKey(normalizedCode, salt);
+        const dataKey = await unwrapDataKey(entry.wrappedDataKey, kek);
+        const profileJson = await decryptData(stored.encryptedProfile, dataKey);
+        const profile: UserProfile = JSON.parse(profileJson);
+
+        localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, stored.email);
+        setMasterKey(dataKey);
+        setUserProfile(profile);
+        setIsAuthenticated(true);
+        return true;
+      } catch {
+        continue;
+      }
+    }
+    return false;
   }, []);
 
   const logout = useCallback(() => {
@@ -276,7 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [userProfile]
   );
 
-  const generateBackupCodes = useCallback(async (): Promise<string[] | null> => {
+  const generateBackupCodes = useCallback(async (options?: GenerateBackupCodesOptions): Promise<string[] | null> => {
     if (!masterKey || !userProfile) return null;
     const existing = readAccounts();
     const idx = existing.findIndex((a) => a.email === userProfile.email);
@@ -299,95 +352,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserProfile(updatedProfile);
     }
 
-    const plainCodes: string[] = [];
-    const codeEntries: StoredBackupCode[] = [];
-    for (let i = 0; i < 10; i++) {
-      const code = generateBackupCodeString();
-      plainCodes.push(code);
-      const salt = generateSalt();
-      const kek = await deriveKey(code, salt);
-      const wrappedDataKey = await wrapDataKey(dataKey, kek);
-      codeEntries.push({ salt: uint8ArrayToBase64(salt), wrappedDataKey });
-    }
-
+    const { codes, entries } = await createBackupCodeSet(dataKey);
+    const backupCodesEncrypted = await encryptData(JSON.stringify(codes), dataKey);
     const now = new Date().toISOString();
-    existing[idx] = { ...updatedStored, backupCodes: codeEntries, backupCodesGeneratedAt: now };
+
+    existing[idx] = { ...updatedStored, backupCodes: entries, backupCodesGeneratedAt: now, backupCodesEncrypted };
     writeAccounts(existing);
     setAccountsVersion((v) => v + 1);
 
-    return plainCodes;
+    if (!options?.silent) {
+      setPendingBackupCodesToShow(codes);
+    }
+
+    return codes;
   }, [masterKey, userProfile]);
 
-  // Только проверяет код, ничего не меняет в хранилище и не логинит —
-  // на LoginPage это отдельный шаг ПЕРЕД вводом нового пароля, чтобы
-  // неверный код не пускал пользователя дальше по цепочке экранов
-  const verifyBackupCode = useCallback(async (email: string, code: string): Promise<CryptoKey | null> => {
+  // Расшифровывает уже сохранённый набор кодов текущим DEK — не создаёт
+  // новых кодов, просто показывает то, что уже есть, повторно
+  const getStoredBackupCodes = useCallback(async (): Promise<string[] | null> => {
+    if (!masterKey || !userProfile) return null;
     const existing = readAccounts();
-    const stored = existing.find((a) => a.email.toLowerCase() === email.toLowerCase());
-    if (!stored) return null;
-    const normalizedCode = code.trim().toUpperCase();
-
-    for (const entry of stored.backupCodes ?? []) {
-      try {
-        const salt = base64ToUint8Array(entry.salt);
-        const kek = await deriveKey(normalizedCode, salt);
-        const dataKey = await unwrapDataKey(entry.wrappedDataKey, kek);
-        await decryptData(stored.encryptedProfile, dataKey); // защита от случайных коллизий
-        return dataKey;
-      } catch {
-        continue;
-      }
-    }
-    return null;
-  }, []);
-
-  // Вызывается только после успешной verifyBackupCode. Устанавливает новый
-  // пароль, аннулирует и перевыпускает все 10 кодов, но НЕ логинит сразу —
-  // возвращает новые коды, чтобы вызывающий код успел их показать пользователю
-  // перед обычным login(email, newPassword)
-  const completeBackupRecovery = useCallback(async (email: string, dataKey: CryptoKey, newPassword: string): Promise<string[] | null> => {
-    const existing = readAccounts();
-    const idx = existing.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
-    if (idx === -1) return null;
-    const stored = existing[idx];
-
+    const stored = existing.find((a) => a.email === userProfile.email);
+    if (!stored?.backupCodesEncrypted) return null;
     try {
-      const newSalt = generateSalt();
-      const newKek = await deriveKey(newPassword, newSalt);
-      const newWrappedDataKey = await wrapDataKey(dataKey, newKek);
-
-      const plainCodes: string[] = [];
-      const freshEntries: StoredBackupCode[] = [];
-      for (let i = 0; i < 10; i++) {
-        const freshCode = generateBackupCodeString();
-        plainCodes.push(freshCode);
-        const freshSalt = generateSalt();
-        const freshKek = await deriveKey(freshCode, freshSalt);
-        const freshWrapped = await wrapDataKey(dataKey, freshKek);
-        freshEntries.push({ salt: uint8ArrayToBase64(freshSalt), wrappedDataKey: freshWrapped });
-      }
-
-      const now = new Date().toISOString();
-      existing[idx] = {
-        ...stored,
-        salt: uint8ArrayToBase64(newSalt),
-        wrappedDataKey: newWrappedDataKey,
-        backupCodes: freshEntries,
-        backupCodesGeneratedAt: now,
-      };
-      writeAccounts(existing);
-      setAccountsVersion((v) => v + 1);
-
-      return plainCodes;
+      const json = await decryptData(stored.backupCodesEncrypted, masterKey);
+      return JSON.parse(json);
     } catch {
       return null;
     }
+  }, [masterKey, userProfile]);
+
+  const dismissPendingBackupCodes = useCallback(() => {
+    setPendingBackupCodesToShow(null);
   }, []);
 
   const value: AuthContextValue = {
-    isAuthenticated, userProfile, masterKey, isLoading, accounts, lastActiveEmail, backupCodesGeneratedAt,
-    register, login, logout, removeAccount, updateProfile, changeEmail, changePassword,
-    generateBackupCodes, verifyBackupCode, completeBackupRecovery,
+    isAuthenticated, userProfile, masterKey, isLoading, accounts, lastActiveEmail,
+    backupCodesGeneratedAt, pendingBackupCodesToShow,
+    register, login, loginWithBackupCode, logout, removeAccount, updateProfile, changeEmail, changePassword,
+    generateBackupCodes, getStoredBackupCodes, dismissPendingBackupCodes,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

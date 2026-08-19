@@ -7,6 +7,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import Layout from './components/Layout';
 import { DocumentEditorProvider } from './context/DocumentEditorProvider';
 import { BackupProvider } from './context/BackupProvider';
+import BackupCodesGate from './components/auth/BackupCodesGate';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,20 +20,21 @@ function App() {
     }
   }, [appSettings, i18n]);
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
   return (
-    <DocumentEditorProvider>
-      <BackupProvider>
-        <Layout />
-      </BackupProvider>
-    </DocumentEditorProvider>
+    <>
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : !isAuthenticated ? (
+        <LoginPage />
+      ) : (
+        <DocumentEditorProvider>
+          <BackupProvider>
+            <Layout />
+          </BackupProvider>
+        </DocumentEditorProvider>
+      )}
+      <BackupCodesGate />
+    </>
   );
 }
 

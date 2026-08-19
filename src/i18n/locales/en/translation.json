@@ -306,7 +306,10 @@
     "recoveryCodeSubtitle": "Enter one of your 10 saved recovery codes",
     "recoverySuccessToast": "Password updated, you're signed in",
     "recoveryNewCodesTitle": "New recovery codes", 
-    "recoveryNewCodesSubtitle": "The old codes no longer work — save the new ones."
+    "recoveryNewCodesSubtitle": "The old codes no longer work — save the new ones.",
+    "backupCodesGateTitle": "Save your recovery codes", 
+    "backupCodesGateMessage": "Without them, forgetting your master password means permanently losing access to your data. Download and store the codes somewhere safe.", 
+    "backupCodesGateConfirm": "Got it, continue"
   },
   "settings": {
     "title": "Settings",
@@ -377,7 +380,8 @@
     "backupCodesShownOnce": "Codes are shown only once — save them now.",
     "backupCodesDownload": "Download as TXT",
     "backupCodesRegenerateConfirmTitle": "Regenerate recovery codes?",
-    "backupCodesRegenerateConfirmMessage": "The old 10 codes will stop working. You'll need to save the new ones again."
+    "backupCodesRegenerateConfirmMessage": "The old 10 codes will stop working. You'll need to save the new ones again.",
+    "backupCodesLoadFailed": "Could not load recovery codes"
   },
   "documentTarget": {
     "personal": "Personal document",

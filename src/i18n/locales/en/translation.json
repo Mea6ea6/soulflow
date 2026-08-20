@@ -311,7 +311,8 @@
     "backupCodesGateMessage": "Without them, forgetting your master password means permanently losing access to your data. Download and store the codes somewhere safe.", 
     "backupCodesGateConfirm": "Got it, continue",
     "forgotCurrentPasswordLink": "Forgot your current password?",
-    "resetPasswordSessionSubtitle": "You're already signed in — you can set a new password without entering the old one."
+    "resetPasswordSessionSubtitle": "You're already signed in — you can set a new password without entering the old one.",
+    "otpTitleRecovery": "Confirm recovery"
   },
   "settings": {
     "title": "Settings",
@@ -377,7 +378,8 @@
     "backupCodesHint": "10 one-time codes will help you log in if you forget the master password. Each code works only once and disappears from the list after use.",
     "backupCodesShownOnce": "Codes are shown only once — save them now.",
     "backupCodesDownload": "Download as TXT",
-    "backupCodesLoadFailed": "Could not load recovery codes"
+    "backupCodesLoadFailed": "Could not load recovery codes",
+    "backupCodesLowCount": "{{count}} codes left. A fresh set will be generated automatically 90 days after the last refresh."
   },
   "documentTarget": {
     "personal": "Personal document",

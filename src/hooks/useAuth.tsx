@@ -20,10 +20,6 @@ interface StoredAuthData {
   encryptedProfile: string;
   backupCodes?: StoredBackupCode[];
   backupCodesGeneratedAt?: string;
-  // Тот же набор кодов, что и в backupCodes, но зашифрованный DEK (не паролем/кодом) —
-  // нужен, чтобы можно было заново показать коды авторизованному пользователю в
-  // настройках. Это безопасно: расшифровать может только тот, кто уже вошёл в
-  // аккаунт и так имеет доступ ко всем остальным данным
   backupCodesEncrypted?: string;
 }
 
@@ -143,8 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, email);
     setAccountsVersion((v) => v + 1);
 
-    // TODO: когда появится серверный API — подключить реальный клиент вместо заглушки
-    void accountDirectoryStub;
+    void accountDirectoryStub; // TODO: подключить реальный клиент, когда появится серверный API
 
     setMasterKey(dataKey);
     setUserProfile(profile);
@@ -174,22 +169,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Вход по бэкап-коду — сразу даёт доступ, без промежуточного шага смены
-  // пароля. Код НЕ аннулируется после использования (см. пояснение в чате):
-  // это осознанный компромисс ради UX, а не забытая деталь
+  // Вход по бэкап-коду. Код одноразовый: после успешного использования
+  // удаляется и из списка "рабочих" записей, и из зашифрованного списка,
+  // который показывается в настройках — второй раз тот же код не сработает
   const loginWithBackupCode = useCallback(async (email: string, code: string): Promise<boolean> => {
     const existing = readAccounts();
-    const stored = existing.find((a) => a.email.toLowerCase() === email.toLowerCase());
-    if (!stored) return false;
+    const idx = existing.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
+    if (idx === -1) return false;
+    const stored = existing[idx];
     const normalizedCode = code.trim().toUpperCase();
+    const codeEntries = stored.backupCodes ?? [];
 
-    for (const entry of stored.backupCodes ?? []) {
+    for (let i = 0; i < codeEntries.length; i++) {
+      const entry = codeEntries[i];
       try {
         const salt = base64ToUint8Array(entry.salt);
         const kek = await deriveKey(normalizedCode, salt);
         const dataKey = await unwrapDataKey(entry.wrappedDataKey, kek);
         const profileJson = await decryptData(stored.encryptedProfile, dataKey);
         const profile: UserProfile = JSON.parse(profileJson);
+
+        const remainingEntries = codeEntries.filter((_, j) => j !== i);
+        let backupCodesEncrypted = stored.backupCodesEncrypted;
+        if (backupCodesEncrypted) {
+          try {
+            const plainCodes: string[] = JSON.parse(await decryptData(backupCodesEncrypted, dataKey));
+            const remainingPlain = plainCodes.filter((c) => c.toUpperCase() !== normalizedCode);
+            backupCodesEncrypted = await encryptData(JSON.stringify(remainingPlain), dataKey);
+          } catch {
+            backupCodesEncrypted = undefined;
+          }
+        }
+
+        existing[idx] = { ...stored, backupCodes: remainingEntries, backupCodesEncrypted };
+        writeAccounts(existing);
+        setAccountsVersion((v) => v + 1);
 
         localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, stored.email);
         setMasterKey(dataKey);
@@ -228,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateProfile = useCallback(
-    async (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar' >>) => {
+    async (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar'>>) => {
       if (!masterKey || !userProfile) return;
       const updated: UserProfile = { ...userProfile, ...updates, updatedAt: new Date().toISOString() };
       await persistProfile(updated, masterKey);
@@ -329,6 +343,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [userProfile]
   );
 
+  // Смена пароля БЕЗ проверки старого — доступна только когда masterKey уже
+  // есть в памяти (сессия уже доказала владение аккаунтом любым способом:
+  // обычным паролем или бэкап-кодом). Не трогает зашифрованный профиль —
+  // только переоборачивает уже существующий DEK новым паролем
+  const resetPasswordWithSession = useCallback(async (newPassword: string): Promise<boolean> => {
+    if (!masterKey || !userProfile) return false;
+    const existing = readAccounts();
+    const idx = existing.findIndex((a) => a.email === userProfile.email);
+    if (idx === -1) return false;
+    const stored = existing[idx];
+
+    try {
+      const newSalt = generateSalt();
+      const newKek = await deriveKey(newPassword, newSalt);
+      const wrappedDataKey = await wrapDataKey(masterKey, newKek);
+
+      existing[idx] = { ...stored, salt: uint8ArrayToBase64(newSalt), wrappedDataKey };
+      writeAccounts(existing);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [masterKey, userProfile]);
+
   const generateBackupCodes = useCallback(async (options?: GenerateBackupCodesOptions): Promise<string[] | null> => {
     if (!masterKey || !userProfile) return null;
     const existing = readAccounts();
@@ -367,8 +405,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return codes;
   }, [masterKey, userProfile]);
 
-  // Расшифровывает уже сохранённый набор кодов текущим DEK — не создаёт
-  // новых кодов, просто показывает то, что уже есть, повторно
   const getStoredBackupCodes = useCallback(async (): Promise<string[] | null> => {
     if (!masterKey || !userProfile) return null;
     const existing = readAccounts();
@@ -390,7 +426,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated, userProfile, masterKey, isLoading, accounts, lastActiveEmail,
     backupCodesGeneratedAt, pendingBackupCodesToShow,
     register, login, loginWithBackupCode, logout, removeAccount, updateProfile, changeEmail, changePassword,
-    generateBackupCodes, getStoredBackupCodes, dismissPendingBackupCodes,
+    resetPasswordWithSession, generateBackupCodes, getStoredBackupCodes, dismissPendingBackupCodes,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

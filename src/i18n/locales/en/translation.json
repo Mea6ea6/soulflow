@@ -309,7 +309,9 @@
     "recoveryNewCodesSubtitle": "The old codes no longer work — save the new ones.",
     "backupCodesGateTitle": "Save your recovery codes", 
     "backupCodesGateMessage": "Without them, forgetting your master password means permanently losing access to your data. Download and store the codes somewhere safe.", 
-    "backupCodesGateConfirm": "Got it, continue"
+    "backupCodesGateConfirm": "Got it, continue",
+    "forgotCurrentPasswordLink": "Forgot your current password?",
+    "resetPasswordSessionSubtitle": "You're already signed in — you can set a new password without entering the old one."
   },
   "settings": {
     "title": "Settings",
@@ -372,15 +374,9 @@
     "backupPermissionDenied": "No access to the folder — please choose it again",
     "backupTabOpenNotice": "Automatic backups only run while this tab is open in the browser.",
     "backupCodesTitle": "Recovery codes",
-    "backupCodesHint": "10 one-time codes let you sign in if you forget your master password. Using any code invalidates the whole set — we recommend refreshing them every 90 days.",
-    "backupCodesGenerate": "Generate codes",
-    "backupCodesRegenerate": "Regenerate codes",
-    "backupCodesNone": "No codes generated yet",
-    "backupCodesGeneratedAt": "Generated {{date}}",
+    "backupCodesHint": "10 one-time codes will help you log in if you forget the master password. Each code works only once and disappears from the list after use.",
     "backupCodesShownOnce": "Codes are shown only once — save them now.",
     "backupCodesDownload": "Download as TXT",
-    "backupCodesRegenerateConfirmTitle": "Regenerate recovery codes?",
-    "backupCodesRegenerateConfirmMessage": "The old 10 codes will stop working. You'll need to save the new ones again.",
     "backupCodesLoadFailed": "Could not load recovery codes"
   },
   "documentTarget": {

@@ -6,9 +6,6 @@ export interface StoredAccountSummary {
 }
 
 export interface GenerateBackupCodesOptions {
-  // silent = true пропускает показ блокирующего попапа с новыми кодами —
-  // используется только для тихой фоновой генерации у легаси-аккаунтов,
-  // созданных до появления этой функции
   silent?: boolean;
 }
 
@@ -26,9 +23,12 @@ export interface AuthContextValue {
   loginWithBackupCode: (email: string, code: string) => Promise<boolean>;
   logout: () => void;
   removeAccount: (email: string) => void;
-  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar' >>) => Promise<void>;
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar'>>) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
+  // Смена пароля без старого пароля — доступна только когда masterKey уже есть
+  // в сессии (пользователь уже вошёл, любым способом). См. ответ на вопрос 3
+  resetPasswordWithSession: (newPassword: string) => Promise<boolean>;
   generateBackupCodes: (options?: GenerateBackupCodesOptions) => Promise<string[] | null>;
   getStoredBackupCodes: () => Promise<string[] | null>;
   dismissPendingBackupCodes: () => void;

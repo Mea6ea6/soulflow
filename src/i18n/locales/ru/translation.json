@@ -309,7 +309,9 @@
     "recoveryNewCodesSubtitle": "Старые коды больше не действуют — сохраните новые.",
     "backupCodesGateTitle": "Сохраните коды восстановления", 
     "backupCodesGateMessage": "Без них, если вы забудете мастер-пароль, доступ к данным будет утерян навсегда. Скачайте и сохраните коды в надёжном месте.", 
-    "backupCodesGateConfirm": "Понятно, продолжить"
+    "backupCodesGateConfirm": "Понятно, продолжить",
+    "forgotCurrentPasswordLink": "Забыли текущий пароль?",
+    "resetPasswordSessionSubtitle": "Вы уже вошли в аккаунт — можно задать новый пароль без ввода старого."
   },
   "settings": {
     "title": "Настройки",
@@ -372,15 +374,10 @@
     "firstName": "Имя", 
     "lastName": "Фамилия",
     "backupCodesTitle": "Коды восстановления",
-    "backupCodesHint": "10 одноразовых кодов помогут войти, если вы забудете мастер-пароль. Использование любого кода аннулирует весь набор — рекомендуем обновлять его каждые 90 дней.",
-    "backupCodesGenerate": "Создать коды",
-    "backupCodesRegenerate": "Обновить коды",
-    "backupCodesNone": "Коды ещё не созданы",
-    "backupCodesGeneratedAt": "Созданы {{date}}",
+    "backupCodesHint": "10 одноразовых кодов помогут войти, если вы забудете мастер-пароль. Каждый код срабатывает только один раз и после использования исчезает из списка.",
+    "backupCodesExhausted": "Все коды использованы. Новые сгенерировать нельзя — если забудете пароль, восстановить доступ будет нечем.",
     "backupCodesShownOnce": "Коды показываются только один раз — сохраните их сейчас.",
     "backupCodesDownload": "Скачать как TXT",
-    "backupCodesRegenerateConfirmTitle": "Обновить коды восстановления?",
-    "backupCodesRegenerateConfirmMessage": "Старые 10 кодов перестанут работать. Новые нужно будет сохранить заново.",
     "backupCodesLoadFailed": "Не удалось загрузить коды восстановления"
   },
   "documentTarget": {

@@ -5,10 +5,9 @@ import BackupCodesDisplay from '../auth/BackupCodesDisplay';
 
 export default function BackupCodesSection() {
   const { t } = useTranslation();
-  const { userProfile, backupCodesGeneratedAt, getStoredBackupCodes, generateBackupCodes } = useAuth();
+  const { userProfile, getStoredBackupCodes, generateBackupCodes } = useAuth();
   const [codes, setCodes] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,24 +17,17 @@ export default function BackupCodesSection() {
       if (stored) {
         if (!cancelled) setCodes(stored);
       } else {
-        // Аккаунт без сохранённого набора (легаси, до появления фичи) —
-        // тихо создаём набор без блокирующего попапа; попап показывается
-        // только сразу после регистрации и по явному "Обновить коды"
+        // Легаси-аккаунт без сохранённого набора — создаём один раз тихо,
+        // без блокирующего попапа (тот показывается только после явной
+        // регистрации, когда пользователь явно на это настроен)
         const generated = await generateBackupCodes({ silent: true });
-        if (!cancelled) setCodes(generated);
+        if (!cancelled) setCodes(generated ?? []);
       }
       if (!cancelled) setIsLoading(false);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userProfile?.email]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    const fresh = await generateBackupCodes();
-    if (fresh) setCodes(fresh);
-    setIsRefreshing(false);
-  };
 
   return (
     <div>
@@ -44,26 +36,10 @@ export default function BackupCodesSection() {
 
       {isLoading ? (
         <p className="text-sm text-text-tertiary">{t('common.loading')}</p>
-      ) : codes ? (
-        <>
-          <BackupCodesDisplay codes={codes} email={userProfile?.email} />
-          <div className="flex items-center justify-between mt-3">
-            {backupCodesGeneratedAt && (
-              <p className="text-xs text-text-tertiary">
-                {t('settings.backupCodesGeneratedAt', { date: new Date(backupCodesGeneratedAt).toLocaleDateString('ru-RU') })}
-              </p>
-            )}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="text-xs text-primary hover:underline disabled:opacity-50 shrink-0"
-            >
-              {isRefreshing ? t('common.saving') : t('settings.backupCodesRegenerate')}
-            </button>
-          </div>
-        </>
+      ) : codes && codes.length > 0 ? (
+        <BackupCodesDisplay codes={codes} email={userProfile?.email} />
       ) : (
-        <p className="text-sm text-error">{t('settings.backupCodesLoadFailed')}</p>
+        <p className="text-sm text-warning">{t('settings.backupCodesExhausted')}</p>
       )}
     </div>
   );

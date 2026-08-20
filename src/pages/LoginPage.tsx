@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { SparkleIcon, LockIcon, EnvelopeSimpleIcon, KeyIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
-import { useAppSettings } from '../hooks/useDB';
 import FloatingInput from '../components/FloatingInput';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AccountList from '../components/auth/AccountList';
@@ -10,19 +9,27 @@ import OtpInput from '../components/auth/OtpInput';
 
 const STUB_VALID_OTP = '000000';
 
-type Mode = 'password' | 'register' | 'otp' | 'recoverCode';
+type Mode = 'password' | 'register' | 'otp' | 'recoverCode' | 'recoverPassword';
 
 interface PendingCredentials {
+  kind: 'credentials';
   mode: 'login' | 'register';
   email: string;
   password: string;
 }
 
+interface PendingRecovery {
+  kind: 'recovery';
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
+type PendingOtpAction = PendingCredentials | PendingRecovery;
+
 export default function LoginPage() {
   const { t } = useTranslation();
-  const { register, login, loginWithBackupCode, accounts, lastActiveEmail, removeAccount } = useAuth();
-  const appSettings = useAppSettings();
-  const theme = appSettings?.theme ?? 'dawn';
+  const { register, login, accounts, lastActiveEmail, removeAccount, verifyBackupCodeForReset, completeBackupCodeReset } = useAuth();
 
   const preselected = accounts.find((a) => a.email === lastActiveEmail)?.email ?? accounts[0]?.email ?? null;
 
@@ -33,14 +40,13 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [backupCode, setBackupCode] = useState('');
+  const [recoveryNewPassword, setRecoveryNewPassword] = useState('');
+  const [recoveryConfirmPassword, setRecoveryConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingEmail, setRemovingEmail] = useState<string | null>(null);
-  const [pendingCredentials, setPendingCredentials] = useState<PendingCredentials | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingOtpAction | null>(null);
 
-  // Единственная точка переключения экрана формы — гарантированно чистит
-  // ошибку при любом переходе (в т.ч. по кнопке "Отмена"), чтобы сообщение
-  // об ошибке не "зависало" при возврате на другой экран
   const changeMode = (next: Mode) => {
     setError(null);
     setMode(next);
@@ -65,13 +71,13 @@ export default function LoginPage() {
       if (!email.trim()) { setError(t('auth.enterEmail')); return; }
       if (password.length < 8) { setError(t('auth.passwordTooShort')); return; }
       if (password !== confirmPassword) { setError(t('auth.passwordsDoNotMatch')); return; }
-      setPendingCredentials({ mode: 'register', email: email.trim(), password });
+      setPendingAction({ kind: 'credentials', mode: 'register', email: email.trim(), password });
       setOtpCode('');
       changeMode('otp');
     } else {
       if (!selectedEmail) { setError(t('auth.enterEmail')); return; }
       if (!password) { setError(t('auth.enterPassword')); return; }
-      setPendingCredentials({ mode: 'login', email: selectedEmail, password });
+      setPendingAction({ kind: 'credentials', mode: 'login', email: selectedEmail, password });
       setOtpCode('');
       changeMode('otp');
     }
@@ -82,23 +88,29 @@ export default function LoginPage() {
     setError(null);
     if (otpCode.length < 6) { setError(t('auth.otpIncomplete')); return; }
     if (otpCode !== STUB_VALID_OTP) { setError(t('auth.otpInvalid')); return; }
-    if (!pendingCredentials) return;
+    if (!pendingAction) return;
 
     setIsSubmitting(true);
     try {
-      if (pendingCredentials.mode === 'register') {
-        try {
-          await register(pendingCredentials.email, pendingCredentials.password);
-          // Успех: register() сам выставит isAuthenticated и pendingBackupCodesToShow —
-          // приложение переключится на Layout, а поверх покажется BackupCodesGate
-        } catch (err) {
-          setError(err instanceof Error && err.message === 'ACCOUNT_EXISTS' ? t('auth.accountExists') : t('auth.registerFailed'));
-          changeMode('register');
+      if (pendingAction.kind === 'credentials') {
+        if (pendingAction.mode === 'register') {
+          try {
+            await register(pendingAction.email, pendingAction.password);
+          } catch (err) {
+            setError(err instanceof Error && err.message === 'ACCOUNT_EXISTS' ? t('auth.accountExists') : t('auth.registerFailed'));
+            changeMode('register');
+          }
+        } else {
+          const success = await login(pendingAction.email, pendingAction.password);
+          if (!success) {
+            setError(t('auth.wrongPassword'));
+            changeMode('password');
+          }
         }
       } else {
-        const success = await login(pendingCredentials.email, pendingCredentials.password);
+        const success = await completeBackupCodeReset(pendingAction.email, pendingAction.code, pendingAction.newPassword);
         if (!success) {
-          setError(t('auth.wrongPassword'));
+          setError(t('auth.backupCodeInvalid'));
           changeMode('password');
         }
       }
@@ -109,6 +121,8 @@ export default function LoginPage() {
 
   const handleStartRecovery = () => {
     setBackupCode('');
+    setRecoveryNewPassword('');
+    setRecoveryConfirmPassword('');
     changeMode('recoverCode');
   };
 
@@ -119,14 +133,26 @@ export default function LoginPage() {
     if (!selectedEmail) return;
 
     setIsSubmitting(true);
-    const success = await loginWithBackupCode(selectedEmail, backupCode);
+    const isValid = await verifyBackupCodeForReset(selectedEmail, backupCode);
     setIsSubmitting(false);
 
-    if (!success) {
-      // Остаёмся на этом же экране — не пускаем дальше
+    if (!isValid) {
       setError(t('auth.backupCodeInvalid'));
+      return;
     }
-    // при success приложение само переключится на Layout, здесь больше ничего не нужно
+    changeMode('recoverPassword');
+  };
+
+  const handleRecoveryPasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (recoveryNewPassword.length < 8) { setError(t('auth.passwordTooShort')); return; }
+    if (recoveryNewPassword !== recoveryConfirmPassword) { setError(t('auth.passwordsDoNotMatch')); return; }
+    if (!selectedEmail) return;
+
+    setPendingAction({ kind: 'recovery', email: selectedEmail, code: backupCode, newPassword: recoveryNewPassword });
+    setOtpCode('');
+    changeMode('otp');
   };
 
   const handleRemoveConfirm = () => {
@@ -141,7 +167,7 @@ export default function LoginPage() {
 
   return (
     <div
-      data-theme={theme}
+      data-theme="dawn"
       className="min-h-screen flex items-center justify-center px-4"
       style={{ background: 'radial-gradient(circle at 30% 20%, var(--color-primary-tint) 0%, var(--color-bg) 55%), var(--color-bg)' }}
     >
@@ -216,16 +242,18 @@ export default function LoginPage() {
             </>
           )}
 
-          {mode === 'otp' && pendingCredentials && (
+          {mode === 'otp' && pendingAction && (
             <>
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-12 h-12 rounded-full bg-primary-tint text-primary flex items-center justify-center mb-3">
                   <EnvelopeSimpleIcon size={22} />
                 </div>
                 <h2 className="text-base font-semibold text-text-primary">
-                  {pendingCredentials.mode === 'register' ? t('auth.otpTitleRegister') : t('auth.otpTitleLogin')}
+                  {pendingAction.kind === 'recovery'
+                    ? t('auth.otpTitleRecovery')
+                    : pendingAction.mode === 'register' ? t('auth.otpTitleRegister') : t('auth.otpTitleLogin')}
                 </h2>
-                <p className="text-xs text-text-tertiary mt-1">{t('auth.otpSentTo', { email: pendingCredentials.email })}</p>
+                <p className="text-xs text-text-tertiary mt-1">{t('auth.otpSentTo', { email: pendingAction.email })}</p>
               </div>
               <form onSubmit={handleOtpSubmit} className="flex flex-col gap-4">
                 <OtpInput value={otpCode} onChange={setOtpCode} autoFocus />
@@ -235,7 +263,7 @@ export default function LoginPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => changeMode(pendingCredentials.mode === 'register' ? 'register' : 'password')}
+                  onClick={() => changeMode(pendingAction.kind === 'recovery' ? 'recoverPassword' : pendingAction.mode === 'register' ? 'register' : 'password')}
                   className="text-sm text-text-tertiary hover:underline w-full text-center"
                 >
                   {t('common.cancel')}
@@ -263,9 +291,31 @@ export default function LoginPage() {
                 />
                 {error && <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">{error}</div>}
                 <button type="submit" disabled={isSubmitting} className="btn-lift w-full py-3 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-medium transition-colors">
-                  {isSubmitting ? t('auth.loading') : t('auth.otpConfirm')}
+                  {isSubmitting ? t('auth.loading') : t('common.continue')}
                 </button>
                 <button type="button" onClick={() => changeMode('password')} className="text-sm text-text-tertiary hover:underline w-full text-center">
+                  {t('common.cancel')}
+                </button>
+              </form>
+            </>
+          )}
+
+          {mode === 'recoverPassword' && (
+            <>
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-primary-tint text-primary flex items-center justify-center mb-3">
+                  <LockIcon size={22} />
+                </div>
+                <h2 className="text-base font-semibold text-text-primary">{t('auth.newPasswordTitle')}</h2>
+              </div>
+              <form onSubmit={handleRecoveryPasswordSubmit} className="flex flex-col gap-4">
+                <FloatingInput type="password" label={t('auth.newPasswordLabel')} icon={<LockIcon size={16} />} value={recoveryNewPassword} onChange={(e) => setRecoveryNewPassword(e.target.value)} />
+                <FloatingInput type="password" label={t('auth.confirmPassword')} icon={<LockIcon size={16} />} value={recoveryConfirmPassword} onChange={(e) => setRecoveryConfirmPassword(e.target.value)} />
+                {error && <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">{error}</div>}
+                <button type="submit" className="btn-lift w-full py-3 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors">
+                  {t('common.continue')}
+                </button>
+                <button type="button" onClick={() => changeMode('recoverCode')} className="text-sm text-text-tertiary hover:underline w-full text-center">
                   {t('common.cancel')}
                 </button>
               </form>

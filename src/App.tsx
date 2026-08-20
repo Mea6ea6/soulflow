@@ -15,10 +15,14 @@ function App() {
   const appSettings = useAppSettings();
 
   useEffect(() => {
-    if (appSettings) {
+    if (isAuthenticated && appSettings) {
       i18n.changeLanguage(appSettings.language);
+    } else if (!isAuthenticated) {
+      // На экране логина язык и тема всегда дефолтные — не зависят от
+      // того, что было выбрано в каком-либо из аккаунтов на этом устройстве
+      i18n.changeLanguage('en');
     }
-  }, [appSettings, i18n]);
+  }, [isAuthenticated, appSettings, i18n]);
 
   return (
     <>

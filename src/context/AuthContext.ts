@@ -26,12 +26,15 @@ export interface AuthContextValue {
   updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar'>>) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
-  // Смена пароля без старого пароля — доступна только когда masterKey уже есть
-  // в сессии (пользователь уже вошёл, любым способом). См. ответ на вопрос 3
   resetPasswordWithSession: (newPassword: string) => Promise<boolean>;
   generateBackupCodes: (options?: GenerateBackupCodesOptions) => Promise<string[] | null>;
   getStoredBackupCodes: () => Promise<string[] | null>;
   dismissPendingBackupCodes: () => void;
+  // Восстановление пароля: сначала только проверяем код (ничего не меняем),
+  // и только после подтверждения по почте вызывается completeBackupCodeReset,
+  // которая списывает код и реально меняет пароль
+  verifyBackupCodeForReset: (email: string, code: string) => Promise<boolean>;
+  completeBackupCodeReset: (email: string, code: string, newPassword: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

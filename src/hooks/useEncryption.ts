@@ -58,11 +58,6 @@ export async function decryptData(encryptedBase64: string, key: CryptoKey): Prom
 }
 
 // ===== Ключ данных (DEK) и его "оборачивание" другими ключами (KEK) =====
-// Данные шифруются DEK — случайным ключом, который никогда не хранится в
-// открытом виде. Пароль (и каждый бэкап-код) превращается в KEK через
-// deriveKey и используется только чтобы зашифровать ("обернуть") сам DEK.
-// Это позволяет менять пароль или восстанавливать доступ по коду без
-// перешифровки уже существующих данных — переоборачивается только DEK.
 
 export async function generateDataKey(): Promise<CryptoKey> {
   return crypto.subtle.generateKey(DATA_KEY_ALG, true, ['encrypt', 'decrypt']);
@@ -85,6 +80,20 @@ export async function wrapDataKey(dataKey: CryptoKey, kek: CryptoKey): Promise<s
 export async function unwrapDataKey(wrapped: string, kek: CryptoKey): Promise<CryptoKey> {
   const rawStr = await decryptData(wrapped, kek);
   return importKeyRaw(base64ToUint8Array(rawStr));
+}
+
+// Экспорт/импорт "сырого" DEK для временного хранения в sessionStorage —
+// позволяет пережить обновление страницы (F5) без повторного ввода пароля,
+// но исчезает при закрытии вкладки/браузера (в отличие от localStorage).
+// Это осознанный компромисс между удобством и моделью "нулевого знания" —
+// пока вкладка открыта, ключ технически доступен любому JS на странице
+export async function exportDataKeyToBase64(key: CryptoKey): Promise<string> {
+  const raw = await exportKeyRaw(key);
+  return uint8ArrayToBase64(raw);
+}
+
+export async function importDataKeyFromBase64(base64: string): Promise<CryptoKey> {
+  return importKeyRaw(base64ToUint8Array(base64));
 }
 
 // ===== Утилиты base64 =====

@@ -376,6 +376,7 @@
     "backupTabOpenNotice": "Automatic backups only run while this tab is open in the browser.",
     "backupCodesTitle": "Recovery codes",
     "backupCodesHint": "10 one-time codes will help you log in if you forget the master password. Each code works only once and disappears from the list after use.",
+    "backupCodesExhausted": "All codes have been used. New ones cannot be generated — if you forget the password, there will be no way to restore access.",
     "backupCodesShownOnce": "Codes are shown only once — save them now.",
     "backupCodesDownload": "Download as TXT",
     "backupCodesLoadFailed": "Could not load recovery codes",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   SignOutIcon, DownloadSimpleIcon, UploadSimpleIcon, TrashIcon, CameraIcon,
@@ -9,7 +9,6 @@ import { useAuth } from '../hooks/useAuthHook';
 import { useTheme } from '../hooks/useThemeHook';
 import { useToast } from '../hooks/useToastHook';
 import { useBackup } from '../hooks/useBackupHook';
-import { useAppSettings, updateAppSettings } from '../hooks/useDB';
 import { exportAllData, downloadExport, importAllData, clearAllData } from '../utils/exportImport';
 import { processAvatarFile, AvatarProcessingError } from '../utils/avatarImage';
 import type { ThemeId } from '../types';
@@ -44,9 +43,6 @@ const NAV_ITEMS: { id: SettingsSection; icon: React.ElementType; labelKey: strin
   { id: 'data', icon: HardDrivesIcon, labelKey: 'settings.navData' },
 ];
 
-// Полноширинная строка-действие: иконка слева, подпись/описание по центру,
-// значение или шеврон справа. Используется вместо узких кнопок-пилюль там,
-// где действие логичнее смотрится как пункт списка настроек
 interface SettingsActionRowProps {
   icon: React.ElementType;
   label: string;
@@ -77,11 +73,10 @@ function SettingsActionRow({ icon: Icon, label, description, trailing, onClick, 
 }
 
 export default function SettingsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { logout, userProfile, updateProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
-  const appSettings = useAppSettings();
   const backup = useBackup();
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
@@ -94,12 +89,6 @@ export default function SettingsPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (appSettings) {
-      i18n.changeLanguage(appSettings.language);
-    }
-  }, [appSettings, i18n]);
 
   const initialFirstName = userProfile?.firstName ?? userProfile?.name?.split(' ')[0] ?? '';
   const initialLastName = userProfile?.lastName ?? userProfile?.name?.split(' ').slice(1).join(' ') ?? '';
@@ -140,7 +129,6 @@ export default function SettingsPage() {
   };
 
   const handleThemeChange = (newTheme: ThemeId) => setTheme(newTheme);
-  const handleLanguageChange = async (language: 'en' | 'es' | 'fr' | 'ru') => updateAppSettings({ language });
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -188,7 +176,6 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-display font-semibold text-text-primary mb-6">{t('settings.title')}</h1>
 
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Левая колонка — только навигация, без статичной карточки профиля */}
         <div className="w-full md:w-64 shrink-0 flex flex-col gap-4">
           <nav className="flex flex-col gap-0.5 p-1.5 rounded-2xl bg-surface shadow-card">
             {NAV_ITEMS.map((item) => {
@@ -221,7 +208,6 @@ export default function SettingsPage() {
           <p className="text-xs text-text-tertiary px-1">{t('settings.version')}: {APP_VERSION}</p>
         </div>
 
-        {/* Правая колонка — содержимое выбранного раздела */}
         <div className="flex-1 min-w-0 w-full">
           {activeSection === 'profile' && (
             <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-4">
@@ -328,7 +314,10 @@ export default function SettingsPage() {
                 label={t('settings.changePassword')}
                 onClick={() => setIsPasswordModalOpen(true)}
               />
-              <BackupCodesSection />
+
+              <div className="pt-2 border-t border-border mt-1">
+                <BackupCodesSection />
+              </div>
             </div>
           )}
 
@@ -350,9 +339,9 @@ export default function SettingsPage() {
                   {LANGUAGES.map((lang) => (
                     <button
                       key={lang.code}
-                      onClick={() => handleLanguageChange(lang.code)}
+                      onClick={() => updateProfile({ language: lang.code })}
                       className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                        appSettings?.language === lang.code ? 'border-primary bg-primary-tint text-primary' : 'border-border text-text-secondary hover:bg-surface-hover'
+                        (userProfile?.language ?? 'en') === lang.code ? 'border-primary bg-primary-tint text-primary' : 'border-border text-text-secondary hover:bg-surface-hover'
                       }`}
                     >
                       {lang.label}

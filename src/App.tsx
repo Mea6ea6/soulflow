@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './hooks/useAuthHook';
-import { useAppSettings } from './hooks/useDB';
 import LoginPage from './pages/LoginPage';
 import LoadingSpinner from './components/LoadingSpinner';
 import Layout from './components/Layout';
@@ -10,19 +9,18 @@ import { BackupProvider } from './context/BackupProvider';
 import BackupCodesGate from './components/auth/BackupCodesGate';
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, userProfile } = useAuth();
   const { i18n } = useTranslation();
-  const appSettings = useAppSettings();
 
   useEffect(() => {
-    if (isAuthenticated && appSettings) {
-      i18n.changeLanguage(appSettings.language);
+    if (isAuthenticated && userProfile?.language) {
+      i18n.changeLanguage(userProfile.language);
     } else if (!isAuthenticated) {
-      // На экране логина язык и тема всегда дефолтные — не зависят от
-      // того, что было выбрано в каком-либо из аккаунтов на этом устройстве
+      // Экран входа всегда на английском — не зависит от того, что выбрано
+      // в каком-либо из аккаунтов на этом устройстве
       i18n.changeLanguage('en');
     }
-  }, [isAuthenticated, appSettings, i18n]);
+  }, [isAuthenticated, userProfile?.language, i18n]);
 
   return (
     <>

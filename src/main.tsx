@@ -12,12 +12,12 @@ initDefaultSettings();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ThemeProvider>
           <App />
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </ToastProvider>
   </StrictMode>,
 );

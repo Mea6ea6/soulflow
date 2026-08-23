@@ -60,6 +60,8 @@ export interface UserProfile {
   description: string;         // Био — редактируется в Настройках, отображается в Профиле
   createdAt: string;           // ISO-строка
   updatedAt: string;           // ISO-строка
+  theme?: ThemeId;
+  language?: 'en' | 'es' | 'fr' | 'ru';
 }
 
 export type ThemeId = 'dawn' | 'dusk' | 'onyx';

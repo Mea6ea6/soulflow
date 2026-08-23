@@ -1,8 +1,8 @@
-import { useState, useCallback, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
 import {
   deriveKey, encryptData, decryptData, generateSalt, uint8ArrayToBase64, base64ToUint8Array,
-  generateDataKey, wrapDataKey, unwrapDataKey,
+  generateDataKey, wrapDataKey, unwrapDataKey, exportDataKeyToBase64, importDataKeyFromBase64,
 } from './useEncryption';
 import { AuthContext, type AuthContextValue, type StoredAccountSummary, type GenerateBackupCodesOptions } from '../context/AuthContext';
 import { reencryptAllRecords } from '../utils/reencrypt';
@@ -26,6 +26,7 @@ interface StoredAuthData {
 const ACCOUNTS_STORAGE_KEY = 'soulflow_accounts';
 const ACTIVE_ACCOUNT_STORAGE_KEY = 'soulflow_active_account';
 const LEGACY_AUTH_STORAGE_KEY = 'soulflow_auth';
+const SESSION_KEY_PREFIX = 'soulflow_session_key_';
 const BACKUP_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 function generateBackupCodeString(): string {
@@ -48,6 +49,30 @@ async function createBackupCodeSet(dataKey: CryptoKey): Promise<{ codes: string[
     entries.push({ salt: uint8ArrayToBase64(salt), wrappedDataKey });
   }
   return { codes, entries };
+}
+
+// Вынесено за пределы компонента намеренно: React Compiler eslint-плагин
+// запрещает переприсваивание переменной, изначально скопированной из
+// useState (даже в другую переменную), внутри тела компонента/хука.
+// Обычная функция вне компонента этому правилу не подчиняется — masterKey
+// здесь просто параметр, а не отслеживаемое состояние
+async function resolveActiveDataKey(
+  stored: StoredAuthData,
+  masterKey: CryptoKey,
+  userProfile: UserProfile
+): Promise<{ dataKey: CryptoKey; updatedStored: StoredAuthData; migratedProfile: UserProfile | null }> {
+  if (stored.wrappedDataKey) {
+    return { dataKey: masterKey, updatedStored: stored, migratedProfile: null };
+  }
+
+  const newDataKey = await generateDataKey();
+  await reencryptAllRecords(masterKey, newDataKey);
+  const updatedProfile: UserProfile = { ...userProfile, updatedAt: new Date().toISOString() };
+  const encryptedProfile = await encryptData(JSON.stringify(updatedProfile), newDataKey);
+  const wrappedDataKey = await wrapDataKey(newDataKey, masterKey);
+  const updatedStored: StoredAuthData = { ...stored, wrappedDataKey, encryptedProfile };
+
+  return { dataKey: newDataKey, updatedStored, migratedProfile: updatedProfile };
 }
 
 function readAccounts(): StoredAuthData[] {
@@ -82,11 +107,28 @@ function writeAccounts(accounts: StoredAuthData[]) {
   localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
 }
 
+async function persistSessionKey(email: string, dataKey: CryptoKey) {
+  try {
+    const raw = await exportDataKeyToBase64(dataKey);
+    sessionStorage.setItem(SESSION_KEY_PREFIX + email, raw);
+  } catch {
+    /* sessionStorage недоступен — просто не переживём refresh */
+  }
+}
+
+function clearSessionKey(email: string) {
+  try {
+    sessionStorage.removeItem(SESSION_KEY_PREFIX + email);
+  } catch {
+    /* игнорируем */
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [masterKey, setMasterKey] = useState<CryptoKey | null>(null);
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [accountsVersion, setAccountsVersion] = useState(0);
   const [pendingBackupCodesToShow, setPendingBackupCodesToShow] = useState<string[] | null>(null);
 
@@ -96,6 +138,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const currentAccountRecord = userProfile ? readAccounts().find((a) => a.email === userProfile.email) : null;
   const backupCodesGeneratedAt = currentAccountRecord?.backupCodesGeneratedAt || null;
+
+  // Восстановление сессии после обновления страницы (F5)
+  useEffect(() => {
+    (async () => {
+      const email = localStorage.getItem(ACTIVE_ACCOUNT_STORAGE_KEY);
+      if (!email) { setIsLoading(false); return; }
+
+      try {
+        const sessionKeyB64 = sessionStorage.getItem(SESSION_KEY_PREFIX + email);
+        if (!sessionKeyB64) { setIsLoading(false); return; }
+
+        const dataKey = await importDataKeyFromBase64(sessionKeyB64);
+        const stored = readAccounts().find((a) => a.email === email);
+        if (!stored) { setIsLoading(false); return; }
+
+        const profileJson = await decryptData(stored.encryptedProfile, dataKey);
+        const profile: UserProfile = JSON.parse(profileJson);
+
+        setMasterKey(dataKey);
+        setUserProfile(profile);
+        setIsAuthenticated(true);
+      } catch {
+        clearSessionKey(email);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
 
   const register = useCallback(async (email: string, password: string) => {
     const existing = readAccounts();
@@ -139,8 +209,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, email);
     setAccountsVersion((v) => v + 1);
 
-    void accountDirectoryStub; // TODO: подключить реальный клиент, когда появится серверный API
+    void accountDirectoryStub;
 
+    await persistSessionKey(email, dataKey);
     setMasterKey(dataKey);
     setUserProfile(profile);
     setIsAuthenticated(true);
@@ -160,6 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile: UserProfile = JSON.parse(decryptedProfileJson);
 
       localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, stored.email);
+      await persistSessionKey(stored.email, dataKey);
       setMasterKey(dataKey);
       setUserProfile(profile);
       setIsAuthenticated(true);
@@ -169,9 +241,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Вход по бэкап-коду. Код одноразовый: после успешного использования
-  // удаляется и из списка "рабочих" записей, и из зашифрованного списка,
-  // который показывается в настройках — второй раз тот же код не сработает
   const loginWithBackupCode = useCallback(async (email: string, code: string): Promise<boolean> => {
     const existing = readAccounts();
     const idx = existing.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
@@ -206,6 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccountsVersion((v) => v + 1);
 
         localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, stored.email);
+        await persistSessionKey(stored.email, dataKey);
         setMasterKey(dataKey);
         setUserProfile(profile);
         setIsAuthenticated(true);
@@ -218,10 +288,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    if (userProfile) clearSessionKey(userProfile.email);
     setMasterKey(null);
     setUserProfile(null);
     setIsAuthenticated(false);
-  }, []);
+  }, [userProfile]);
 
   const removeAccount = useCallback((email: string) => {
     const existing = readAccounts();
@@ -229,6 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (localStorage.getItem(ACTIVE_ACCOUNT_STORAGE_KEY)?.toLowerCase() === email.toLowerCase()) {
       localStorage.removeItem(ACTIVE_ACCOUNT_STORAGE_KEY);
     }
+    clearSessionKey(email);
     setAccountsVersion((v) => v + 1);
   }, []);
 
@@ -242,7 +314,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateProfile = useCallback(
-    async (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar'>>) => {
+    async (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar' | 'theme' | 'language'>>) => {
       if (!masterKey || !userProfile) return;
       const updated: UserProfile = { ...userProfile, ...updates, updatedAt: new Date().toISOString() };
       await persistProfile(updated, masterKey);
@@ -274,6 +346,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         existing[idx] = { ...stored, email: newEmail, encryptedProfile };
         writeAccounts(existing);
         localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, newEmail);
+        clearSessionKey(stored.email);
+        await persistSessionKey(newEmail, dataKey);
         setAccountsVersion((v) => v + 1);
 
         setUserProfile(updated);
@@ -333,6 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         writeAccounts(existing);
 
+        await persistSessionKey(userProfile.email, finalDataKey);
         setMasterKey(finalDataKey);
         setUserProfile(updatedProfile);
         return true;
@@ -343,10 +418,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [userProfile]
   );
 
-  // Смена пароля БЕЗ проверки старого — доступна только когда masterKey уже
-  // есть в памяти (сессия уже доказала владение аккаунтом любым способом:
-  // обычным паролем или бэкап-кодом). Не трогает зашифрованный профиль —
-  // только переоборачивает уже существующий DEK новым паролем
   const resetPasswordWithSession = useCallback(async (newPassword: string): Promise<boolean> => {
     if (!masterKey || !userProfile) return false;
     const existing = readAccounts();
@@ -369,51 +440,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const generateBackupCodes = useCallback(async (options?: GenerateBackupCodesOptions): Promise<string[] | null> => {
     if (!masterKey || !userProfile) return null;
-    const existing = readAccounts();
-    const idx = existing.findIndex((a) => a.email === userProfile.email);
-    if (idx === -1) return null;
-    const stored = existing[idx];
+    try {
+      const existing = readAccounts();
+      const idx = existing.findIndex((a) => a.email === userProfile.email);
+      if (idx === -1) return null;
+      const stored = existing[idx];
 
-    let dataKey = masterKey;
-    let updatedStored = { ...stored };
+      const { dataKey, updatedStored, migratedProfile } = await resolveActiveDataKey(stored, masterKey, userProfile);
 
-    if (!stored.wrappedDataKey) {
-      const newDataKey = await generateDataKey();
-      await reencryptAllRecords(masterKey, newDataKey);
-      const updatedProfile: UserProfile = { ...userProfile, updatedAt: new Date().toISOString() };
-      const encryptedProfile = await encryptData(JSON.stringify(updatedProfile), newDataKey);
-      const wrappedDataKey = await wrapDataKey(newDataKey, masterKey);
+      if (migratedProfile) {
+        await persistSessionKey(userProfile.email, dataKey);
+        setMasterKey(dataKey);
+        setUserProfile(migratedProfile);
+      }
 
-      updatedStored = { ...stored, wrappedDataKey, encryptedProfile };
-      dataKey = newDataKey;
-      setMasterKey(newDataKey);
-      setUserProfile(updatedProfile);
+      const { codes, entries } = await createBackupCodeSet(dataKey);
+      const backupCodesEncrypted = await encryptData(JSON.stringify(codes), dataKey);
+      const now = new Date().toISOString();
+
+      existing[idx] = { ...updatedStored, backupCodes: entries, backupCodesGeneratedAt: now, backupCodesEncrypted };
+      writeAccounts(existing);
+      setAccountsVersion((v) => v + 1);
+
+      if (!options?.silent) {
+        setPendingBackupCodesToShow(codes);
+      }
+
+      return codes;
+    } catch (err) {
+      console.error('[generateBackupCodes] failed:', err);
+      return null;
     }
-
-    const { codes, entries } = await createBackupCodeSet(dataKey);
-    const backupCodesEncrypted = await encryptData(JSON.stringify(codes), dataKey);
-    const now = new Date().toISOString();
-
-    existing[idx] = { ...updatedStored, backupCodes: entries, backupCodesGeneratedAt: now, backupCodesEncrypted };
-    writeAccounts(existing);
-    setAccountsVersion((v) => v + 1);
-
-    if (!options?.silent) {
-      setPendingBackupCodesToShow(codes);
-    }
-
-    return codes;
   }, [masterKey, userProfile]);
 
   const getStoredBackupCodes = useCallback(async (): Promise<string[] | null> => {
     if (!masterKey || !userProfile) return null;
-    const existing = readAccounts();
-    const stored = existing.find((a) => a.email === userProfile.email);
-    if (!stored?.backupCodesEncrypted) return null;
     try {
+      const existing = readAccounts();
+      const stored = existing.find((a) => a.email === userProfile.email);
+      if (!stored?.backupCodesEncrypted) return null;
       const json = await decryptData(stored.backupCodesEncrypted, masterKey);
       return JSON.parse(json);
-    } catch {
+    } catch (err) {
+      console.error('[getStoredBackupCodes] failed:', err);
       return null;
     }
   }, [masterKey, userProfile]);
@@ -422,11 +491,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPendingBackupCodesToShow(null);
   }, []);
 
+  const verifyBackupCodeForReset = useCallback(async (email: string, code: string): Promise<boolean> => {
+    const existing = readAccounts();
+    const stored = existing.find((a) => a.email.toLowerCase() === email.toLowerCase());
+    if (!stored) return false;
+    const normalizedCode = code.trim().toUpperCase();
+
+    for (const entry of stored.backupCodes ?? []) {
+      try {
+        const salt = base64ToUint8Array(entry.salt);
+        const kek = await deriveKey(normalizedCode, salt);
+        const dataKey = await unwrapDataKey(entry.wrappedDataKey, kek);
+        await decryptData(stored.encryptedProfile, dataKey);
+        return true;
+      } catch {
+        continue;
+      }
+    }
+    return false;
+  }, []);
+
+  const completeBackupCodeReset = useCallback(async (email: string, code: string, newPassword: string): Promise<boolean> => {
+    const existing = readAccounts();
+    const idx = existing.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
+    if (idx === -1) return false;
+    const stored = existing[idx];
+    const normalizedCode = code.trim().toUpperCase();
+    const codeEntries = stored.backupCodes ?? [];
+
+    for (let i = 0; i < codeEntries.length; i++) {
+      const entry = codeEntries[i];
+      try {
+        const salt = base64ToUint8Array(entry.salt);
+        const kek = await deriveKey(normalizedCode, salt);
+        const dataKey = await unwrapDataKey(entry.wrappedDataKey, kek);
+        const profileJson = await decryptData(stored.encryptedProfile, dataKey);
+        const profile: UserProfile = JSON.parse(profileJson);
+
+        const remainingEntries = codeEntries.filter((_, j) => j !== i);
+        let backupCodesEncrypted = stored.backupCodesEncrypted;
+        if (backupCodesEncrypted) {
+          try {
+            const plainCodes: string[] = JSON.parse(await decryptData(backupCodesEncrypted, dataKey));
+            const remainingPlain = plainCodes.filter((c) => c.toUpperCase() !== normalizedCode);
+            backupCodesEncrypted = await encryptData(JSON.stringify(remainingPlain), dataKey);
+          } catch {
+            backupCodesEncrypted = undefined;
+          }
+        }
+
+        const newSalt = generateSalt();
+        const newKek = await deriveKey(newPassword, newSalt);
+        const newWrappedDataKey = await wrapDataKey(dataKey, newKek);
+
+        existing[idx] = {
+          ...stored,
+          salt: uint8ArrayToBase64(newSalt),
+          wrappedDataKey: newWrappedDataKey,
+          backupCodes: remainingEntries,
+          backupCodesEncrypted,
+        };
+        writeAccounts(existing);
+        setAccountsVersion((v) => v + 1);
+
+        localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, stored.email);
+        await persistSessionKey(stored.email, dataKey);
+        setMasterKey(dataKey);
+        setUserProfile(profile);
+        setIsAuthenticated(true);
+        return true;
+      } catch {
+        continue;
+      }
+    }
+    return false;
+  }, []);
+
   const value: AuthContextValue = {
     isAuthenticated, userProfile, masterKey, isLoading, accounts, lastActiveEmail,
     backupCodesGeneratedAt, pendingBackupCodesToShow,
     register, login, loginWithBackupCode, logout, removeAccount, updateProfile, changeEmail, changePassword,
     resetPasswordWithSession, generateBackupCodes, getStoredBackupCodes, dismissPendingBackupCodes,
+    verifyBackupCodeForReset, completeBackupCodeReset,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

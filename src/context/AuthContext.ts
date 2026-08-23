@@ -23,16 +23,13 @@ export interface AuthContextValue {
   loginWithBackupCode: (email: string, code: string) => Promise<boolean>;
   logout: () => void;
   removeAccount: (email: string) => void;
-  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'firstName' | 'lastName' | 'description' | 'avatar' | 'theme' | 'language'>>) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
   resetPasswordWithSession: (newPassword: string) => Promise<boolean>;
   generateBackupCodes: (options?: GenerateBackupCodesOptions) => Promise<string[] | null>;
   getStoredBackupCodes: () => Promise<string[] | null>;
   dismissPendingBackupCodes: () => void;
-  // Восстановление пароля: сначала только проверяем код (ничего не меняем),
-  // и только после подтверждения по почте вызывается completeBackupCodeReset,
-  // которая списывает код и реально меняет пароль
   verifyBackupCodeForReset: (email: string, code: string) => Promise<boolean>;
   completeBackupCodeReset: (email: string, code: string, newPassword: string) => Promise<boolean>;
 }

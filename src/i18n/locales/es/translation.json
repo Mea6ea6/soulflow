@@ -129,7 +129,18 @@
     "clientPlaceholder": "Selecciona un cliente",
     "note": "Nota",
     "viewMonth": "Mes",
-    "viewWeek": "Semana"
+    "viewWeek": "Semana",
+    "notifyLabel": "Recordarme este evento",
+    "notifyHint": "Llegará una notificación 15 minutos antes del inicio, siempre que este dispositivo y la pestaña estén abiertos",
+    "notifyPermissionDenied": "Las notificaciones están bloqueadas en el navegador — actívalas en la configuración del sitio para recibir recordatorios",
+    "notifyLeadLabel": "Avisarme",
+    "notifyLeadMinutes": "{{count}} min",
+    "notifyLeadHours": "{{count}} h",
+    "notifyLeadDay": "un día antes"
+  },
+  "notifications": {
+    "sessionReminderTitle": "Sesión próxima",
+    "sessionReminderBody": "{{name}} — a las {{time}}"
   },
   "documents": {
     "title": "Documentos",
@@ -379,7 +390,20 @@
     "backupCodesShownOnce": "Los códigos se muestran solo una vez — guárdalos ahora.",
     "backupCodesDownload": "Descargar como TXT",
     "backupCodesLoadFailed": "No se pudieron cargar los códigos de recuperación",
-    "backupCodesLowCount": "Quedan {{count}} códigos. Se generará un nuevo conjunto automáticamente 90 días después de la última actualización."
+    "backupCodesLowCount": "Quedan {{count}} códigos. Se generará un nuevo conjunto automáticamente 90 días después de la última actualización.",
+    "syncSection": "Synchronisation cloud",
+    "syncNote": "Les données se synchronisent avec Google Drive (un dossier caché propre à l'application, non visible dans l'interface normale de Drive). Si vous modifiez sur deux appareils en même temps, la version synchronisée le plus récemment l'emporte — les modifications plus anciennes seront écrasées.",
+    "syncConnect": "Connecter Google Drive",
+    "syncConnected": "Google Drive connecté",
+    "syncNow": "Synchroniser maintenant",
+    "syncInProgress": "Synchronisation...",
+    "syncDisconnect": "Déconnecter",
+    "syncLastLabel": "Dernière synchronisation",
+    "syncNever": "jamais",
+    "syncConnectedToast": "Google Drive connecté",
+    "syncDoneToast": "Synchronisation terminée",
+    "syncPulledToast": "Données mises à jour depuis un autre appareil",
+    "syncFailedToast": "Impossible de synchroniser"
   },
   "documentTarget": {
     "personal": "Documento personal",

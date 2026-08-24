@@ -12,6 +12,9 @@ import TimeInput from './TimeInput';
 import Checkbox from './Checkbox';
 import Select from './Select';
 
+const DEFAULT_LEAD_MINUTES = 15;
+const LEAD_OPTIONS_MINUTES = [5, 15, 30, 60, 120, 1440];
+
 interface CalendarEventModalProps {
   date: string;
   event: CalendarEvent | null;
@@ -30,9 +33,41 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
   const [clientId, setClientId] = useState<string>(event?.clientId ?? '');
   const [title, setTitle] = useState(event?.title ?? '');
   const [note, setNote] = useState(event?.note ?? '');
+  const [notifyEnabled, setNotifyEnabled] = useState(event?.notifyEnabled ?? true);
+  const [notifyLeadMinutes, setNotifyLeadMinutes] = useState(event?.notifyLeadMinutes ?? DEFAULT_LEAD_MINUTES);
+  const [notifyPermissionDenied, setNotifyPermissionDenied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+  const leadLabel = (minutes: number) => {
+    if (minutes < 60) return t('calendar.notifyLeadMinutes', { count: minutes });
+    if (minutes < 1440) return t('calendar.notifyLeadHours', { count: minutes / 60 });
+    return t('calendar.notifyLeadDay');
+  };
+
+  const handleToggleNotify = async (checked: boolean) => {
+    setNotifyPermissionDenied(false);
+    if (!checked) { setNotifyEnabled(false); return; }
+
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setNotifyEnabled(false);
+      return;
+    }
+    if (Notification.permission === 'granted') { setNotifyEnabled(true); return; }
+    if (Notification.permission === 'denied') {
+      setNotifyPermissionDenied(true);
+      setNotifyEnabled(false);
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      setNotifyEnabled(true);
+    } else {
+      setNotifyPermissionDenied(true);
+      setNotifyEnabled(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +84,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
         date, time,
         clientId: isPersonal ? null : clientId,
         title: isPersonal ? title.trim() : '',
-        note, isPersonal,
+        note, isPersonal, notifyEnabled, notifyLeadMinutes,
       };
 
       if (event) {
@@ -124,6 +159,37 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
             rows={3}
             className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
+        </div>
+
+        <div className="p-3 rounded-xl border border-border bg-surface-hover flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Checkbox checked={notifyEnabled} onChange={handleToggleNotify} label={t('calendar.notifyLabel')} />
+            {notifyPermissionDenied && (
+              <p className="text-xs text-warning pl-7">{t('calendar.notifyPermissionDenied')}</p>
+            )}
+          </div>
+
+          {notifyEnabled && (
+            <div className="pl-7">
+              <label className="text-xs font-medium text-text-secondary mb-1.5 block">{t('calendar.notifyLeadLabel')}</label>
+              <div className="flex flex-wrap gap-1.5">
+                {LEAD_OPTIONS_MINUTES.map((minutes) => (
+                  <button
+                    key={minutes}
+                    type="button"
+                    onClick={() => setNotifyLeadMinutes(minutes)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                      notifyLeadMinutes === minutes
+                        ? 'border-primary bg-primary-tint text-primary'
+                        : 'border-border text-text-secondary hover:bg-surface'
+                    }`}
+                  >
+                    {leadLabel(minutes)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {error && <div className="text-sm text-error bg-error/10 rounded-xl px-3 py-2">{error}</div>}

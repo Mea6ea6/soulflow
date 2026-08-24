@@ -129,7 +129,18 @@
     "clientPlaceholder": "Sélectionnez un client",
     "note": "Note",
     "viewMonth": "Mois",
-    "viewWeek": "Semaine"
+    "viewWeek": "Semaine",
+    "notifyLabel": "Me rappeler cet événement",
+    "notifyHint": "Une notification arrivera 15 minutes avant le début, tant que cet appareil et cet onglet sont ouverts",
+    "notifyPermissionDenied": "Les notifications sont bloquées dans le navigateur — autorisez-les dans les paramètres du site pour recevoir des rappels",
+    "notifyLeadLabel": "Me prévenir",
+    "notifyLeadMinutes": "{{count}} min",
+    "notifyLeadHours": "{{count}} h",
+    "notifyLeadDay": "la veille"
+  },
+  "notifications": {
+    "sessionReminderTitle": "Séance à venir",
+    "sessionReminderBody": "{{name}} — à {{time}}"
   },
   "documents": {
     "title": "Documents",
@@ -379,7 +390,20 @@
     "backupCodesShownOnce": "Les codes ne s'affichent qu'une seule fois — enregistrez-les maintenant.",
     "backupCodesDownload": "Télécharger en TXT",
     "backupCodesLoadFailed": "Impossible de charger les codes de récupération",
-    "backupCodesLowCount": "Il reste {{count}} codes. Un nouveau jeu sera généré automatiquement 90 jours après la dernière mise à jour."
+    "backupCodesLowCount": "Il reste {{count}} codes. Un nouveau jeu sera généré automatiquement 90 jours après la dernière mise à jour.",
+    "syncSection": "Sincronización en la nube",
+    "syncNote": "Los datos se sincronizan con Google Drive (una carpeta oculta propia de la app, no visible en la interfaz normal de Drive). Si editas en dos dispositivos a la vez, gana la versión que se sincronizó más recientemente — los cambios más antiguos se sobrescribirán.",
+    "syncConnect": "Conectar Google Drive",
+    "syncConnected": "Google Drive conectado",
+    "syncNow": "Sincronizar ahora",
+    "syncInProgress": "Sincronizando...",
+    "syncDisconnect": "Desconectar",
+    "syncLastLabel": "Última sincronización",
+    "syncNever": "nunca",
+    "syncConnectedToast": "Google Drive conectado",
+    "syncDoneToast": "Sincronización completada",
+    "syncPulledToast": "Datos actualizados desde otro dispositivo",
+    "syncFailedToast": "No se pudo sincronizar"
   },
   "documentTarget": {
     "personal": "Document personnel",

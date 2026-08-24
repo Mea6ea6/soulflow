@@ -129,7 +129,18 @@
     "clientPlaceholder": "Select a client",
     "note": "Note",
     "viewMonth": "Month",
-    "viewWeek": "Week"
+    "viewWeek": "Week",
+    "notifyLabel": "Remind me about this event",
+    "notifyHint": "A notification will arrive 15 minutes before the start, as long as this device and tab are open",
+    "notifyPermissionDenied": "Notifications are blocked in the browser — allow them in the site settings to receive reminders",
+    "notifyLeadLabel": "Remind me",
+    "notifyLeadMinutes": "{{count}} min",
+    "notifyLeadHours": "{{count}} h",
+    "notifyLeadDay": "1 day before"
+  },
+  "notifications": {
+    "sessionReminderTitle": "Session coming up",
+    "sessionReminderBody": "{{name}} — at {{time}}"
   },
   "documents": {
     "title": "Documents",
@@ -380,7 +391,20 @@
     "backupCodesShownOnce": "Codes are shown only once — save them now.",
     "backupCodesDownload": "Download as TXT",
     "backupCodesLoadFailed": "Could not load recovery codes",
-    "backupCodesLowCount": "{{count}} codes left. A fresh set will be generated automatically 90 days after the last refresh."
+    "backupCodesLowCount": "{{count}} codes left. A fresh set will be generated automatically 90 days after the last refresh.",
+    "syncSection": "Cloud sync",
+    "syncNote": "Data syncs to Google Drive (a hidden app-only folder, not visible in the regular Drive UI). If you edit on two devices at once, whichever synced last wins — older changes get overwritten.",
+    "syncConnect": "Connect Google Drive",
+    "syncConnected": "Google Drive connected",
+    "syncNow": "Sync now",
+    "syncInProgress": "Syncing...",
+    "syncDisconnect": "Disconnect",
+    "syncLastLabel": "Last synced",
+    "syncNever": "never",
+    "syncConnectedToast": "Google Drive connected",
+    "syncDoneToast": "Sync complete",
+    "syncPulledToast": "Data updated from another device",
+    "syncFailedToast": "Could not sync"
   },
   "documentTarget": {
     "personal": "Personal document",

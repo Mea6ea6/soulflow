@@ -129,7 +129,18 @@
     "clientPlaceholder": "Выберите клиента",
     "note": "Заметка",
     "viewMonth": "Месяц",
-    "viewWeek": "Неделя"
+    "viewWeek": "Неделя",
+    "notifyLabel": "Напомнить о событии",
+    "notifyHint": "Уведомление придёт за 15 минут до начала, пока это устройство и вкладка открыты",
+    "notifyPermissionDenied": "Уведомления заблокированы в браузере — разрешите их в настройках сайта, чтобы получать напоминания",
+    "notifyLeadLabel": "Напомнить за",
+    "notifyLeadMinutes": "{{count}} мин",
+    "notifyLeadHours": "{{count}} ч",
+    "notifyLeadDay": "за день"
+  },
+  "notifications": {
+    "sessionReminderTitle": "Скоро сеанс",
+    "sessionReminderBody": "{{name}} — в {{time}}"
   },
   "documents": {
     "title": "Документы",
@@ -380,7 +391,20 @@
     "backupCodesShownOnce": "Коды показываются только один раз — сохраните их сейчас.",
     "backupCodesDownload": "Скачать как TXT",
     "backupCodesLoadFailed": "Не удалось загрузить коды восстановления",
-    "backupCodesLowCount": "Осталось кодов: {{count}}. Новые появятся автоматически через 90 дней после последнего обновления."
+    "backupCodesLowCount": "Осталось кодов: {{count}}. Новые появятся автоматически через 90 дней после последнего обновления.",
+    "syncSection": "Синхронизация с облаком",
+    "syncNote": "Данные синхронизируются с Google Drive (скрытая папка приложения, не видна в обычном интерфейсе Drive). При правках на двух устройствах одновременно побеждает та версия, что синхронизировалась последней — более старые изменения будут перезаписаны.",
+    "syncConnect": "Подключить Google Drive",
+    "syncConnected": "Google Drive подключён",
+    "syncNow": "Синхронизировать сейчас",
+    "syncInProgress": "Синхронизация...",
+    "syncDisconnect": "Отключить",
+    "syncLastLabel": "Последняя синхронизация",
+    "syncNever": "ещё не было",
+    "syncConnectedToast": "Google Drive подключён",
+    "syncDoneToast": "Синхронизация завершена",
+    "syncPulledToast": "Данные обновлены с другого устройства",
+    "syncFailedToast": "Не удалось синхронизировать"
   },
   "documentTarget": {
     "personal": "Личный документ",

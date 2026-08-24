@@ -18,6 +18,8 @@ import ChangeEmailModal from '../components/ChangeEmailModal';
 import ThemeSwatch from '../components/ThemeSwatch';
 import Select from '../components/Select';
 import BackupCodesSection from '../components/settings/BackupCodesSection';
+import { CloudCheckIcon, CloudArrowUpIcon } from '@phosphor-icons/react';
+import { useSync } from '../hooks/useSyncHook';
 
 const APP_VERSION = '0.1.0';
 
@@ -94,6 +96,8 @@ export default function SettingsPage() {
   const initialLastName = userProfile?.lastName ?? userProfile?.name?.split(' ').slice(1).join(' ') ?? '';
   const hasProfileChanges = firstName !== initialFirstName || lastName !== initialLastName || description !== (userProfile?.description ?? '');
 
+  const sync = useSync();
+
   const handleSaveProfile = async () => {
     const fullName = `${firstName} ${lastName}`.trim() || userProfile?.name || '';
     await updateProfile({ firstName, lastName, name: fullName, description });
@@ -168,6 +172,11 @@ export default function SettingsPage() {
 
   const formatBackupDate = (iso: string | null) => {
     if (!iso) return t('settings.backupNever');
+    return new Date(iso).toLocaleString('ru-RU');
+  };
+
+  const formatSyncDate = (iso: string | null) => {
+    if (!iso) return t('settings.syncNever');
     return new Date(iso).toLocaleString('ru-RU');
   };
 
@@ -380,6 +389,42 @@ export default function SettingsPage() {
                   danger
                   trailing={<span />}
                 />
+              </div>
+
+              <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-3">
+                <h2 className="text-sm font-semibold text-text-primary mb-1">{t('settings.syncSection')}</h2>
+                <p className="text-xs text-text-tertiary">{t('settings.syncNote')}</p>
+
+                {sync.isConnected ? (
+                  <>
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface-hover">
+                      <CloudCheckIcon size={16} className="text-success shrink-0" />
+                      <span className="text-sm text-text-primary">{t('settings.syncConnected')}</span>
+                    </div>
+                    <button
+                      onClick={sync.syncNow}
+                      disabled={sync.status === 'syncing'}
+                      className="w-full py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                    >
+                      {sync.status === 'syncing' ? t('settings.syncInProgress') : t('settings.syncNow')}
+                    </button>
+                    <p className="text-xs text-text-tertiary">
+                      {t('settings.syncLastLabel')}: {formatSyncDate(sync.lastSyncAt)}
+                    </p>
+                    <button onClick={sync.disconnect} className="text-xs text-error hover:underline self-start">
+                      {t('settings.syncDisconnect')}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={sync.connect}
+                    disabled={sync.status === 'syncing'}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-border text-sm font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-50 transition-colors w-fit"
+                  >
+                    <CloudArrowUpIcon size={16} />
+                    {sync.status === 'syncing' ? t('settings.syncInProgress') : t('settings.syncConnect')}
+                  </button>
+                )}
               </div>
 
               <div className="rounded-2xl bg-surface shadow-card p-5 flex flex-col gap-3">

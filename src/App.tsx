@@ -6,18 +6,19 @@ import LoadingSpinner from './components/LoadingSpinner';
 import Layout from './components/Layout';
 import { DocumentEditorProvider } from './context/DocumentEditorProvider';
 import { BackupProvider } from './context/BackupProvider';
+import { SyncProvider } from './context/SyncProvider';
 import BackupCodesGate from './components/auth/BackupCodesGate';
+import { useSessionNotifications } from './hooks/useSessionNotifications';
 
 function App() {
   const { isAuthenticated, isLoading, userProfile } = useAuth();
   const { i18n } = useTranslation();
+  useSessionNotifications();
 
   useEffect(() => {
     if (isAuthenticated && userProfile?.language) {
       i18n.changeLanguage(userProfile.language);
     } else if (!isAuthenticated) {
-      // Экран входа всегда на английском — не зависит от того, что выбрано
-      // в каком-либо из аккаунтов на этом устройстве
       i18n.changeLanguage('en');
     }
   }, [isAuthenticated, userProfile?.language, i18n]);
@@ -31,7 +32,9 @@ function App() {
       ) : (
         <DocumentEditorProvider>
           <BackupProvider>
-            <Layout />
+            <SyncProvider>
+              <Layout />
+            </SyncProvider>
           </BackupProvider>
         </DocumentEditorProvider>
       )}

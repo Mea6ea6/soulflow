@@ -46,6 +46,8 @@ export interface CalendarEvent {
   note: string;                // Заметка (опционально)
   isPersonal: boolean;         // true — личное событие
   createdAt: string;           // ISO-строка
+  notifyEnabled?: boolean;
+  notifyLeadMinutes?: number;
 }
 
 export type PresenceStatus = 'available' | 'busy' | 'away' | 'offline';

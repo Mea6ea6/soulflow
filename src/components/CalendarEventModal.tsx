@@ -13,7 +13,19 @@ import Checkbox from './Checkbox';
 import Select from './Select';
 
 const DEFAULT_LEAD_MINUTES = 15;
-const LEAD_OPTIONS_MINUTES = [5, 15, 30, 60, 120, 1440];
+type LeadUnit = 'minutes' | 'hours' | 'days';
+
+function decomposeLeadMinutes(totalMinutes: number): { value: number; unit: LeadUnit } {
+  if (totalMinutes % 1440 === 0 && totalMinutes >= 1440) return { value: totalMinutes / 1440, unit: 'days' };
+  if (totalMinutes % 60 === 0 && totalMinutes >= 60) return { value: totalMinutes / 60, unit: 'hours' };
+  return { value: totalMinutes, unit: 'minutes' };
+}
+
+function composeLeadMinutes(value: number, unit: LeadUnit): number {
+  if (unit === 'days') return value * 1440;
+  if (unit === 'hours') return value * 60;
+  return value;
+}
 
 interface CalendarEventModalProps {
   date: string;
@@ -34,17 +46,15 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
   const [title, setTitle] = useState(event?.title ?? '');
   const [note, setNote] = useState(event?.note ?? '');
   const [notifyEnabled, setNotifyEnabled] = useState(event?.notifyEnabled ?? true);
-  const [notifyLeadMinutes, setNotifyLeadMinutes] = useState(event?.notifyLeadMinutes ?? DEFAULT_LEAD_MINUTES);
+
+  const initialLead = decomposeLeadMinutes(event?.notifyLeadMinutes ?? DEFAULT_LEAD_MINUTES);
+  const [notifyLeadValue, setNotifyLeadValue] = useState(initialLead.value);
+  const [notifyLeadUnit, setNotifyLeadUnit] = useState<LeadUnit>(initialLead.unit);
+
   const [notifyPermissionDenied, setNotifyPermissionDenied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-
-  const leadLabel = (minutes: number) => {
-    if (minutes < 60) return t('calendar.notifyLeadMinutes', { count: minutes });
-    if (minutes < 1440) return t('calendar.notifyLeadHours', { count: minutes / 60 });
-    return t('calendar.notifyLeadDay');
-  };
 
   const handleToggleNotify = async (checked: boolean) => {
     setNotifyPermissionDenied(false);
@@ -77,6 +87,10 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
     if (isPersonal && !title.trim()) { setError(t('calendar.validation.titleRequired')); return; }
     if (!isPersonal && !clientId) { setError(t('calendar.validation.clientRequired')); return; }
     if (!masterKey) { setError(t('common.sessionExpired')); return; }
+    if (notifyEnabled && (!notifyLeadValue || notifyLeadValue <= 0)) {
+      setError(t('calendar.validation.notifyLeadRequired'));
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -84,7 +98,8 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
         date, time,
         clientId: isPersonal ? null : clientId,
         title: isPersonal ? title.trim() : '',
-        note, isPersonal, notifyEnabled, notifyLeadMinutes,
+        note, isPersonal, notifyEnabled,
+        notifyLeadMinutes: composeLeadMinutes(notifyLeadValue, notifyLeadUnit),
       };
 
       if (event) {
@@ -170,23 +185,28 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
           </div>
 
           {notifyEnabled && (
-            <div className="pl-7">
-              <label className="text-xs font-medium text-text-secondary mb-1.5 block">{t('calendar.notifyLeadLabel')}</label>
-              <div className="flex flex-wrap gap-1.5">
-                {LEAD_OPTIONS_MINUTES.map((minutes) => (
-                  <button
-                    key={minutes}
-                    type="button"
-                    onClick={() => setNotifyLeadMinutes(minutes)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                      notifyLeadMinutes === minutes
-                        ? 'border-primary bg-primary-tint text-primary'
-                        : 'border-border text-text-secondary hover:bg-surface'
-                    }`}
-                  >
-                    {leadLabel(minutes)}
-                  </button>
-                ))}
+            <div className="pl-7 flex items-end gap-2">
+              <div className="w-20">
+                <label className="text-xs font-medium text-text-secondary mb-1 block">{t('calendar.notifyLeadLabel')}</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={notifyLeadValue}
+                  onChange={(e) => setNotifyLeadValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="flex-1">
+                <Select
+                  value={notifyLeadUnit}
+                  onChange={(v) => setNotifyLeadUnit(v as LeadUnit)}
+                  options={[
+                    { value: 'minutes', label: t('calendar.notifyUnitMinutes') },
+                    { value: 'hours', label: t('calendar.notifyUnitHours') },
+                    { value: 'days', label: t('calendar.notifyUnitDays') },
+                  ]}
+                  placeholder={t('calendar.notifyUnitMinutes')}
+                />
               </div>
             </div>
           )}

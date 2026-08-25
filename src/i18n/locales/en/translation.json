@@ -116,7 +116,8 @@
     "validation": {
       "timeRequired": "Enter the time",
       "titleRequired": "Enter the event title",
-      "clientRequired": "Select a client"
+      "clientRequired": "Select a client",
+      "notifyLeadRequired": "Set how long before to remind you"
     },
     "saveFailed": "Could not save event",
     "editTitle": "Edit event",
@@ -133,10 +134,10 @@
     "notifyLabel": "Remind me about this event",
     "notifyHint": "A notification will arrive 15 minutes before the start, as long as this device and tab are open",
     "notifyPermissionDenied": "Notifications are blocked in the browser — allow them in the site settings to receive reminders",
-    "notifyLeadLabel": "Remind me",
-    "notifyLeadMinutes": "{{count}} min",
-    "notifyLeadHours": "{{count}} h",
-    "notifyLeadDay": "1 day before"
+    "notifyLeadLabel": "Value",
+    "notifyUnitMinutes": "minutes",
+    "notifyUnitHours": "hours",
+    "notifyUnitDays": "days"
   },
   "notifications": {
     "sessionReminderTitle": "Session coming up",

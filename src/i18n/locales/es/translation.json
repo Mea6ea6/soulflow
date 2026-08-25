@@ -116,7 +116,8 @@
     "validation": {
       "timeRequired": "Indica la hora",
       "titleRequired": "Indica el título del evento",
-      "clientRequired": "Selecciona un cliente"
+      "clientRequired": "Selecciona un cliente",
+      "notifyLeadRequired": "Indica con cuánto tiempo de antelación avisar"
     },
     "saveFailed": "No se pudo guardar el evento",
     "editTitle": "Editar evento",
@@ -133,10 +134,10 @@
     "notifyLabel": "Recordarme este evento",
     "notifyHint": "Llegará una notificación 15 minutos antes del inicio, siempre que este dispositivo y la pestaña estén abiertos",
     "notifyPermissionDenied": "Las notificaciones están bloqueadas en el navegador — actívalas en la configuración del sitio para recibir recordatorios",
-    "notifyLeadLabel": "Avisarme",
-    "notifyLeadMinutes": "{{count}} min",
-    "notifyLeadHours": "{{count}} h",
-    "notifyLeadDay": "un día antes"
+    "notifyLeadLabel": "Valor",
+    "notifyUnitMinutes": "minutos",
+    "notifyUnitHours": "horas",
+    "notifyUnitDays": "días"
   },
   "notifications": {
     "sessionReminderTitle": "Sesión próxima",

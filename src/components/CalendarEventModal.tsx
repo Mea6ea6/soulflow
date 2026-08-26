@@ -9,22 +9,21 @@ import { formatDateRu } from '../utils/date';
 import ModalShell from './ModalShell';
 import ConfirmDialog from './ConfirmDialog';
 import TimeInput from './TimeInput';
+import DurationInput from './DurationInput';
 import Checkbox from './Checkbox';
 import Select from './Select';
 
 const DEFAULT_LEAD_MINUTES = 15;
-type LeadUnit = 'minutes' | 'hours' | 'days';
 
-function decomposeLeadMinutes(totalMinutes: number): { value: number; unit: LeadUnit } {
-  if (totalMinutes % 1440 === 0 && totalMinutes >= 1440) return { value: totalMinutes / 1440, unit: 'days' };
-  if (totalMinutes % 60 === 0 && totalMinutes >= 60) return { value: totalMinutes / 60, unit: 'hours' };
-  return { value: totalMinutes, unit: 'minutes' };
+function minutesToDuration(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-function composeLeadMinutes(value: number, unit: LeadUnit): number {
-  if (unit === 'days') return value * 1440;
-  if (unit === 'hours') return value * 60;
-  return value;
+function durationToMinutes(duration: string): number {
+  const [h, m] = duration.split(':').map((n) => parseInt(n, 10) || 0);
+  return h * 60 + m;
 }
 
 interface CalendarEventModalProps {
@@ -46,11 +45,9 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
   const [title, setTitle] = useState(event?.title ?? '');
   const [note, setNote] = useState(event?.note ?? '');
   const [notifyEnabled, setNotifyEnabled] = useState(event?.notifyEnabled ?? true);
-
-  const initialLead = decomposeLeadMinutes(event?.notifyLeadMinutes ?? DEFAULT_LEAD_MINUTES);
-  const [notifyLeadValue, setNotifyLeadValue] = useState(initialLead.value);
-  const [notifyLeadUnit, setNotifyLeadUnit] = useState<LeadUnit>(initialLead.unit);
-
+  const [notifyDuration, setNotifyDuration] = useState(() =>
+    minutesToDuration(event?.notifyLeadMinutes ?? DEFAULT_LEAD_MINUTES)
+  );
   const [notifyPermissionDenied, setNotifyPermissionDenied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,7 +84,9 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
     if (isPersonal && !title.trim()) { setError(t('calendar.validation.titleRequired')); return; }
     if (!isPersonal && !clientId) { setError(t('calendar.validation.clientRequired')); return; }
     if (!masterKey) { setError(t('common.sessionExpired')); return; }
-    if (notifyEnabled && (!notifyLeadValue || notifyLeadValue <= 0)) {
+
+    const notifyLeadMinutes = durationToMinutes(notifyDuration);
+    if (notifyEnabled && (!notifyDuration || notifyLeadMinutes <= 0)) {
       setError(t('calendar.validation.notifyLeadRequired'));
       return;
     }
@@ -98,8 +97,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
         date, time,
         clientId: isPersonal ? null : clientId,
         title: isPersonal ? title.trim() : '',
-        note, isPersonal, notifyEnabled,
-        notifyLeadMinutes: composeLeadMinutes(notifyLeadValue, notifyLeadUnit),
+        note, isPersonal, notifyEnabled, notifyLeadMinutes,
       };
 
       if (event) {
@@ -185,29 +183,8 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
           </div>
 
           {notifyEnabled && (
-            <div className="pl-7 flex items-end gap-2">
-              <div className="w-20">
-                <label className="text-xs font-medium text-text-secondary mb-1 block">{t('calendar.notifyLeadLabel')}</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={notifyLeadValue}
-                  onChange={(e) => setNotifyLeadValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div className="flex-1">
-                <Select
-                  value={notifyLeadUnit}
-                  onChange={(v) => setNotifyLeadUnit(v as LeadUnit)}
-                  options={[
-                    { value: 'minutes', label: t('calendar.notifyUnitMinutes') },
-                    { value: 'hours', label: t('calendar.notifyUnitHours') },
-                    { value: 'days', label: t('calendar.notifyUnitDays') },
-                  ]}
-                  placeholder={t('calendar.notifyUnitMinutes')}
-                />
-              </div>
+            <div className="pl-7">
+              <DurationInput value={notifyDuration} onChange={setNotifyDuration} />
             </div>
           )}
         </div>

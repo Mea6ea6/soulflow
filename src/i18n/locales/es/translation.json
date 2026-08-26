@@ -131,7 +131,7 @@
     "note": "Nota",
     "viewMonth": "Mes",
     "viewWeek": "Semana",
-    "notifyLabel": "Recordarme este evento",
+    "notifyLabel": "Avisarme... antes",
     "notifyHint": "Llegará una notificación 15 minutos antes del inicio, siempre que este dispositivo y la pestaña estén abiertos",
     "notifyPermissionDenied": "Las notificaciones están bloqueadas en el navegador — actívalas en la configuración del sitio para recibir recordatorios",
     "notifyLeadLabel": "Valor",

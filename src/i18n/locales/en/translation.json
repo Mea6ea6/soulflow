@@ -131,7 +131,7 @@
     "note": "Note",
     "viewMonth": "Month",
     "viewWeek": "Week",
-    "notifyLabel": "Remind me about this event",
+    "notifyLabel": "Remind me... before",
     "notifyHint": "A notification will arrive 15 minutes before the start, as long as this device and tab are open",
     "notifyPermissionDenied": "Notifications are blocked in the browser — allow them in the site settings to receive reminders",
     "notifyLeadLabel": "Value",

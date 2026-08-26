@@ -131,7 +131,7 @@
     "note": "Note",
     "viewMonth": "Mois",
     "viewWeek": "Semaine",
-    "notifyLabel": "Me rappeler cet événement",
+    "notifyLabel": "Me prévenir... avant",
     "notifyHint": "Une notification arrivera 15 minutes avant le début, tant que cet appareil et cet onglet sont ouverts",
     "notifyPermissionDenied": "Les notifications sont bloquées dans le navigateur — autorisez-les dans les paramètres du site pour recevoir des rappels",
     "notifyLeadLabel": "Valeur",

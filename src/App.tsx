@@ -7,13 +7,18 @@ import Layout from './components/Layout';
 import { DocumentEditorProvider } from './context/DocumentEditorProvider';
 import { BackupProvider } from './context/BackupProvider';
 import { SyncProvider } from './context/SyncProvider';
+import { InAppNotificationProvider } from './context/InAppNotificationProvider';
 import BackupCodesGate from './components/auth/BackupCodesGate';
 import { useSessionNotifications } from './hooks/useSessionNotifications';
+
+function SessionNotificationsRunner() {
+  useSessionNotifications();
+  return null;
+}
 
 function App() {
   const { isAuthenticated, isLoading, userProfile } = useAuth();
   const { i18n } = useTranslation();
-  useSessionNotifications();
 
   useEffect(() => {
     if (isAuthenticated && userProfile?.language) {
@@ -24,7 +29,7 @@ function App() {
   }, [isAuthenticated, userProfile?.language, i18n]);
 
   return (
-    <>
+    <InAppNotificationProvider>
       {isLoading ? (
         <LoadingSpinner />
       ) : !isAuthenticated ? (
@@ -33,13 +38,14 @@ function App() {
         <DocumentEditorProvider>
           <BackupProvider>
             <SyncProvider>
+              <SessionNotificationsRunner />
               <Layout />
             </SyncProvider>
           </BackupProvider>
         </DocumentEditorProvider>
       )}
       <BackupCodesGate />
-    </>
+    </InAppNotificationProvider>
   );
 }
 

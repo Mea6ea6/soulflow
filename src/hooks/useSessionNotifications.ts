@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './useAuthHook';
 import { useCalendarEvents, useClients } from './useDB';
+import { useInAppNotification } from './useInAppNotificationHook';
 import { toYMD } from '../utils/date';
 
 const CHECK_INTERVAL_MS = 20_000;
@@ -31,46 +32,59 @@ function markNotified(dateYMD: string, eventId: string) {
   try {
     localStorage.setItem(notifiedStorageKey(dateYMD), JSON.stringify([...set]));
   } catch {
-    /* localStorage недоступен — переживём без сохранения между перезагрузками */
+    /* localStorage недоступен */
   }
 }
 
-// Подключается один раз на уровне App — проверяет события с включённым
-// notifyEnabled и показывает Notification за REMINDER_LEAD_MS до начала.
-// Работает независимо от того, какой раздел сайта сейчас открыт, но только
-// пока вкладка не закрыта. events/clients — обычные зависимости эффекта,
-// без рефов: при изменении данных интервал просто пересоздаётся заново
+// Вызывается при сохранении события — снимает отметку "уведомление уже
+// показано" для этого id, чтобы редактирование времени/лида уже
+// существующего события каждый раз честно проверялось заново
+export function clearNotifiedFlag(dateYMD: string, eventId: string) {
+  const set = readNotified(dateYMD);
+  if (!set.has(eventId)) return;
+  set.delete(eventId);
+  try {
+    localStorage.setItem(notifiedStorageKey(dateYMD), JSON.stringify([...set]));
+  } catch {
+    /* localStorage недоступен */
+  }
+}
+
 export function useSessionNotifications() {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
   const events = useCalendarEvents(masterKey);
   const clients = useClients(masterKey);
+  const { showNotification } = useInAppNotification();
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-
     const interval = setInterval(() => {
-      if (Notification.permission !== 'granted') return;
-
       const now = Date.now();
       const todayYMD = toYMD(new Date());
       const notified = readNotified(todayYMD);
+      const hasSystemPermission = typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted';
 
       (events ?? []).forEach((ev) => {
         if (!ev.notifyEnabled || notified.has(ev.id)) return;
-                const leadMs = (ev.notifyLeadMinutes ?? 15) * 60 * 1000;
+        const leadMs = (ev.notifyLeadMinutes ?? 15) * 60 * 1000;
         const msUntil = eventDateTime(ev.date, ev.time).getTime() - now;
         if (msUntil <= leadMs && msUntil > 0) {
           const clientName = ev.isPersonal
             ? ev.title
             : (clients ?? []).find((c) => c.id === ev.clientId)?.name ?? t('home.clientFallback');
-          try {
-            new Notification(t('notifications.sessionReminderTitle'), {
-              body: t('notifications.sessionReminderBody', { name: clientName, time: ev.time }),
-              tag: `soulflow-event-${ev.id}`,
-            });
-          } catch {
-            /* браузер может отклонить показ (например, режим "не беспокоить") */
+          const title = t('notifications.sessionReminderTitle');
+          const body = t('notifications.sessionReminderBody', { name: clientName, time: ev.time });
+
+          // Показываем оба способа сразу: попап поверх сайта (виден только
+          // если вкладка открыта и в фокусе) и системное уведомление ОС
+          // (видно даже когда вкладка свёрнута/в фоне)
+          showNotification({ id: ev.id, title, body });
+          if (hasSystemPermission) {
+            try {
+              new Notification(title, { body, tag: `soulflow-event-${ev.id}` });
+            } catch {
+              /* браузер может отклонить показ, например в режиме "не беспокоить" */
+            }
           }
           markNotified(todayYMD, ev.id);
         }
@@ -78,5 +92,5 @@ export function useSessionNotifications() {
     }, CHECK_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [events, clients, t]);
+  }, [events, clients, t, showNotification]);
 }

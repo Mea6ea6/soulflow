@@ -12,6 +12,7 @@ import TimeInput from './TimeInput';
 import DurationInput from './DurationInput';
 import Checkbox from './Checkbox';
 import Select from './Select';
+import { clearNotifiedFlag } from '../hooks/useSessionNotifications';
 
 const DEFAULT_LEAD_MINUTES = 15;
 
@@ -44,7 +45,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
   const [clientId, setClientId] = useState<string>(event?.clientId ?? '');
   const [title, setTitle] = useState(event?.title ?? '');
   const [note, setNote] = useState(event?.note ?? '');
-  const [notifyEnabled, setNotifyEnabled] = useState(event?.notifyEnabled ?? true);
+  const [notifyEnabled, setNotifyEnabled] = useState(event?.notifyEnabled ?? false);
   const [notifyDuration, setNotifyDuration] = useState(() =>
     minutesToDuration(event?.notifyLeadMinutes ?? DEFAULT_LEAD_MINUTES)
   );
@@ -102,6 +103,7 @@ export default function CalendarEventModal({ date, event, onClose }: CalendarEve
 
       if (event) {
         await updateCalendarEvent(event.id, payload, masterKey);
+        clearNotifiedFlag(date, event.id);
       } else {
         await addCalendarEvent(payload, masterKey);
       }

@@ -5,6 +5,8 @@ export interface DocumentEditorTarget {
   document: Document | null;
   clientId: string | null;
   isPersonal: boolean;
+  initialTitle?: string;
+  templateId?: 'blank' | 'soap';
 }
 
 export interface EditorTab {

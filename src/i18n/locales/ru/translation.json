@@ -224,7 +224,29 @@
     "discardConfirmTitle": "Закрыть без сохранения?",
     "discardConfirmMessage": "Несохранённые изменения в документе будут потеряны.",
     "discardConfirm": "Не сохранять",
-    "saving": "Сохранение..."
+    "saving": "Сохранение...",
+    "soapSubjective": "Субъективно",
+    "soapObjective": "Объективно",
+    "soapAssessment": "Оценка",
+    "soapPlan": "План",
+    "soapSubjectiveHint": "Что клиент сообщает о своём состоянии, жалобы, самоощущение",
+    "soapObjectiveHint": "Наблюдаемое: поведение, аффект, речь, внешний вид",
+    "soapAssessmentHint": "Клиническая оценка динамики и эффективности вмешательств",
+    "soapPlanHint": "Дальнейшие шаги, домашнее задание, дата следующей встречи",
+    "dapData": "Данные",
+    "dapDataHint": "Объединённое наблюдение: что рассказал клиент и что вы заметили сами",
+    "dapAssessment": "Оценка",
+    "dapAssessmentHint": "Интерпретация данных, прогресс по сравнению с прошлым разом",
+    "dapPlan": "План",
+    "dapPlanHint": "Следующие шаги и договорённости",
+    "birpBehavior": "Поведение",
+    "birpBehaviorHint": "Наблюдаемое поведение и заявленная клиентом проблема",
+    "birpIntervention": "Интервенция",
+    "birpInterventionHint": "Что конкретно вы сделали или предложили в рамках сессии",
+    "birpResponse": "Реакция",
+    "birpResponseHint": "Как клиент отреагировал на интервенцию",
+    "birpPlan": "План",
+    "birpPlanHint": "Дальнейшие шаги до следующей встречи"
   },
   "documentEditor": {
     "title": "Документы",
@@ -410,7 +432,16 @@
   "documentTarget": {
     "personal": "Личный документ",
     "client": "Документ клиента",
-    "selectClient": "Выберите клиента"
+    "selectClient": "Выберите клиента",
+    "templateBlank": "Обычный документ",
+    "templateBlankDescription": "Пустой лист без структуры",
+    "templateSoap": "Шаблон SOAP",
+    "templateSoapDescription": "Subjective / Objective / Assessment / Plan — структура для заметки сеанса",
+    "templateSectionTitle": "Тип документа",
+    "templateDap": "Шаблон DAP",
+    "templateDapDescription": "Data / Assessment / Plan — компактный формат для приёма с ограниченным временем",
+    "templateBirp": "Шаблон BIRP",
+    "templateBirpDescription": "Behavior / Intervention / Response / Plan — фокус на конкретных интервенциях и реакции клиента"
   },
   "errors": {
     "invalidPassword": "Неверный пароль"

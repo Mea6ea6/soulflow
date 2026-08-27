@@ -145,7 +145,7 @@ export default function HomePage() {
 
   const handleNewDocConfirm = (target: DocumentTarget) => {
     setIsCreatingDoc(false);
-    openDocument({ document: null, clientId: target.clientId, isPersonal: target.isPersonal });
+    openDocument({ document: null, clientId: target.clientId, isPersonal: target.isPersonal, templateId: target.templateId });
   };
 
   const handleDismissEvent = (eventId: string) => {

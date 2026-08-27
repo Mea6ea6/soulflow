@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useClients } from '../hooks/useDB';
+import { SESSION_TEMPLATE_OPTIONS, type SessionTemplateId } from '../utils/sessionTemplates';
 import ModalShell from './ModalShell';
 import Radio from './Radio';
 import Select from './Select';
@@ -10,6 +11,7 @@ import Select from './Select';
 export interface DocumentTarget {
   clientId: string | null;
   isPersonal: boolean;
+  templateId?: SessionTemplateId;
 }
 
 interface DocumentTargetModalProps {
@@ -27,13 +29,14 @@ export default function DocumentTargetModal({ title, icon, onConfirm, onClose }:
 
   const [mode, setMode] = useState<'personal' | 'client'>('personal');
   const [clientId, setClientId] = useState('');
+  const [templateId, setTemplateId] = useState<SessionTemplateId>('blank');
 
   const handleConfirm = () => {
     if (mode === 'personal') {
-      onConfirm({ clientId: null, isPersonal: true });
+      onConfirm({ clientId: null, isPersonal: true, templateId: icon === 'create' ? templateId : undefined });
     } else {
       if (!clientId) return;
-      onConfirm({ clientId, isPersonal: false });
+      onConfirm({ clientId, isPersonal: false, templateId: icon === 'create' ? templateId : undefined });
     }
   };
 
@@ -62,6 +65,31 @@ export default function DocumentTargetModal({ title, icon, onConfirm, onClose }:
             options={activeClients.map((c) => ({ value: c.id, label: c.name }))}
             placeholder={t('documentTarget.selectClient')}
           />
+        )}
+
+        {icon === 'create' && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-border">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary mt-3">
+              {t('documentTarget.templateSectionTitle')}
+            </p>
+            <div className="flex flex-col gap-2">
+              {SESSION_TEMPLATE_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setTemplateId(option.id)}
+                  className={`text-left px-3 py-2.5 rounded-xl border transition-colors ${
+                    templateId === option.id ? 'border-primary bg-primary-tint' : 'border-border hover:bg-surface-hover'
+                  }`}
+                >
+                  <p className={`text-sm font-medium ${templateId === option.id ? 'text-primary' : 'text-text-primary'}`}>
+                    {t(option.labelKey)}
+                  </p>
+                  <p className="text-xs text-text-tertiary mt-0.5">{t(option.descriptionKey)}</p>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         <button

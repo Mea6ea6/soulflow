@@ -25,11 +25,11 @@ export function InAppNotificationProvider({ children }: { children: ReactNode })
         {current && (
           <motion.div
             key={current.id}
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 16 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] w-full max-w-sm px-4"
+            className="fixed top-4 right-4 z-[200] w-full max-w-sm"
             onClick={() => setCurrent(null)}
           >
             <div className="flex items-start gap-3 p-4 rounded-2xl bg-surface shadow-card-hover border border-border cursor-pointer">

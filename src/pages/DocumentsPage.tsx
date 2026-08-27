@@ -299,7 +299,7 @@ export default function DocumentsPage() {
           onClose={() => setCreatingStep(null)}
           onConfirm={(target) => {
             setCreatingStep(null);
-            openDocument({ document: null, clientId: target.clientId, isPersonal: target.isPersonal });
+            openDocument({ document: null, clientId: target.clientId, isPersonal: target.isPersonal, templateId: target.templateId });
           }}
         />
       )}

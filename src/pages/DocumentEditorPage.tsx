@@ -5,7 +5,9 @@ import DocumentTargetModal, { type DocumentTarget } from '../components/Document
 import ConfirmDialog from '../components/ConfirmDialog';
 import DocumentSidebar from '../components/documentEditor/DocumentSidebar';
 import EditorTabs from '../components/documentEditor/EditorTabs';
-import DocumentEditorPanel, { type ContentTheme } from '../components/documentEditor/DocumentEditorPanel';
+import DocumentEditorPanel from '../components/documentEditor/DocumentEditorPanel';
+
+type ContentTheme = 'light' | 'dark';
 
 const CONTENT_THEME_STORAGE_KEY = 'soulflow_editor_content_theme';
 
@@ -63,7 +65,7 @@ export default function DocumentEditorPage({ tabs, activeTabId, onSelectTab, onC
 
   const handleNewDocConfirm = (target: DocumentTarget) => {
     setIsCreatingNew(false);
-    onOpenTab({ document: null, clientId: target.clientId, isPersonal: target.isPersonal });
+    onOpenTab({ document: null, clientId: target.clientId, isPersonal: target.isPersonal, templateId: target.templateId });
   };
 
   return (

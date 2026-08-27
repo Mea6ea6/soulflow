@@ -29,6 +29,7 @@ import ConfirmDialog from '../ConfirmDialog';
 import DocumentTypeModal, { type DocumentTypeChange } from '../DocumentTypeModal';
 import BlockMenuList from '../BlockMenuList';
 import TableControls from './TableControls';
+import { buildTemplateContent } from '../../utils/sessionTemplates';
 
 type ContentTheme = 'light' | 'dark';
 
@@ -88,7 +89,9 @@ export default function DocumentEditorPanel({ target, isActive, contentTheme, on
       Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
       SlashCommand, shortcutsExtension,
     ],
-    content: initialContentFor(target.document),
+    content: target.document
+      ? initialContentFor(target.document)
+      : buildTemplateContent(target.templateId, t) ?? initialContentFor(target.document),
     editable: !isReadonly,
   });
 

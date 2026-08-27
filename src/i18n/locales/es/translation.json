@@ -224,7 +224,29 @@
     "discardConfirmTitle": "¿Descartar los cambios?",
     "discardConfirmMessage": "Se perderán los cambios no guardados en este documento.",
     "discardConfirm": "Descartar",
-    "saving": "Guardando..."
+    "saving": "Guardando...",
+    "soapSubjective": "Subjetivo",
+    "soapObjective": "Objetivo",
+    "soapAssessment": "Evaluación",
+    "soapPlan": "Plan",
+    "soapSubjectiveHint": "Lo que el cliente informa sobre su estado, preocupaciones, percepción de sí mismo",
+    "soapObjectiveHint": "Observable: comportamiento, afecto, habla, apariencia",
+    "soapAssessmentHint": "Interpretación clínica del progreso y la eficacia de las intervenciones",
+    "soapPlanHint": "Próximos pasos, tarea, fecha de la próxima sesión",
+    "dapData": "Datos",
+    "dapDataHint": "Observación combinada: lo que el cliente compartió y lo que usted notó",
+    "dapAssessment": "Evaluación",
+    "dapAssessmentHint": "Interpretación de los datos, progreso respecto a la vez anterior",
+    "dapPlan": "Plan",
+    "dapPlanHint": "Próximos pasos y acuerdos",
+    "birpBehavior": "Comportamiento",
+    "birpBehaviorHint": "Comportamiento observado y la preocupación expresada por el cliente",
+    "birpIntervention": "Intervención",
+    "birpInterventionHint": "Qué hizo u ofreció específicamente durante la sesión",
+    "birpResponse": "Respuesta",
+    "birpResponseHint": "Cómo respondió el cliente a la intervención",
+    "birpPlan": "Plan",
+    "birpPlanHint": "Próximos pasos antes de la siguiente sesión"
   },
   "documentEditor": {
     "title": "Documentos",
@@ -409,7 +431,16 @@
   "documentTarget": {
     "personal": "Documento personal",
     "client": "Documento de cliente",
-    "selectClient": "Selecciona un cliente"
+    "selectClient": "Selecciona un cliente",
+    "templateBlank": "Documento en blanco",
+    "templateBlankDescription": "Una página vacía sin estructura",
+    "templateSoap": "Plantilla SOAP",
+    "templateSoapDescription": "Subjetivo / Objetivo / Evaluación / Plan — una nota de sesión estructurada",
+    "templateSectionTitle": "Tipo de documento",
+    "templateDap": "Plantilla DAP",
+    "templateDapDescription": "Datos / Evaluación / Plan — un formato compacto para sesiones con tiempo limitado",
+    "templateBirp": "Plantilla BIRP",
+    "templateBirpDescription": "Comportamiento / Intervención / Respuesta / Plan — centrado en intervenciones específicas y la respuesta del cliente"
   },
   "errors": {
     "invalidPassword": "Contraseña incorrecta"

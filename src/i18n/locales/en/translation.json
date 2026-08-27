@@ -224,7 +224,29 @@
     "discardConfirmTitle": "Discard changes?",
     "discardConfirmMessage": "Unsaved changes to this document will be lost.",
     "discardConfirm": "Discard",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "soapSubjective": "Subjective",
+    "soapObjective": "Objective",
+    "soapAssessment": "Assessment",
+    "soapPlan": "Plan",
+    "soapSubjectiveHint": "What the client reports about their state, concerns, self-perception",
+    "soapObjectiveHint": "Observable: behavior, affect, speech, appearance",
+    "soapAssessmentHint": "Clinical interpretation of progress and intervention effectiveness",
+    "soapPlanHint": "Next steps, homework, date of the next session",
+    "dapData": "Data",
+    "dapDataHint": "Combined observation: what the client shared and what you noticed",
+    "dapAssessment": "Assessment",
+    "dapAssessmentHint": "Interpretation of the data, progress compared to last time",
+    "dapPlan": "Plan",
+    "dapPlanHint": "Next steps and agreements",
+    "birpBehavior": "Behavior",
+    "birpBehaviorHint": "Observed behavior and the client's stated concern",
+    "birpIntervention": "Intervention",
+    "birpInterventionHint": "What you specifically did or offered during the session",
+    "birpResponse": "Response",
+    "birpResponseHint": "How the client responded to the intervention",
+    "birpPlan": "Plan",
+    "birpPlanHint": "Next steps before the following session"
   },
   "documentEditor": {
     "title": "Documents",
@@ -410,7 +432,16 @@
   "documentTarget": {
     "personal": "Personal document",
     "client": "Client document",
-    "selectClient": "Select a client"
+    "selectClient": "Select a client",
+    "templateBlank": "Blank document",
+    "templateBlankDescription": "An empty page with no structure",
+    "templateSoap": "SOAP template",
+    "templateSoapDescription": "Subjective / Objective / Assessment / Plan — a structured session note",
+    "templateSectionTitle": "Document type",
+    "templateDap": "DAP template",
+    "templateDapDescription": "Data / Assessment / Plan — a compact format for time-constrained sessions",
+    "templateBirp": "BIRP template",
+    "templateBirpDescription": "Behavior / Intervention / Response / Plan — focused on specific interventions and client response"
   },
   "errors": {
     "invalidPassword": "Wrong password"

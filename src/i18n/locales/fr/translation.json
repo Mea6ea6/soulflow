@@ -224,7 +224,29 @@
     "discardConfirmTitle": "Annuler les modifications ?",
     "discardConfirmMessage": "Les modifications non enregistrées de ce document seront perdues.",
     "discardConfirm": "Annuler",
-    "saving": "Enregistrement..."
+    "saving": "Enregistrement...",
+    "soapSubjective": "Subjectif",
+    "soapObjective": "Objectif",
+    "soapAssessment": "Évaluation",
+    "soapPlan": "Plan",
+    "soapSubjectiveHint": "Ce que le client rapporte sur son état, ses préoccupations, sa perception de lui-même",
+    "soapObjectiveHint": "Observable : comportement, affect, discours, apparence",
+    "soapAssessmentHint": "Interprétation clinique du progrès et de l'efficacité des interventions",
+    "soapPlanHint": "Prochaines étapes, devoirs, date de la prochaine séance",
+    "dapData": "Données",
+    "dapDataHint": "Observation combinée : ce que le client a partagé et ce que vous avez remarqué",
+    "dapAssessment": "Évaluation",
+    "dapAssessmentHint": "Interprétation des données, progrès par rapport à la dernière fois",
+    "dapPlan": "Plan",
+    "dapPlanHint": "Prochaines étapes et accords",
+    "birpBehavior": "Comportement",
+    "birpBehaviorHint": "Comportement observé et préoccupation exprimée par le client",
+    "birpIntervention": "Intervention",
+    "birpInterventionHint": "Ce que vous avez concrètement fait ou proposé pendant la séance",
+    "birpResponse": "Réponse",
+    "birpResponseHint": "Comment le client a réagi à l'intervention",
+    "birpPlan": "Plan",
+    "birpPlanHint": "Prochaines étapes avant la séance suivante"
   },
   "documentEditor": {
     "title": "Documents",
@@ -409,7 +431,16 @@
   "documentTarget": {
     "personal": "Document personnel",
     "client": "Document client",
-    "selectClient": "Sélectionnez un client"
+    "selectClient": "Sélectionnez un client",
+    "templateBlank": "Document vierge",
+    "templateBlankDescription": "Une page vide sans structure",
+    "templateSoap": "Modèle SOAP",
+    "templateSoapDescription": "Subjectif / Objectif / Évaluation / Plan — une note de séance structurée",
+    "templateSectionTitle": "Type de document",
+    "templateDap": "Modèle DAP",
+    "templateDapDescription": "Données / Évaluation / Plan — un format compact pour les séances au temps limité",
+    "templateBirp": "Modèle BIRP",
+    "templateBirpDescription": "Comportement / Intervention / Réponse / Plan — axé sur des interventions précises et la réponse du client"
   },
   "errors": {
     "invalidPassword": "Mot de passe incorrect"

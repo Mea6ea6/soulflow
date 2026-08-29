@@ -1,5 +1,5 @@
 import { FilePlusIcon, UploadSimpleIcon } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuthHook';
 import { useClients } from '../hooks/useDB';
@@ -30,6 +30,11 @@ export default function DocumentTargetModal({ title, icon, onConfirm, onClose }:
   const [mode, setMode] = useState<'personal' | 'client'>('personal');
   const [clientId, setClientId] = useState('');
   const [templateId, setTemplateId] = useState<SessionTemplateId>('blank');
+
+  const selectedTemplate = useMemo(
+    () => SESSION_TEMPLATE_OPTIONS.find((opt) => opt.id === templateId) ?? SESSION_TEMPLATE_OPTIONS[0],
+    [templateId]
+  );
 
   const handleConfirm = () => {
     if (mode === 'personal') {
@@ -68,27 +73,15 @@ export default function DocumentTargetModal({ title, icon, onConfirm, onClose }:
         )}
 
         {icon === 'create' && (
-          <div className="flex flex-col gap-2 pt-1 border-t border-border">
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary mt-3">
-              {t('documentTarget.templateSectionTitle')}
-            </p>
-            <div className="flex flex-col gap-2">
-              {SESSION_TEMPLATE_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setTemplateId(option.id)}
-                  className={`text-left px-3 py-2.5 rounded-xl border transition-colors ${
-                    templateId === option.id ? 'border-primary bg-primary-tint' : 'border-border hover:bg-surface-hover'
-                  }`}
-                >
-                  <p className={`text-sm font-medium ${templateId === option.id ? 'text-primary' : 'text-text-primary'}`}>
-                    {t(option.labelKey)}
-                  </p>
-                  <p className="text-xs text-text-tertiary mt-0.5">{t(option.descriptionKey)}</p>
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-text-secondary">{t('documentTarget.templateSectionTitle')}</label>
+            <Select
+              value={templateId}
+              onChange={(v) => setTemplateId(v as SessionTemplateId)}
+              options={SESSION_TEMPLATE_OPTIONS.map((opt) => ({ value: opt.id, label: t(opt.labelKey) }))}
+              placeholder={t('documentTarget.templateBlank')}
+            />
+            <p className="text-xs text-text-tertiary">{t(selectedTemplate.descriptionKey)}</p>
           </div>
         )}
 

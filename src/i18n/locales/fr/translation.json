@@ -5,7 +5,8 @@
     "clients": "Clients",
     "documents": "Documents",
     "profile": "Profil",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "search": "Rechercher"
   },
   "brand": {
     "soulFlow": "SoulFlow"
@@ -485,5 +486,15 @@
     "groupBasic": "Basique",
     "groupLists": "Listes",
     "groupOther": "Autre"
+  },
+  "search": {
+    "placeholder": "Rechercher clients, documents, événements...",
+    "empty": "Aucun résultat",
+    "groupClients": "Clients",
+    "groupDocuments": "Documents",
+    "groupEvents": "Événements",
+    "categoryAllClients": "Tous les clients",
+    "categoryAllDocuments": "Tous les documents",
+    "categoryEventsWeek": "Événements de la semaine"
   }
 }

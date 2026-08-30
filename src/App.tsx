@@ -10,6 +10,7 @@ import { SyncProvider } from './context/SyncProvider';
 import { InAppNotificationProvider } from './context/InAppNotificationProvider';
 import BackupCodesGate from './components/auth/BackupCodesGate';
 import { useSessionNotifications } from './hooks/useSessionNotifications';
+import { NavigationProvider } from './context/NavigationProvider';
 
 function SessionNotificationsRunner() {
   useSessionNotifications();
@@ -38,8 +39,10 @@ function App() {
         <DocumentEditorProvider>
           <BackupProvider>
             <SyncProvider>
-              <SessionNotificationsRunner />
-              <Layout />
+              <NavigationProvider>
+                <SessionNotificationsRunner />
+                <Layout />
+              </NavigationProvider>
             </SyncProvider>
           </BackupProvider>
         </DocumentEditorProvider>

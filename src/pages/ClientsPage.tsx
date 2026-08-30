@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Client } from '../types';
 import { useAuth } from '../hooks/useAuthHook';
 import { useClients } from '../hooks/useDB';
+import { useNavigation } from '../hooks/useNavigationHook';
 import Avatar from '../components/Avatar';
 import ClientModal from '../components/ClientModal';
 import ClientCard from '../components/ClientCard';
@@ -12,11 +13,19 @@ export default function ClientsPage() {
   const { t } = useTranslation();
   const { masterKey } = useAuth();
   const clients = useClients(masterKey);
+  const { pendingClientId, consumePendingClientId } = useNavigation();
 
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  const pendingTarget = pendingClientId && clients ? clients.find((c) => c.id === pendingClientId) ?? null : null;
+
+  if (pendingTarget && selectedClient?.id !== pendingTarget.id) {
+    setSelectedClient(pendingTarget);
+    consumePendingClientId();
+  }
 
   const filteredClients = useMemo(() => {
     if (!clients) return [];

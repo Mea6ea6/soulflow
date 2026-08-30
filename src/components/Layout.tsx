@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ListIcon, XIcon } from '@phosphor-icons/react';
 import Sidebar from './Sidebar';
 import type { TabId } from '../types';
+import { useNavigation } from '../hooks/useNavigationHook';
 import HomePage from '../pages/HomePage';
 import CalendarPage from '../pages/CalendarPage';
 import ClientsPage from '../pages/ClientsPage';
 import DocumentsPage from '../pages/DocumentsPage';
+import SearchPage from '../pages/SearchPage';
 import ProfilePage from '../pages/ProfilePage';
 import SettingsPage from '../pages/SettingsPage';
 
@@ -15,12 +17,13 @@ const pageMap: Record<TabId, React.ComponentType> = {
   calendar: CalendarPage,
   clients: ClientsPage,
   documents: DocumentsPage,
+  search: SearchPage,
   profile: ProfilePage,
   settings: SettingsPage,
 };
 
 export default function Layout() {
-  const [activeTab, setActiveTab] = useState<TabId>('home');
+  const { activeTab, setActiveTab } = useNavigation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -33,7 +36,6 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg">
-      {/* Затемнение фона на мобильных при открытом меню */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -56,7 +58,6 @@ export default function Layout() {
       />
 
       <main className="flex-1 overflow-y-auto">
-        {/* Гамбургер — только на мобильных */}
         <div className="md:hidden flex items-center px-4 py-3 border-b border-border bg-surface sticky top-0 z-20">
           <button
             onClick={() => setIsMobileMenuOpen((v) => !v)}

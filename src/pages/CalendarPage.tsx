@@ -8,6 +8,7 @@ import type { CalendarEvent } from '../types';
 import { toYMD } from '../utils/date';
 import CalendarEventModal from '../components/CalendarEventModal';
 import WeekCalendarView from '../components/WeekCalendarView';
+import { useNavigation } from '../hooks/useNavigationHook';
 
 
 const MAX_VISIBLE_EVENTS = 2;
@@ -41,6 +42,25 @@ export default function CalendarPage() {
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const days = useMemo(() => buildMonthGrid(year, month), [year, month]);
+
+  const { pendingCalendarDate, consumePendingCalendarDate } = useNavigation();
+
+  // Пришли из поиска с конкретной датой — переключаем видимый месяц на неё
+  // и сразу открываем модалку событий этого дня. Вычисляется прямо при
+  // рендере (без useEffect): pendingCalendarDate уже доступен синхронно,
+  // а consumePendingCalendarDate() в этом же тике гасит условие повторного
+  // срабатывания при следующем рендере
+  if (pendingCalendarDate) {
+    const [py, pm] = pendingCalendarDate.split('-').map(Number);
+    if (year !== py || month !== pm - 1) {
+      setViewDate(new Date(py, pm - 1, 1));
+    }
+    if (modalDate !== pendingCalendarDate) {
+      setModalDate(pendingCalendarDate);
+      setEditingEvent(null);
+    }
+    consumePendingCalendarDate();
+  }
 
   const weekdays = [
     t('calendar.weekdays.mon'), t('calendar.weekdays.tue'), t('calendar.weekdays.wed'),

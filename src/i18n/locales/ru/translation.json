@@ -5,7 +5,8 @@
     "clients": "Клиенты",
     "documents": "Документы",
     "profile": "Профиль",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "search": "Поиск"
   },
   "brand": {
     "soulFlow": "SoulFlow"
@@ -519,5 +520,15 @@
     "groupBasic": "Основное",
     "groupLists": "Списки",
     "groupOther": "Другое"
+  },
+  "search": {
+    "placeholder": "Поиск по клиентам, документам, событиям...",
+    "empty": "Ничего не найдено",
+    "groupClients": "Клиенты",
+    "groupDocuments": "Документы",
+    "groupEvents": "События",
+    "categoryAllClients": "Все клиенты",
+    "categoryAllDocuments": "Все документы",
+    "categoryEventsWeek": "События на неделе"
   }
 }

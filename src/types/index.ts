@@ -1,4 +1,4 @@
-export type TabId = 'home' | 'calendar' | 'clients' | 'documents' | 'profile' | 'settings';
+export type TabId = 'home' | 'calendar' | 'clients' | 'documents' | 'search' | 'profile' | 'settings';
 
 export interface NavItem {
   id: TabId;

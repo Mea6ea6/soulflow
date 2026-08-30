@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import {
   HouseIcon, CalendarBlankIcon, UsersIcon, FolderOpenIcon, UserIcon, GearIcon,
-  SparkleIcon, CaretLineLeftIcon, CaretLineRightIcon,
+  SparkleIcon, CaretLineLeftIcon, CaretLineRightIcon, MagnifyingGlassIcon,
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { TabId, NavItem } from '../types';
@@ -19,6 +19,7 @@ const ICONS: Record<TabId, React.ElementType> = {
   calendar: CalendarBlankIcon,
   clients: UsersIcon,
   documents: FolderOpenIcon,
+  search: MagnifyingGlassIcon,
   profile: UserIcon,
   settings: GearIcon,
 };
@@ -56,6 +57,7 @@ export default function Sidebar({ activeTab, onTabChange, isCollapsed, onToggleC
 
   const navItems: NavItem[] = [
     { id: 'home', label: t('nav.home') },
+    { id: 'search', label: t('nav.search') },
     { id: 'calendar', label: t('nav.calendar') },
     { id: 'clients', label: t('nav.clients') },
     { id: 'documents', label: t('nav.documents') },
@@ -111,7 +113,6 @@ export default function Sidebar({ activeTab, onTabChange, isCollapsed, onToggleC
         ))}
       </div>
 
-      {/* Кнопка сворачивания — скрыта на мобильных, там сайдбар управляется гамбургером */}
       <button
         onClick={onToggleCollapse}
         className="hidden md:flex items-center justify-center mt-3 py-2 rounded-md bg-surface-hover text-text-secondary hover:bg-border hover:text-text-primary transition-colors"

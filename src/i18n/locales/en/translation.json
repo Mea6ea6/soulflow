@@ -527,8 +527,10 @@
     "groupClients": "Clients",
     "groupDocuments": "Documents",
     "groupEvents": "Events",
+    "searchAction": "Search",
+    "recentTitle": "Recent searches",
     "categoryAllClients": "All clients",
     "categoryAllDocuments": "All documents",
-    "categoryEventsWeek": "Events this week"
+    "categoryEventsMonth": "Events this month"
   }
 }

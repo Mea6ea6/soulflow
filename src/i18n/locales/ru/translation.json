@@ -527,8 +527,10 @@
     "groupClients": "Клиенты",
     "groupDocuments": "Документы",
     "groupEvents": "События",
+    "searchAction": "Найти",
+    "recentTitle": "Недавние запросы",
     "categoryAllClients": "Все клиенты",
     "categoryAllDocuments": "Все документы",
-    "categoryEventsWeek": "События на неделе"
+    "categoryEventsMonth": "События в этом месяце"
   }
 }

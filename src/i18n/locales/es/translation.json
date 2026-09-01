@@ -526,8 +526,10 @@
     "groupClients": "Clientes",
     "groupDocuments": "Documentos",
     "groupEvents": "Eventos",
+    "searchAction": "Buscar",
+    "recentTitle": "Búsquedas recientes",
     "categoryAllClients": "Todos los clientes",
     "categoryAllDocuments": "Todos los documentos",
-    "categoryEventsWeek": "Eventos de esta semana"
+    "categoryEventsMonth": "Eventos de este mes"
   }
 }

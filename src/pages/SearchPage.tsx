@@ -178,7 +178,7 @@ export default function SearchPage() {
         className="w-full max-w-2xl mx-auto px-4"
       >
         <div className="relative" ref={searchContainerRef}>
-          <form onSubmit={handleSubmit} className="relative flex items-center gap-2">
+                    <form onSubmit={handleSubmit} className="relative flex items-stretch">
             <div className="relative flex-1">
               <MagnifyingGlassIcon
                 size={isCompact ? 18 : 22}
@@ -191,7 +191,7 @@ export default function SearchPage() {
                 onFocus={() => setIsSearchFocused(true)}
                 placeholder={t('search.placeholder')}
                 autoFocus
-                className={`w-full rounded-3xl border border-border bg-surface shadow-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 ${
+                className={`w-full rounded-l-3xl border border-r-0 border-border bg-surface shadow-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 ${
                   isCompact ? 'pl-11 pr-10 py-2.5 text-sm' : 'pl-13 pr-12 py-4 text-base'
                 }`}
               />
@@ -207,11 +207,11 @@ export default function SearchPage() {
             </div>
             <button
               type="submit"
-              className={`btn-lift shrink-0 rounded-full bg-primary hover:bg-primary-hover text-white font-medium transition-all duration-300 ${
-                isCompact ? 'px-4 py-2.5 text-sm' : 'px-6 py-4 text-base'
+              className={`btn-lift shrink-0 rounded-r-3xl border border-border bg-primary hover:bg-primary-hover text-white transition-all duration-300 flex items-center justify-center ${
+                isCompact ? 'px-4' : 'px-6'
               }`}
             >
-              {t('search.searchAction')}
+              <MagnifyingGlassIcon size={isCompact ? 18 : 22} />
             </button>
           </form>
 

@@ -1,12 +1,13 @@
 import { createContext } from 'react';
 import type { Document } from '../types';
+import type { SessionTemplateId } from '../utils/sessionTemplates';
 
 export interface DocumentEditorTarget {
   document: Document | null;
   clientId: string | null;
   isPersonal: boolean;
   initialTitle?: string;
-  templateId?: 'blank' | 'soap';
+  templateId?: SessionTemplateId;
 }
 
 export interface EditorTab {

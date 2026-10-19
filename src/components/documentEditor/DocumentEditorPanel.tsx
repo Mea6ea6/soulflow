@@ -31,7 +31,7 @@ import BlockMenuList from '../BlockMenuList';
 import TableControls from './TableControls';
 import { buildTemplateContent } from '../../utils/sessionTemplates';
 
-type ContentTheme = 'light' | 'dark';
+export type ContentTheme = 'light' | 'dark';
 
 const CONTENT_THEME_VARS: Record<ContentTheme, { bg: string; text: string; secondary: string; hover: string }> = {
   light: { bg: '#ffffff', text: '#191919', secondary: '#8b8b89', hover: '#f1f1ef' },

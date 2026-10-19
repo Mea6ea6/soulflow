@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileTextIcon, CircleIcon, XIcon, PlusIcon, SunIcon, MoonIcon } from '@phosphor-icons/react';
 import type { EditorTab } from '../../context/DocumentEditorContextDef';
-import type { ContentTheme } from './DocumentEditorPanel';
+import type { ContentTheme } from '../../utils/editorTheme';
 
 interface EditorTabsProps {
   tabs: EditorTab[];
